@@ -6,14 +6,17 @@ library(fs)
 #### PART DATE RANGE, METADATA SUMMARY ####
 
 # paths
-
-download_dir <- "data/apprehensions"
-metadata_dir <- file.path(download_dir, "metadata")
 processed_dir <- "data/apprehensions/processed"
+metadata_dir <- file.path(download_dir, "metadata")
 
 parts_to_stack_dir <- file.path(
   processed_dir,
   "parts_to_stack"
+)
+
+part_date_ranges_path <- file.path(
+  metadata_dir,
+  "parts_date_ranges.parquet"
 )
 
 parts_metadata_path <- file.path(
@@ -228,6 +231,34 @@ write_parquet(
 cat(
   "\nParts metadata saved to:",
   parts_metadata_path,
+  "\n"
+)
+
+# preserve the simpler date-range output
+part_ranges <- parts_metadata |>
+  select(
+    part_file,
+    source_file,
+    source_sheet,
+    date_column,
+    min_date,
+    max_date,
+    rows = n_rows
+  )
+
+write_parquet(
+  parts_ranges,
+  parts_date_ranges_path
+)
+
+print(
+  part_ranges,
+  n = Inf
+)
+
+cat(
+  "\nPart date ranges saved to:",
+  parts_date_ranges_path,
   "\n"
 )
 

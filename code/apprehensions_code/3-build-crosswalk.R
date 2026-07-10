@@ -2,7 +2,8 @@
 library(tidyverse)
 library(arrow)
 
-#### WRITE CROSSWALK ####
+# WRITE CROSSWALK
+## ================================================================
 
 # paths
 metadata_dir <- "data/apprehensions/metadata"
@@ -320,7 +321,8 @@ write_parquet(
   file.path(metadata_dir, "crosswalk.parquet")
 )
 
-#### AUDITS ####
+# AUDITS
+## ================================================================
 
 # audits
 cat("distinct_columns rows:", nrow(distinct_columns), "\n")
