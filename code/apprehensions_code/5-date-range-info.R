@@ -16,7 +16,7 @@ parts_to_stack_dir <- file.path(
 
 part_date_ranges_path <- file.path(
   metadata_dir,
-  "part_date_ranges.parquet"
+  "parts_date_ranges.parquet"
 )
 
 parts_metadata_path <- file.path(
@@ -247,8 +247,8 @@ part_ranges <- parts_metadata |>
   )
 
 write_parquet(
-  part_ranges,
-  part_date_ranges_path
+  parts_ranges,
+  parts_date_ranges_path
 )
 
 print(
@@ -258,7 +258,7 @@ print(
 
 cat(
   "\nPart date ranges saved to:",
-  part_date_ranges_path,
+  parts_date_ranges_path,
   "\n"
 )
 
