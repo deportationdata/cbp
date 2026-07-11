@@ -10,18 +10,29 @@ download_dir <- "data/apprehensions"
 metadata_dir <- file.path(download_dir, "metadata")
 processed_dir <- "data/apprehensions/processed"
 
+# outputs 
 parts_to_stack_dir <- file.path(
   processed_dir,
   "parts_to_stack"
 )
 
+unique_rows_dir <- file.path(
+  processed_dir,
+  "unique_rows"
+)
+
+dir.create(
+  unique_rows_dir,
+  recursive = TRUE,
+  showWarnings = FALSE
+)
 
 parts_metadata_path <- file.path(
   metadata_dir,
   "parts_metadata.parquet"
 )
 
-same_date_groups_path <- file.path(
+same_date_ranges_path <- file.path(
   metadata_dir,
   "same_date_ranges.parquet"
 )
@@ -232,9 +243,9 @@ cat(
 )
 
 
-#### SAME DATE RANGES ####
+#### ID SAME DATE RANGES ####
 
-same_date_groups <- parts_metadata |>
+same_date_ranges <- parts_metadata |>
   filter(
     !is.na(min_date),
     !is.na(max_date)
@@ -268,18 +279,18 @@ same_date_groups <- parts_metadata |>
   )
 
 print(
-  same_date_groups,
+  same_date_ranges,
   n = Inf
 )
 
 write_parquet(
-  same_date_groups,
-  same_date_groups_path
+  same_date_ranges,
+  same_date_ranges_path
 )
 
 cat(
   "\nSame date ranges saved to:",
-  same_date_groups_path,
+  same_date_ranges_path,
   "\n"
 )
 
@@ -297,6 +308,7 @@ cat(
 
 cat(
   "Repeated date-range groups:",
-  nrow(same_date_groups),
+  nrow(same_date_ranges),
   "\n"
 )
+

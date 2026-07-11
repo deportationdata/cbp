@@ -7,6 +7,7 @@ library(arrow)
 # paths
 metadata_dir <- "data/apprehensions/metadata"
 
+# outputs 
 distinct_columns <- read_parquet(
   file.path(metadata_dir, "distinct_columns.parquet")
 )

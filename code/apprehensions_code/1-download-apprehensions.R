@@ -13,6 +13,8 @@ download_dir <- "data/apprehensions"
 raw_dir <- file.path(download_dir, "raw")
 manual_review_dir <- file.path(download_dir, "manual_review")
 metadata_dir <- file.path(download_dir, "metadata")
+
+# outputs 
 link_inventory_path <- file.path(metadata_dir, "apprehension_links.parquet")
 
 # create folders

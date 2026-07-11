@@ -10,6 +10,8 @@ download_dir <- "data/apprehensions"
 metadata_dir <- file.path(download_dir, "metadata")
 processed_dir <- file.path(download_dir, "processed")
 parts_to_stack_dir <- file.path(processed_dir, "parts_to_stack")
+
+# outputs 
 column_inventory_path <- file.path(metadata_dir, "column_inventory.parquet")
 crosswalk_path <- file.path(metadata_dir,"crosswalk.parquet")
 
