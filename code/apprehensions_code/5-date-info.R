@@ -52,7 +52,7 @@ date_cols <- c(
   "entry_date"
 )
 
-# helper: convert CBP dates to Date class
+# helper: convert CBP dates to date class
 parse_dates <- function(x) {
   
   x <- str_squish(as.character(x))
@@ -117,8 +117,8 @@ parse_dates <- function(x) {
 # helper: summarize one part
 summarize_part <- function(part_path) {
   
-  # Read each part once so both date and column metadata
-  # can be calculated in the same pass.
+  # read each part once so both date and column metadata
+  # can be calculated in the same pass
   df <- read_parquet(part_path)
   
   part_file <- path_file(part_path)
@@ -136,8 +136,8 @@ summarize_part <- function(part_path) {
     )
   }
   
-  # Identify every canonical column containing at least one
-  # nonmissing, nonblank value.
+  # identify every canonical column containing at least one
+  # nonmissing, nonblank value
   non_empty_cols <- names(df)[
     map_lgl(
       df,
@@ -153,14 +153,14 @@ summarize_part <- function(part_path) {
     c("source_file", "source_sheet")
   )
   
-  # Identify available date columns.
+  # identify available date columns
   available_cols <- intersect(
     date_cols,
     names(df)
   )
   
-  # Choose the first preferred date column containing
-  # at least one nonblank value.
+  # choose the first preferred date column containing
+  # at least one nonblank value
   date_col <- NA_character_
   
   for (nm in available_cols) {
@@ -178,7 +178,7 @@ summarize_part <- function(part_path) {
     }
   }
   
-  # Parse dates if a usable date column was found.
+  # parse dates if a usable date column was found
   if (is.na(date_col)) {
     
     min_date <- as.Date(NA)

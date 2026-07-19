@@ -36,7 +36,7 @@ crosswalk <- distinct_columns |>
         "subject_demographic_sdi"
       ) ~ "subject_demographic",
       
-      # apprehension/arrest datetime/date/time
+      # apprehension/arrest datetime
       clean_column %in% c(
         "app_dt_time",
         "appr_dt_time",
@@ -141,9 +141,8 @@ crosswalk <- distinct_columns |>
       ) ~ "unaccompanied_child",
       
       clean_column %in% c(
-        "number_children_and_nationality",
-        "number_of_children_and_nationality"
-      ) ~ "children_nationality",
+        "number_children_and_nationality"
+      ) ~ "number_of_children_and_nationality",
       
       # identifiers
       clean_column %in% c(

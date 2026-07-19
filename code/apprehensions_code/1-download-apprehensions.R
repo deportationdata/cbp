@@ -6,7 +6,7 @@ library(xml2)
 library(arrow)
 
 # store URL
-cbp_apps_url <- "https://www.cbp.gov/document/foia-record/customs-and-border-protection-border-patrol-statistics"
+apps_url <- "https://www.cbp.gov/document/foia-record/customs-and-border-protection-border-patrol-statistics"
 
 # set paths
 download_dir <- "data/apprehensions"
@@ -31,7 +31,7 @@ cbp_request <- function(url) {
 }
 
 # request page
-resp <- cbp_request(cbp_apps_url) |>
+resp <- cbp_request(apps_url) |>
   req_perform()
 
 html <- resp_body_string(resp)
@@ -43,7 +43,7 @@ links <- tibble(
   href = cbp_page |> html_elements("a") |> html_attr("href")
 ) |>
   filter(!is.na(href)) |>
-  mutate(full_url = url_absolute(href, cbp_apps_url))
+  mutate(full_url = url_absolute(href, apps_url))
 
 # classify downloadable files
 apprehension_links <- links |>
@@ -51,47 +51,26 @@ apprehension_links <- links |>
   mutate(
     text_lower = str_to_lower(text),
     # files to include 
-    is_nationwide_apprehensions =
+    is_apprehensions =
       str_detect(
         text_lower,
-        "nationwide apprehension|nationwide apprehensions"
-      ) |
-      str_detect(
-        text_lower,
-        "^usbp apprehensions fy"
-      ),
-    # is_subject_details =
-      # str_detect(
-        # text_lower,
-        # "^usbp encounter subject details"
-      # ),
-    # files to exclude 
+        "apprehension|apprehenion|t8"
+      ) ,
+    # files for manual review  
     is_too_specific =
       str_detect(
         text_lower,
         paste(
           c(
-            "gotaway", "gotaways", "turnback", "turnbacks",
-            "dna", "ketamine", "seizure", "seizures",
-            "pregnancy", "pregnant","death", "deaths",
-            "drug", "fentanyl", "heroin", "smugglers", 
-            "smuggler", "smuggling","texas national guard", "department of public safety",
-            "ramsey sector", "dominican", "haitian", "return to sender",
-            "title 8", "usc 1304", "t8", "height weight",
-            "demographic", "demo", "citizenship and sector",
-            "sector only", "unaccompanied children", "family units",
-            "migrant deaths", "borstar", "weapon", "rescue",
-            "special interest aliens", "place of origin",
-            "subject type", "t42", "separated children"
+            "texas", "haitian", "demographic", "guatemalan", "origin"
           ),
           collapse = "|"
         )
       ),
     
     download_class = case_when(
-      (is_nationwide_apprehensions #| is_subject_details) 
-       ) & !is_too_specific ~ "include_apprehensions",
-      str_detect(text_lower, "apprehension|apprehensions|encounter subject details") ~ "manual_review",
+      (is_apprehensions) & !is_too_specific ~ "include_apprehensions",
+      str_detect(text_lower, "apprehension|apprehenion") ~ "manual_review",
       TRUE ~ "exclude"
     )
   ) |>
@@ -109,8 +88,7 @@ old_apprehension_links <- if (file.exists(link_inventory_path)) {
     href = character(),
     full_url = character(),
     text_lower = character(),
-    is_nationwide_apprehensions = logical(),
-    # is_subject_details = logical(),
+    is_apprehensions = logical(),
     is_too_specific = logical(),
     download_class = character()
   )
@@ -127,10 +105,8 @@ if (manual_count > 0) {
   warning(
     paste0(
       manual_count,
-      " WARNING: File(s) flagged for manual review. Check data/apprehensions/manual_review/"
-    )
-  )
-}
+      "WARNING: File(s) flagged for manual review. Check data/apprehensions/manual_review/"))
+  }
 
 print(new_apprehension_links, n = Inf)
 
@@ -174,6 +150,4 @@ write_parquet(
 
 cat("New apprehension files:", length(downloaded_apprehension_files), "\n")
 cat("New manual-review files:", length(downloaded_manual_review_files), "\n")
-
-
 

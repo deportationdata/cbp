@@ -97,13 +97,9 @@ find_header_row <- function(file_path, sheet, n_max = 100, min_matches = 3) {
   
   header_terms <- paste(
     c(
-      "subject", "event", "citizenship", "gender",
-      "age", "indicator", "sector", "date",
-      "status", "entry", "disposition",
-      "transfer", "juvenile", "unaccompanied",
-      "family", "fear", "program",
-      "nationality", "children"
-    ),
+      "event", "citizenship", "gender", "age", "indicator", "sector", 
+      "status", "entry", "disposition", "transfer", "juvenile", 
+      "unaccompanied", "family", "fear", "program", "nationality", "children"),
     collapse = "|"
   )
   
@@ -123,7 +119,7 @@ find_header_row <- function(file_path, sheet, n_max = 100, min_matches = 3) {
       values_to = "value"
     ) |>
     mutate(
-      value = str_to_lower(str_squish(value)),
+      value = make_clean_names(str_squish(value)),
       has_header_term = str_detect(value, header_terms)
     ) |>
     group_by(row_number) |>
@@ -279,3 +275,5 @@ write_parquet(distinct_columns, distinct_columns_path)
 if (nrow(failed_sheets_final) > 0) {
   write_parquet(failed_sheets_final, failed_sheets_path)
 }
+
+
