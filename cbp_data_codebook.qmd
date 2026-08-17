@@ -1,0 +1,330 @@
+---
+title: "CBP Data Codebook"
+format: html
+editor: visual
+---
+
+## **CBP Data Codebook**
+
+AUTHORS
+
+Graeme Blair, University of California, Los Angeles
+
+Simone Horowitz, University of California, Los Angeles
+
+## Intro
+
+We provide data on Customs and Border Protection on Title 8 encounters (including apprehensions and inadmissibles) and Title 42 expulsions. We provide three datasets: Apprehensions, Inadmissibles, and Encounters. 
+
+Under Title 8, apprehensions refers to those under physical control or temporary detainment by the United States Border Patrol (USBP) between Ports of Entry (POE) who are not lawfully in the United States, which may or may not result in an arrest. 
+
+Under Title 8, inadmissibles refers to those encountered at Ports of Entry (POE) who are determined to be inadmissible under immigration law by the Office of Field Operations (OFO). This can include those seeking lawful admission, asylum, or parole.
+
+In this dataset, encounters refers specifically to USBP encounters, which include only Title 8 apprehensions and Title 42 expulsions and do not contain Title 8 inadmissibles recorded under the OFO. Generally, encounters refers to anyone apprehended by the United States Border Patrol (USBP) under Title 8 Apprehensions, encountered by the Office of Field Operations (OFO) under Title 8 Inadmissibles, or expelled under Title 42 Expulsions. Title 42 was enacted by the Center for Disease Control (CDC) from March 21, 2020 to May 11, 2023 during the COVID-19 pandemic to increase expulsion speed and ease at and between points of entry. After May 11, 2023, enforcement reverted to Title 8 Apprehensions and Inadmissibles. Title 42 Expulsions are tracked separately from immigration enforcement actions, including apprehension or inadmissibility, reported by CBP and are not based on immigration status.
+
+We collected separate files published under different time periods to the CBP website under Freedom of Information Act statistical records and present them in a single, usable dataset.
+
+## Data Structure
+
+Each row in the datasets represents one recorded CBP encounter involving an individual. Some records contain fields indicating that multiple individuals were encountered together. The datasets are maintained separately because they represent different enforcement categories, CBP components, source files, and record structures. Variant column names are merged under standardized headers that are used across all three datasets.
+
+## Data Processing
+
+It is important to note that files are identified by their URLs published on CBP’s website. If CBP replaces the contents of an existing URL the pipeline will not automatically detect this revision. We collected CBP data in these steps:
+
+-   **Download apprehensions, inadmissibles, and encounters.** We identified and downloaded all relevant raw files from CBP’s original website. Any ambiguous files were manually reviewed.
+
+-   **Profile header rows.** Here, we learned about the types of column names within each sheet to later build a crosswalk to match distinct column names to. The script separates sheets that fail profiling to be manually viewed only if they exist.
+
+-   **Build a crosswalk of canonical column names.** We created a crosswalk from the distinct columns identified in the previous step to assign each a canonical column name and allow files within each dataset to be combined. This step was crucial to successfully condense variant columns that contain the same expected entries.
+
+-   **Convert original files to cleaned format.** Then, we converted the headers in each dataset to their canonical name assigned in the crosswalk, ensuring that headers across sheets were standardized.
+
+-   **Identify dataset overlaps.** We extracted the minimum and maximum encounter dates in each cleaned file, exploring whether duplicate datasets existed. Datasets with the same minimum and maximum date and equal row counts were flagged and manually examined.
+
+-   **Remove duplicate datasets.** Upon examination, if files were determined to be exact duplicates, one copy was retained and the duplicate was excluded from stacking. If matching datasets contained complementary information, they were merged to retain the most complete version of each record.
+
+-   **Stack unique datasets.** Unique datasets were stacked to yield our final apprehensions, inadmissibles, and encounters datasets.
+
+-   **Clean combined datasets.** Finally, combined datasets were cleaned so that column names contained the appropriate data type. Erroneous spaces were also removed from certain codes.
+
+**Future work:** We are continuing to expand our datasets by submitting FOIA requests to obtain more recent datasets. We will update this codebook as processes develop.
+
+## Data Sources
+
+We list and link each of our data sources here. 
+
+|  |  |  |  |
+|----|----|----|----|
+| **Name** | **Source** | **Date(s) in FY** | **Contributor** |
+| [CBP Apprehensions Data](https://www.cbp.gov/document/foia-record/customs-and-border-protection-border-patrol-statistics) | CBP, USBP | 2008–2026 |  |
+| [CBP Inadmissibles Data](https://www.cbp.gov/document/foia-record/cbp-office-field-operations-statistics) | CBP, OFO | 2012–2026 |  |
+| [CBP Encounters Data](https://www.cbp.gov/document/foia-record/customs-and-border-protection-border-patrol-statistics) | CBP | 2010–2025 |  |
+
+## Inspect Code
+
+|  |  |
+|----|----|
+| **Dataset** | **Code** |
+| Apprehensions | [\<\>](https://github.com/deportationdata/cbp/tree/main/code/apprehensions_code) |
+| Inadmissibles | [\<\>](https://github.com/deportationdata/cbp/tree/main/code/inadmissibles_code) |
+| Encounters | [\<\>](https://github.com/deportationdata/cbp/tree/main/code/encounters_code) |
+
+## Fields
+
+#### Encounters Fields
+
+|  |  |  |  |
+|----|----|----|----|
+| **Name** | **Description** | **Raw Columns** | **Type** |
+| adult_or_juvenile | Whether the subject was categorized as an adult or juvenile | ADULT OR JUVENILE, Adult or Juvenile | string |
+| app_age | Age at the time of apprehension or encounter | APP AGE, APP_AGE | integer |
+| apprehension_date | Date of apprehension | Apprehension Date | date |
+| apprehension_datetime | Date and time of apprehension | APP_DT_TIME, APPR DT TIME, APPR_DT_TIME | datetime |
+| apprehension_latitude | Latitude associated with the apprehension | APPREHENSION LATITUDE, LATITUDE | string |
+| apprehension_sector | USBP sector associated with the apprehension | APPREHENSION SECTOR, Apprehension Sector | string |
+| apprehension_state | State associated with the apprehension | APPREHENSION STATE, Apprehension State | string |
+| apprehension_time | Time of apprehension | Apprehension Time | time |
+| arrest_at_checkpoint_indicator | Whether the arrest occurred at a checkpoint | ARREST AT CHECKPOINT (Y/N), ARREST_AT_CHECKPOINT (Y/N), Arrest at Checkpoint (Y/N) | logical |
+| border | Border region associated with the encounter | BORDER, Border | string |
+| ces_indicator | CES indicator | CES(Y/N) | logical |
+| citizenship | Subject’s recorded citizenship | CITIZENSHIP | string |
+| citizenship_cd | Code for the subject’s recorded citizenship | CITIZENSHIP_CD | string |
+| city_of_residence | Subject’s recorded city of residence | CITY OF RESIDENCE, CITY_OF_RESIDENCE, City of Residence | string |
+| country_of_res_cd | Code for the subject’s recorded country of residence | COUNTRY_OF_RES_CD | string |
+| country_of_residence | Subject’s recorded country of residence | COUNTRY OF RESIDENCE, COUNTRY_OF_RESIDENCE | string |
+| criminal_conviction_indicator | Whether a criminal conviction was recorded | CRIMINAL_CONVICTION | logical |
+| currency_seized_during_app_value | Recorded value of currency seized during apprehension | Currency Seiz During App (\$Value), CURRENCY SEIZ DURING APP, CURRENCY_SEIZ_DURING_APP | double |
+| disposition | Recorded encounter disposition | DISPOSITION | string |
+| drugs_seized_during_apprehension_indicator | Whether drugs were seized during the apprehension | DRUGS SEIZED DURING APPREHENSION (Y/N) | logical |
+| earliest_apprehension_date | Earliest recorded apprehension date | Earliest App Date, EARLIEST APPREHENSION DATE | date |
+| earliest_encounter_date | Earliest recorded encounter date | EARLIEST ENCOUNTER DATE | date |
+| encounter_datetime | Date and time of encounter | ENCOUNTER_DT_TIME | datetime |
+| final_bookout_date | Date of final bookout | FINAL_BOOKOUT_DATE | date |
+| final_bookout_datetime | Date and time of final bookout | FINAL BOOKOUT DATETIME | datetime |
+| gang_affiliation | Recorded gang affiliation | GANG AFFILIATION, Gang Affiliation | string |
+| gender | Subject’s recorded gender | GENDER | string |
+| marital_status | Subject’s recorded marital status | MARITAL STATUS | string |
+| marital_status_cd | Code for the subject’s recorded marital status | MARITAL_STATUS_CD | string |
+| most_recent_apprehension_date | Most recent recorded apprehension date | Most Recent App Date, MOST RECENT APPREHENSION DATE | date |
+| most_recent_encounter_date | Most recent recorded encounter date | MOST RECENT ENCOUNTER DATE | date |
+| mpp_indicator | Whether the subject was associated with the Migrant Protection Protocols | MPP INDICATOR (Y/N), MPP Indicator (Y/N), MPP_INDICATOR (Y/N) | logical |
+| number_children_and_nationality | Recorded number and nationality of children | NUMBER CHILDREN AND NATIONALITY, NUMBER_CHILDREN_AND_NATIONALITY | string |
+| number_of_children_and_nationality | Recorded number and nationality of children | #of Children and Nationality | string |
+| number_of_previous_apprehensions | Number of previous recorded apprehensions | NUMBER OF PREVIOUS APPREHENSION, #of Previous Apps | integer |
+| number_of_previous_encounters | Number of previous recorded encounters | NUMBER OF PREVIOUS ENCOUNTER | integer |
+| referred_for_prosecution_under_8usc1325_or_8usc1326 | Whether the subject was referred for prosecution under 8 USC §1325 or §1326 | Referred for Prosecution Under 8USC1325 OR 8USC1326, REFFERRED FOR PROSECUTION UNDER 8 USC 1325 OR 8 USC 1326 | string |
+| sector_of_bookout | USBP sector associated with bookout | SECTOR OF BOOKED OUT, Sector of Bookout | string |
+| smuggled_cost | Recorded smuggling cost | SMUGGLED COST, SMUGGLED_COST | double |
+| spp_program_s | Recorded SPP program or programs | SPP PROGRAM(S), SPP Program(s) | string |
+| statute_charges | Recorded statute charge or charges | Statue Charge, STATUTE CHARGE(S), STATUTE_CHARGE(S) | string |
+| subject_group_classification | CBP classification such as single adult, family-unit member, or unaccompanied child | DEMOGRAPHIC, Demographic | string |
+| time_in_us | Recorded time in the United States | TIME IN US, TIME_IN_US | string |
+| time_in_us_cd | Code for recorded time in the United States | TIME_IN_US_CD | string |
+| transfer_to_group | Group to which the subject was transferred | TRANSFER_TO_GROUP, TRANSFERRED TO GROUP, TRANSFERRED_TO_GROUP | string |
+| type_of_drugs_seized_during_apprehension | Type of drugs seized during the apprehension | TYPE OF DRUGS SEIZED DURING APPREHENSION | string |
+| uc_indicator | Unaccompanied-child indicator | UC INDICATOR (Y/N) | logical |
+| source_file | Source file from which the record was extracted | source_file | string |
+| source_sheet | Source worksheet from which the record was extracted | source_sheet | string |
+
+#### Inadmissibles Fields
+
+|  |  |  |  |
+|----|----|----|----|
+| **Name** | **Description** | **Raw Columns** | **Type** |
+| age | Age at the time the event was created | Age at Event Creation Time | integer |
+| alien_file_number | Recorded alien file number | Alien File Number | string |
+| approving_supervisor_hash_id | Hashed identifier for the approving supervisor | Approving Supervisor (HashID) | string |
+| birth_country_name | Subject’s recorded country of birth | Birth Country Name | string |
+| calendar_month_year | Recorded calendar month and year | Calendar Month (mon-yy) | string |
+| calendar_month_name | Recorded calendar month | Calendar Month Name | string |
+| calendar_year | Recorded calendar year | Calendar Year, Calendar Year Number (yyyy) | string |
+| charge | Recorded charge | Charge | string |
+| citizenship_country_name | Subject’s recorded country of citizenship | Citizenship Country Name | string |
+| city_name | City recorded in the source record; CBP does not specify what type of location it represents | City Name | string |
+| country_name | Country recorded in the source record; CBP does not specify what type of location it represents | Country Name | string |
+| created_by_hash_id | Hashed identifier for the person who created the record | Created By (HashID) | string |
+| cred_fear_indicator | Credible-fear indicator | Cred Fear Indicator | logical |
+| cred_fear_indicator_derived | CBP-derived credible-fear indicator; derivation method is not provided | Cred Fear Indicator (Derived) | logical |
+| custody_date_time_out_latest | Latest recorded date and time out of custody | Custody Date/Time Out (Latest) | datetime |
+| destination_address_in_u_s | Recorded destination address in the United States | Destination Address in U.S. | string |
+| disposition | Recorded disposition | Disposition | string |
+| disposition_name | Recorded disposition name | Disposition Name | string |
+| duplicate | Duplicate-record indicator recorded by CBP | Duplicate Indicator, Duplicate Subject Indicator, Duplicates | string |
+| entry_status | Recorded entry status | Entry Status | string |
+| event_created_datetime | Date and time the event record was created | Event Created Date/Time, Event Created Datetime | datetime |
+| event_reason | Recorded reason for the event | Event Reason | string |
+| event_subject_count | Recorded number of subjects associated with the event | Event Subject Count | integer |
+| field_office_name | OFO field office associated with the record | Field Office Name | string |
+| first_street_name | First street name recorded in the source record | First Street Name | string |
+| fmua_indicator | Family-unit-member indicator | FMUA Indicator | logical |
+| fmua_indicator_derived | CBP-derived family-unit-member indicator; derivation method is not provided | FMUA Indicator (Derived) | logical |
+| fmua_uac_am_single_derived | CBP-derived classification of the subject as FMUA, UAC, accompanied minor, or single adult | FMUA/UAC/AM/SINGLE (Derived) | string |
+| fmua_uac_indicator | Recorded FMUA/UAC classification | FMUA/UAC Indicator | string |
+| gang_affiliation_comments | Recorded comments about gang affiliation | Gang Affiliation Comments | string |
+| gang_affiliation_type_name | Recorded gang-affiliation type | Gang Affiliation Type Name | string |
+| gender | Subject’s recorded gender | Gender | string |
+| i216_custody_transfer_to_agency | Agency to which custody was transferred | I216 Custody Transfer To (Agency) | string |
+| inadmissibles_subject_count | Recorded number of inadmissible subjects | Inadmissibles Subject Count | integer |
+| marital_status_name | Subject’s recorded marital status | Marital Status Name | string |
+| mode_of_transportation | Recorded mode of transportation | Mode of Transport, Mode of Transportation | string |
+| mot | MOT value recorded by CBP | MOT | string |
+| north_south_indicator | North–south indicator recorded by CBP | North - South Indicator, North South Indicator | string |
+| person_count | Recorded person count | Person Count | integer |
+| postal_zip_code | Recorded postal or ZIP code | Postal/Zip Code | string |
+| presented_to_ausa | Whether the record was presented to an Assistant U.S. Attorney | Presented To AUSA | string |
+| sigma_event_id | Recorded SIGMA event identifier | Sigma Event ID | string |
+| sigma_subject_person_id | Recorded SIGMA subject or person identifier | SIGMA Subject/Person ID | string |
+| state_name | State recorded in the source record | State Name | string |
+| suspected_gang_affiliation_name | Recorded suspected gang affiliation | Suspected Gang Affiliation Name | string |
+| uac_indicator | Unaccompanied-child indicator | UAC Indicator | logical |
+| uac_indicator_derived | CBP-derived unaccompanied-child indicator; derivation method is not provided | UAC Indicator (Derived) | logical |
+| unaccompanied_minor_indicator_unac_inadmissible_admissible | Unaccompanied-minor classification recorded by CBP | Unaccompanied Minor Indicator (UNAC - Inadmissible & Admissible) | string |
+| usa_state_code | Recorded U.S. state code | USA State Code | string |
+| source_file | Source file from which the record was extracted | source_file | string |
+| source_sheet | Source worksheet from which the record was extracted | source_sheet | string |
+
+#### Apprehensions
+
+|  |  |  |  |
+|----|----|----|----|
+| **Name** | **Description** | **Raw Columns** | **Type** |
+| adult_or_juvenile | Whether the subject was categorized as an adult or juvenile | Adult or Juvenile | string |
+| age | Subject’s recorded age | Age, APP AGE, APP Age, Subject Age | integer |
+| apprehension_date | Date of apprehension | APPREHENSION_DT | date |
+| apprehension_datetime | Date and time of apprehension | APPR_DT_TIME | datetime |
+| apprehension_time | Time of apprehension | Apprehension Time | time |
+| apprehensions |  | Apprehensions | string |
+| arrest_border | Border associated with the arrest | Arrest Border, Border | string |
+| arrest_date | Date of arrest | Arrest Date | date |
+| arrest_datetime | Date and time of arrest | Arrest DateTime | datetime |
+| arrest_method | Recorded arrest method | ARREST METHOD, ARREST_METHOD, Arrest Method | string |
+| arrest_sector | USBP sector associated with the arrest or apprehension | Arrest Sector, SECTOR, Sector | string |
+| arrest_sl_checkpoint_indicator | Arrest/checkpoint indicator recorded by CBP | Arrest SL Checkpoint Indicator | logical |
+| arrest_time | Time of arrest | Arrest Time | time |
+| arresting_agent_hash_number | Hashed identifier for the arresting agent | Arresting Agent Hash# | string |
+| birth_city | Subject’s recorded city of birth | Birth City, City of Birth | string |
+| birth_date | Subject’s recorded date of birth | BIRTH_DATE | date |
+| birth_state | Subject’s recorded state of birth | Birth State, STATE_OF_BIRTH, State of Birth | string |
+| case_file_date | Date the case was filed | Case File Date, Case Filing Date, CASE FILING DATE(S) | date |
+| case_id | Recorded case identifier | Case ID | string |
+| cds_program | Recorded CDS program or program code | CDS Program, CDS Program Code, CDS PROGRAM(S) | string |
+| ces_indicator | CES criminal indicator | CES Criminal Indicator, CES INDICATOR | logical |
+| charge_code | Recorded charge code or statute code | CHARGE CODE(S), Charge Code / Statue Charge, Charge Code/Statue Code | string |
+| citizenship | Subject’s recorded citizenship | CITIZENSHIP, Citizenship | string |
+| citizenship_cd | Code for the subject’s recorded citizenship | CITIZENSHIP_CD | string |
+| country_of_birth | Subject’s recorded country of birth | Country of Birth | string |
+| country_of_birth_cd | Code for the subject’s recorded country of birth | COUNTRY_OF_BIRTH_CD | string |
+| country_of_res_cd | Code for the subject’s recorded country of residence | COUNTRY_OF_RES_CD | string |
+| credible_fear_indicator | Credible-fear indicator | Credible Fear, Credible Fear Ind, CREDIBLE FEAR INDICATOR, Credible Fear Indicator | logical |
+| criminal_conviction_indicator | Whether a criminal conviction was recorded | CRIMINAL_CONVICTION, Criminal Conviction | logical |
+| currency_seized_during_app_indicator | Whether currency was seized during apprehension | Curency Seized During App (Y/N) | logical |
+| currency_seized_during_app_value | Recorded value of currency seized during apprehension | Currency Seized During App (\$Value) | double |
+| dhs_status_code_lpr | Recorded DHS status code for lawful permanent residents | DHS STATUS CODE - LPR | string |
+| disposition | Recorded case disposition | DISPOSITION, Disposition, Subject Disposition Code | string |
+| drugs_seized_during_apprehension_indicator | Whether drugs were seized during apprehension | Drugs Seized During App (Y/N) | logical |
+| earliest_app_date_time | Earliest recorded apprehension date and time | Earliest APP Date Time | datetime |
+| entry_date | Recorded date of entry | Entry Date, ENTRY_DT | date |
+| entry_status | Recorded status at entry | Entry Status, STATUS_AT_ENTRY | string |
+| entry_status_includes_lpr | Recorded entry status, including LPR status | Entry Status (includes LPR) | string |
+| ethnicity | Subject’s recorded ethnicity | Ethnicity | string |
+| event_number | Recorded event number | EVENT_NUMBER, Event Number | string |
+| final_bookout_date | Date of final bookout | Final Bookout, FINAL BOOKOUT DATE, FINAL_BOOKOUT_DATE, Final Bookout Date | date |
+| first_country_of_residence | Subject’s first recorded country of residence | First Country of Residence | string |
+| first_country_of_residence_foreign | Subject’s first recorded foreign country of residence | First Country of Residence (Foreign) | string |
+| fmu_number | Recorded family-unit group number | Family Unit Group#, FMU NUMBER(S) | string |
+| fmu_type | Recorded family-unit type | FAMILY_UNIT_TYPE | string |
+| fmua_indicator | Family-unit-member indicator recorded by CBP | FMUA INDICATOR, FMUA Indicator | string |
+| gang_code | Recorded gang code | Gang Code | string |
+| gang_name | Recorded gang name | Gang Name | string |
+| gender | Subject’s recorded gender | GENDER, Gender, Subject Gender | string |
+| general_processing_code | Recorded general processing code | GENERAL_PROCESSING_CODE | string |
+| highest_statute_charge | Highest recorded statute charge | Highest Statute Charge | string |
+| juvenile_18_indicator | Whether the subject was recorded as under 18 | Juvenile \<18 | logical |
+| landmark | Landmark associated with the latest apprehension | Landmark, Landmark Name for Latest Apprehension | string |
+| landmark_withheld_indicator | Whether the landmark associated with the latest apprehension was withheld | Landmark Name for Latest Apprehension Withheld in Full (b)(7)( E), Landmark Name for Latest Apprehension- Withheld in Full (b)(7)( E) | logical |
+| language | Subject’s recorded language | Language | string |
+| latitude | Latitude associated with the arrest | Arrest Latitude | double |
+| lpr | Recorded LPR value | LPR | string |
+| marital_status | Subject’s recorded marital status or marital-status code | MARITAL STATUS, Marital Status, MARITAL_STATUS_CD, Subject Marital Status | string |
+| most_recent_encounter_date | Most recent recorded encounter date | Most Recent Encounter Date | date |
+| most_recent_prior_entry_date | Most recent recorded prior-entry date | Most Recent Prior Entry Date | date |
+| most_recent_prior_entry_datetime | Most recent recorded prior-entry date and time | Most Recent Prior Ent DateTime, Most Recent Prior Entry Date/Time | datetime |
+| most_recent_prior_entry_time | Most recent recorded prior-entry time | Most Recent Prior Entry Time | time |
+| mpp_indicator | Migrant Protection Protocols indicator | MPP Indicator | string |
+| nationality | Subject’s recorded nationality | Nationality | string |
+| ncic_charge_code | Recorded NCIC charge code | NCIC Charge Code, NCIC_CHARGE_CODE(S) | string |
+| ncic_charge_code_defer_to_doj | NCIC charge-code information deferred to DOJ | NCIC Charge Code, Defer to DOJ | string |
+| ncic_charge_code_owned_by_doj_not_cbp | NCIC charge-code information identified as owned by DOJ rather than CBP | NCIC Charge Code, owned by DOJ not CBP | string |
+| ncic_desc_defer_to_doj | NCIC description deferred to DOJ | NCIC Desc, Defer to DOJ | string |
+| ncic_desc_owned_by_doj_not_cbp | NCIC description identified as owned by DOJ rather than CBP | NCIC Desc, owned by DOJ not CBP | string |
+| ncic_description | Recorded NCIC description | NCIC Desc, NCIC_DESC(S) | string |
+| number_of_children_and_nationality | Recorded number and nationality of children | NUMBER_CHILDREN_AND_NATIONALITY, #of Children and Nationality | string |
+| number_of_children_in_event | Recorded number of children in the event | #of Children in Event | integer |
+| number_of_people_per_event | Recorded number of people in the event | \# of people per Event, #of People per Event | integer |
+| number_of_previous_apprehensions | Number of previous recorded apprehensions | \# of Previous Apprehensions, #of Previous Apprehensions, Number of Previous Apprehensions | integer |
+| number_of_subjects_per_event | Recorded number of subjects in the event | \# of Subjects per Event | integer |
+| person_id | Recorded person identifier | Unique Person Identifier | string |
+| prosecution_indicator | Whether the subject was referred for prosecution | Prosecution Indicator, Referred for Prosecution Under 8 USC 1325 or 8 USC 1326, REFERRED PROSECUTION | string |
+| removal_type | Recorded removal type | REMOVAL TYPE, Removal Type, Removal_Type | string |
+| sector_district | Recorded sector district | SECTOR_DISTRICT, Sector_District | string |
+| sector_of_bookout | USBP sector associated with bookout | Sector of Bookout | string |
+| smuggled_cost | Recorded smuggling cost | Subject Smuggle Cost | double |
+| spp_program | Recorded SPP program or programs | SPP Program(s) | string |
+| state | State recorded in the source record | STATE | string |
+| status_at_entry_cd | Code for the subject’s recorded status at entry | STATUS_AT_ENTRY_CD | string |
+| statute_charge | Recorded statute charge or charges | Statue Charge, Statute Charge, STATUTE_CHARGE(S) | string |
+| subject_afile_number | Subject’s recorded alien file number | Subject AFILE# | string |
+| subject_group_classification | CBP classification such as single adult, family-unit member, or unaccompanied child | Demographic, Demographic\*, Subject Demographic (SDI) | string |
+| subject_key | Recorded subject key or civilian identifier | Civ ID, Civ Id(Subject Key), Civ Id(Subject Key) Unique Identifier, SUBJECT_KEY | string |
+| suspected_gang_member_indicator | Whether the subject was recorded as a suspected gang member | SUSPECTED_GANG_MEMBER | logical |
+| time_in_us | Subject’s recorded time in the United States | Subject Time In US | string |
+| transfer_to | Recorded transfer destination | TRANSFER_TO, Transfer To ERO | string |
+| transfer_to_group | Recorded group to which the subject was transferred | TRANSFER_TO_GROUP, Transferred to Group | string |
+| type_of_drugs_seized_during_apprehension | Type of drugs seized during apprehension | Type of Drugs Seized during App | string |
+| unaccompanied_child_indicator | Unaccompanied-child indicator | UC INDICATOR, UC Indicator, UNACCOMPANIED CHILD, UNACCOMPANIED_CHILD | logical |
+| unique_case_identifier | Recorded unique case identifier | Unique Case Identifier | string |
+| source_file | Source file from which the record was extracted | source_file | string |
+| source_sheet | Source worksheet from which the record was extracted | source_sheet | string |
+
+## Warnings and Limitations
+
+Here are some limitations and things to consider when accessing this data:
+
+-   **Link permanence:** Files are identified by their URLS published on CBP’s website. If CBP replaces the contents of an existing URL the pipeline will not automatically detect this revision. 
+
+-   **Redacted values:** At times, redacted codes were present in columns whose data types were cleaned. In this case, redacted codes were converted to NA values. If this occurred in a non-character column (i.e., columns that would convert redacted values to NAs), a companion flag column was created to indicate whether the NA was previously a redacted value. 
+
+-   **Deleted sheets:** As mentioned, if entire datasets were determined to be duplicates of each other, one was excluded from the final dataset. We have two instances of this, whose deletions we further explain here.
+
+    -   **Apprehensions: usbp_nationwide_apprehension_q4_fy_2024.xlsx** was deleted and not merged. This file was concluded to be an erroneous duplicate of **usbp_nationwide_apprehension_q3_fy_2024.xlsx**, and thus, its data was discarded.
+
+    -   **Inadmissibles: ofo_inadmissible_case_by_case_feb_2025_0.xlsx** was deleted and not merged. This file was found to be an exact duplicate of **ofo_inadmissible_case_by_case_feb_2025.xlsx** and contributed no new information.
+
+-   **Force functions:**
+
+-   **Overlapping dates:**
+
+-   **Lack of subject identifiers: (rows ≠ ppl)**
+
+-   **Inconsistent coverage: eventually, make a note about what I decide regarding granular vs. broad time coverage**
+
+-   **Column harmonization**: CBP lacks clear documentation about headers, merged to the best of our ability 
+
+    -   Some headers have unclear meanings as well, indicated in codebook 
+
+    -   Headers may not mean the same thing across different datasets, set codebook before merging 
+
+-   Missing vs NA vs redacted 
+
+    -   Might not be same across CBP sheets (at point of entry)
+
+-   Reminder about how encounters only has title 8 apps and 42 exclusions, not title 8 inads 
+
+-   Note on aggregate validation + beware of discrepancies
+
+Citation
+
+BibTeX citation: @dataset{blair2026, author = {Blair, Graeme and Horowitz, Simone}, title = {CBP Data Codebook}, date = {2026}, url = {}, langid = {en} }
+
+For attribution, please cite this work as: Blair, Graeme, and Simone Horowitz. 2026. “CBP Data Codebook.”

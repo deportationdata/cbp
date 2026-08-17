@@ -1,0 +1,221 @@
+---
+title: "cbp-weekly-counts"
+output: pdf
+date: "2026-08-13"
+---
+
+```{r}
+# packages
+library(tidyverse)
+library(arrow)
+library(lubridate)
+
+```
+
+## Encounters Over Time
+
+```{r ENCOUNTERS}
+# paths
+encounters_dir <- "data/encounters"
+processed_dir <- file.path(encounters_dir, "processed")
+
+encounters_final_path <- file.path(
+  processed_dir,
+  "encounters_final.parquet"
+)
+
+setwd("/Users/simone/Desktop/DDP/cbp")
+
+# select date data
+weekly_encounters <- encounters_final_path |>
+  open_dataset() |>
+  select(
+    encounter_datetime,
+    apprehension_datetime,
+    apprehension_date
+  ) |>
+  mutate(
+    event_date = coalesce(
+      as.Date(encounter_datetime),
+      as.Date(apprehension_datetime),
+      apprehension_date),
+    week_start = floor_date(
+      event_date,
+      unit = "week",
+      week_start = 1
+    )
+    ) |>
+  filter(
+    !is.na(week_start)
+  ) |>
+  count(
+    week_start,
+    name = "encounter_count"
+  ) |>
+  collect() |>
+  arrange(
+    week_start
+  )
+
+# plot
+ggplot(
+  weekly_encounters,
+  aes(
+    x = week_start,
+    y = encounter_count
+  )
+) +
+  geom_line(
+    linewidth = 0.5
+  ) +
+  scale_x_date(
+    date_breaks = "1 year",
+    date_labels = "%Y"
+  ) +
+  labs(
+    title = "Weekly USBP Encounters",
+    x = NULL,
+    y = "Encounter Count",
+    caption = "Source: U.S. Customs and Border Protection"
+  ) +
+  theme_minimal()
+
+# flag which dataset each obs comes from
+
+```
+
+## Inadmissibles Over Time
+
+```{r INADMISSIBLES}
+# paths
+inadmissibles_dir <- "data/inadmissibles"
+processed_dir <- file.path(inadmissibles_dir, "processed")
+
+inadmissibles_final_path <- file.path(
+  processed_dir,
+  "inadmissibles_final.parquet"
+)
+
+setwd("/Users/simone/Desktop/DDP/cbp")
+
+# select date data
+weekly_inadmissibles <- inadmissibles_final_path |>
+  open_dataset() |>
+  select(
+    event_created_datetime
+  ) |>
+  mutate(
+    event_date = as.Date(event_created_datetime),
+    week_start = floor_date(
+      event_date,
+      unit = "week",
+      week_start = 1
+    )
+  ) |>
+  filter(
+    !is.na(week_start)
+  ) |>
+  count(
+    week_start,
+    name = "inadmissible_count"
+  ) |>
+  collect() |>
+  arrange(
+    week_start
+  )
+
+# plot
+ggplot(
+  weekly_inadmissibles,
+  aes(
+    x = week_start,
+    y = inadmissible_count
+  )
+) +
+  geom_line(
+    linewidth = 0.5
+  ) +
+  scale_x_date(
+    date_breaks = "1 year",
+    date_labels = "%Y"
+  ) +
+  labs(
+    title = "Weekly OFO Inadmissibles",
+    x = NULL,
+    y = "Inadmissible Count",
+    caption = "Source: U.S. Customs and Border Protection"
+  ) +
+  theme_minimal()
+```
+
+## Apprehensions Over Time
+
+```{r APPREHENSIONS }
+# paths
+apprehensions_dir <- "data/apprehensions"
+processed_dir <- file.path(apprehensions_dir, "processed")
+
+apprehensions_final_path <- file.path(
+  processed_dir,
+  "apprehensions_final.parquet"
+)
+
+setwd("/Users/simone/Desktop/DDP/cbp")
+
+# select date data
+weekly_apprehensions <- apprehensions_final_path |>
+  open_dataset() |>
+  select(
+    apprehension_datetime,
+    apprehension_date,
+    arrest_datetime,
+    arrest_date
+  ) |>
+  mutate(
+    event_date = coalesce(
+      as.Date(apprehension_datetime),
+      apprehension_date,
+      as.Date(arrest_datetime),
+      arrest_date),
+    week_start = floor_date(
+      event_date,
+      unit = "week",
+      week_start = 1
+    )
+  ) |>
+  filter(
+    !is.na(week_start)
+  ) |>
+  count(
+    week_start,
+    name = "apprehension_count"
+  ) |>
+  collect() |>
+  arrange(
+    week_start
+  )
+
+
+# plot
+ggplot(
+  weekly_apprehensions,
+  aes(
+    x = week_start,
+    y = apprehension_count
+  )
+) +
+  geom_line(
+    linewidth = 0.5
+  ) +
+  scale_x_date(
+    date_breaks = "1 year",
+    date_labels = "%Y"
+  ) +
+  labs(
+    title = "Weekly USBP Apprehensions",
+    x = NULL,
+    y = "Apprehension Count",
+    caption = "Source: U.S. Customs and Border Protection"
+  ) +
+  theme_minimal()
+```
