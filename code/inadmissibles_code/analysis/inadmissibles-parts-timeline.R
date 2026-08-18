@@ -30,17 +30,17 @@ timeline_data <- parts_metadata |>
     !is.na(max_date)
   ) |>
   mutate(
-    contained = map2_lgl(
-      min_date,
-      max_date,
-      \(current_min, current_max) {
+    contained = pmap_lgl(
+      list(
+        part_file,
+        min_date,
+        max_date
+      ),
+      \(current_file, current_min, current_max) {
         any(
-          min_date <= current_min &
-            max_date >= current_max &
-            (
-              min_date < current_min |
-                max_date > current_max
-            )
+          part_file != current_file &
+            min_date <= current_min &
+            max_date >= current_max
         )
       }
     ),
@@ -137,7 +137,7 @@ inadmissibles_timeline
 
 # save plot
 ggsave(
-  "data/inadmissibles/metadata/inadmissibles_parts_timeline.pdf",
+  "data/inadmissibles/metadata/inadmissibles-parts-timeline.pdf",
   plot = inadmissibles_timeline,
   width = 24,
   height = 14,

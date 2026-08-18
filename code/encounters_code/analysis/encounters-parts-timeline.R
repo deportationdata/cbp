@@ -30,17 +30,17 @@ timeline_data <- parts_metadata |>
     !is.na(max_date)
   ) |>
   mutate(
-    contained = map2_lgl(
-      min_date,
-      max_date,
-      \(current_min, current_max) {
+    contained = pmap_lgl(
+      list(
+        part_file,
+        min_date,
+        max_date
+      ),
+      \(current_file, current_min, current_max) {
         any(
-          min_date <= current_min &
-            max_date >= current_max &
-            (
-              min_date < current_min |
-                max_date > current_max
-            )
+          part_file != current_file &
+            min_date <= current_min &
+            max_date >= current_max
         )
       }
     ),
@@ -134,7 +134,7 @@ encounters_timeline
 
 # save plot
 ggsave(
-  "data/encounters/metadata/encounters_parts_timeline.pdf",
+  "data/encounters/metadata/encounters-parts-timeline.pdf",
   plot = encounters_timeline,
   width = 24,
   height = 14,

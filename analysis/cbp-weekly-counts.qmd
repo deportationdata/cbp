@@ -4,17 +4,20 @@ output: pdf
 date: "2026-08-13"
 ---
 
-```{r}
+```{r Setup}
 # packages
 library(tidyverse)
 library(arrow)
 library(lubridate)
+library(ggrepel)
 
 ```
 
 ## Encounters Over Time
 
 ```{r ENCOUNTERS}
+setwd("/Users/simone/Desktop/DDP/cbp")
+
 # paths
 encounters_dir <- "data/encounters"
 processed_dir <- file.path(encounters_dir, "processed")
@@ -23,8 +26,6 @@ encounters_final_path <- file.path(
   processed_dir,
   "encounters_final.parquet"
 )
-
-setwd("/Users/simone/Desktop/DDP/cbp")
 
 # select date data
 weekly_encounters <- encounters_final_path |>
@@ -87,25 +88,52 @@ ggplot(
 ## Inadmissibles Over Time
 
 ```{r INADMISSIBLES}
+setwd("/Users/simone/Desktop/DDP/cbp")
+
 # paths
 inadmissibles_dir <- "data/inadmissibles"
 processed_dir <- file.path(inadmissibles_dir, "processed")
+metadata_dir <- file.path(inadmissibles_dir, "metadata")
 
 inadmissibles_final_path <- file.path(
   processed_dir,
   "inadmissibles_final.parquet"
 )
 
-setwd("/Users/simone/Desktop/DDP/cbp")
+parts_metadata_path <- file.path(
+  metadata_dir,
+  "parts_metadata.parquet"
+)
+
+parts_metadata <- read_parquet(
+  parts_metadata_path
+)
+
+# part lookup 
+part_lookup <- parts_metadata |>
+  transmute(
+    source_file,
+    part_number = str_sub(
+      part_file,
+      start = 1,
+      end = 4
+    )
+  ) |>
+  distinct()
+
 
 # select date data
 weekly_inadmissibles <- inadmissibles_final_path |>
   open_dataset() |>
   select(
-    event_created_datetime
+    event_created_datetime,
+    source_file,
+    source_sheet
   ) |>
   mutate(
-    event_date = as.Date(event_created_datetime),
+    event_date = as.Date(
+      event_created_datetime
+    ),
     week_start = floor_date(
       event_date,
       unit = "week",
@@ -115,21 +143,33 @@ weekly_inadmissibles <- inadmissibles_final_path |>
   filter(
     !is.na(week_start)
   ) |>
-  count(
-    week_start,
-    name = "inadmissible_count"
+  group_by(
+    source_file,
+    source_sheet,
+    week_start
+  ) |>
+  summarize(
+    inadmissible_count = n(),
+    .groups = "drop"
   ) |>
   collect() |>
+  left_join(
+  part_lookup,
+  by = "source_file"
+) |>
   arrange(
+    part_number,
     week_start
   )
 
-# plot
-ggplot(
+# plot 
+weekly_inadmissibles_plot <- ggplot(
   weekly_inadmissibles,
   aes(
     x = week_start,
-    y = inadmissible_count
+    y = inadmissible_count,
+    group = part_number,
+    color = part_number
   )
 ) +
   geom_line(
@@ -140,27 +180,117 @@ ggplot(
     date_labels = "%Y"
   ) +
   labs(
-    title = "Weekly OFO Inadmissibles",
+    title = "Weekly OFO Inadmissibles by Source Part",
     x = NULL,
     y = "Inadmissible Count",
     caption = "Source: U.S. Customs and Border Protection"
   ) +
   theme_minimal()
+
+weekly_inadmissibles_plot
+
+# plot (2024)
+line_labels_2024 <- weekly_inadmissibles |>
+  filter(
+    week_start >= as.Date("2024-01-01")
+  ) |>
+  group_by(
+    part_number
+  ) |> 
+  slice_max(
+    week_start,
+    n = 1,
+    with_ties = FALSE
+) |>
+  ungroup()
+
+weekly_inadmissibles_plot_2024 <- ggplot(
+  weekly_inadmissibles,
+  aes(
+    x = week_start,
+    y = inadmissible_count,
+    group = part_number,
+    color = part_number
+  )
+) +
+  geom_line(
+    linewidth = 0.5
+  ) +
+  scale_x_date(
+    date_breaks = "1 year",
+    date_labels = "%Y"
+  ) +
+  coord_cartesian(xlim = as.Date(c("2024-01-01", NA))) +
+  labs(
+    title = "Weekly OFO Inadmissibles by Source Part",
+    x = NULL,
+    y = "Inadmissible Count",
+    caption = "Source: U.S. Customs and Border Protection"
+  ) +
+  geom_text_repel(
+    data = line_labels_2024,
+    aes(label = part_number)
+  ) +
+  theme_minimal()
+
+weekly_inadmissibles_plot_2024
+
+# save plot
+ggsave(
+  "analysis/weekly-inadmissibles-plot.pdf",
+  plot = weekly_inadmissibles_plot,
+  width = 24,
+  height = 14,
+  units = "in",
+  limitsize = FALSE
+)
+
+ggsave(
+  "analysis/weekly-inadmissibles-plot-2024.pdf",
+  plot = weekly_inadmissibles_plot_2024,
+  width = 24,
+  height = 14,
+  units = "in",
+  limitsize = FALSE
+)
 ```
 
 ## Apprehensions Over Time
 
 ```{r APPREHENSIONS }
+setwd("/Users/simone/Desktop/DDP/cbp")
+
 # paths
 apprehensions_dir <- "data/apprehensions"
 processed_dir <- file.path(apprehensions_dir, "processed")
+metadata_dir <- file.path(apprehensions_dir, "metadata")
 
 apprehensions_final_path <- file.path(
   processed_dir,
   "apprehensions_final.parquet"
 )
 
-setwd("/Users/simone/Desktop/DDP/cbp")
+parts_metadata_path <- file.path(
+  metadata_dir,
+  "parts_metadata.parquet"
+)
+
+parts_metadata <- read_parquet(
+  parts_metadata_path
+)
+
+# part lookup 
+part_lookup <- parts_metadata |>
+  transmute(
+    source_file,
+    part_number = str_sub(
+      part_file,
+      start = 1,
+      end = 4
+    )
+  ) |>
+  distinct()
+
 
 # select date data
 weekly_apprehensions <- apprehensions_final_path |>
@@ -169,14 +299,17 @@ weekly_apprehensions <- apprehensions_final_path |>
     apprehension_datetime,
     apprehension_date,
     arrest_datetime,
-    arrest_date
+    arrest_date,
+    source_file,
+    source_sheet
   ) |>
   mutate(
     event_date = coalesce(
       as.Date(apprehension_datetime),
       apprehension_date,
       as.Date(arrest_datetime),
-      arrest_date),
+      arrest_date
+    ),
     week_start = floor_date(
       event_date,
       unit = "week",
@@ -186,22 +319,33 @@ weekly_apprehensions <- apprehensions_final_path |>
   filter(
     !is.na(week_start)
   ) |>
-  count(
-    week_start,
-    name = "apprehension_count"
+  group_by(
+    source_file,
+    source_sheet,
+    week_start
+  ) |>
+  summarize(
+    inadmissible_count = n(),
+    .groups = "drop"
   ) |>
   collect() |>
+  left_join(
+  part_lookup,
+  by = "source_file"
+) |>
   arrange(
+    part_number,
     week_start
   )
 
-
 # plot
-ggplot(
+weekly_apprehensions_plot <- ggplot(
   weekly_apprehensions,
   aes(
     x = week_start,
-    y = apprehension_count
+    y = inadmissible_count,
+    group = part_number,
+    color = part_number
   )
 ) +
   geom_line(
@@ -212,10 +356,23 @@ ggplot(
     date_labels = "%Y"
   ) +
   labs(
-    title = "Weekly USBP Apprehensions",
+    title = "Weekly USBP Apprehensions by Source Part",
     x = NULL,
     y = "Apprehension Count",
     caption = "Source: U.S. Customs and Border Protection"
   ) +
   theme_minimal()
+
+weekly_apprehensions_plot
+
+# save plot
+ggsave(
+  "analysis/weekly-apprehensions-plot.pdf",
+  plot = weekly_apprehensions_plot,
+  width = 24,
+  height = 14,
+  units = "in",
+  limitsize = FALSE
+)
 ```
+
