@@ -21,11 +21,33 @@ setwd("/Users/simone/Desktop/DDP/cbp")
 # paths
 encounters_dir <- "data/encounters"
 processed_dir <- file.path(encounters_dir, "processed")
+metadata_dir <- file.path(encounters_dir, "metadata")
 
 encounters_final_path <- file.path(
   processed_dir,
   "encounters_final.parquet"
 )
+
+parts_metadata_path <- file.path(
+  metadata_dir,
+  "parts_metadata.parquet"
+)
+
+parts_metadata <- read_parquet(
+  parts_metadata_path
+)
+
+# part lookup 
+part_lookup <- parts_metadata |>
+  transmute(
+    source_file,
+    part_number = str_sub(
+      part_file,
+      start = 1,
+      end = 4
+    )
+  ) |>
+  distinct()
 
 # select date data
 weekly_encounters <- encounters_final_path |>
@@ -33,7 +55,9 @@ weekly_encounters <- encounters_final_path |>
   select(
     encounter_datetime,
     apprehension_datetime,
-    apprehension_date
+    apprehension_date,
+    source_file,
+    source_sheet
   ) |>
   mutate(
     event_date = coalesce(
@@ -45,25 +69,37 @@ weekly_encounters <- encounters_final_path |>
       unit = "week",
       week_start = 1
     )
-    ) |>
+  ) |>
   filter(
     !is.na(week_start)
   ) |>
-  count(
-    week_start,
-    name = "encounter_count"
+  group_by(
+    source_file,
+    source_sheet,
+    week_start
+  ) |>
+  summarize(
+    encounter_count = n(),
+    .groups = "drop"
   ) |>
   collect() |>
+  left_join(
+  part_lookup,
+  by = "source_file"
+) |>
   arrange(
+    part_number,
     week_start
   )
 
 # plot
-ggplot(
+weekly_encounters_plot <- ggplot(
   weekly_encounters,
   aes(
     x = week_start,
-    y = encounter_count
+    y = encounter_count,
+    group = part_number,
+    color = part_number
   )
 ) +
   geom_line(
@@ -74,14 +110,24 @@ ggplot(
     date_labels = "%Y"
   ) +
   labs(
-    title = "Weekly USBP Encounters",
+    title = "Weekly USBP Encounter by Source Part",
     x = NULL,
     y = "Encounter Count",
     caption = "Source: U.S. Customs and Border Protection"
   ) +
   theme_minimal()
 
-# flag which dataset each obs comes from
+weekly_encounters_plot
+
+# save plot
+ggsave(
+  "analysis/weekly-encounters-plot.pdf",
+  plot = weekly_encounters_plot,
+  width = 24,
+  height = 14,
+  units = "in",
+  limitsize = FALSE
+)
 
 ```
 
@@ -325,7 +371,7 @@ weekly_apprehensions <- apprehensions_final_path |>
     week_start
   ) |>
   summarize(
-    inadmissible_count = n(),
+    apprehension_count = n(),
     .groups = "drop"
   ) |>
   collect() |>
@@ -343,7 +389,7 @@ weekly_apprehensions_plot <- ggplot(
   weekly_apprehensions,
   aes(
     x = week_start,
-    y = inadmissible_count,
+    y = apprehension_count,
     group = part_number,
     color = part_number
   )
