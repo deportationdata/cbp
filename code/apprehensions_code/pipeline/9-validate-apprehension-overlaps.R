@@ -3,7 +3,6 @@ library(tidyverse)
 library(arrow)
 library(fs)
 
-
 # paths
 apprehensions_dir <- "data/apprehensions"
 

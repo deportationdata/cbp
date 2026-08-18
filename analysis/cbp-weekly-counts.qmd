@@ -384,6 +384,67 @@ weekly_apprehensions <- apprehensions_final_path |>
     week_start
   )
 
+
+# plot (2024)
+line_labels_2024 <- weekly_apprehensions |>
+  filter(
+    week_start >= as.Date("2024-01-01")
+  ) |>
+  group_by(
+    part_number
+  ) |> 
+  slice_max(
+    week_start,
+    n = 1,
+    with_ties = FALSE
+) |>
+  ungroup()
+
+line_labels_2024 <- weekly_apprehensions |>
+  filter(
+    week_start >= as.Date("2024-01-01")
+  ) |>
+  group_by(
+    part_number
+  ) |> 
+  slice_max(
+    week_start,
+    n = 1,
+    with_ties = FALSE
+) |>
+  ungroup()
+
+weekly_apprehensions_plot_2024 <- ggplot(
+  weekly_apprehensions,
+  aes(
+    x = week_start,
+    y = apprehension_count,
+    group = part_number,
+    color = part_number
+  )
+) +
+  geom_line(
+    linewidth = 0.5
+  ) +
+  coord_cartesian(xlim = as.Date(c("2024-01-01", NA))) +
+  scale_x_date(
+    date_breaks = "1 year",
+    date_labels = "%Y"
+  ) +
+  labs(
+    title = "Weekly USBP Apprehensions by Source Part",
+    x = NULL,
+    y = "Apprehension Count",
+    caption = "Source: U.S. Customs and Border Protection"
+  ) +
+   geom_text_repel(
+    data = line_labels_2024,
+    aes(label = part_number)) +
+  theme_minimal()
+
+weekly_apprehensions_plot_2024
+
+
 # plot
 weekly_apprehensions_plot <- ggplot(
   weekly_apprehensions,
@@ -415,6 +476,15 @@ weekly_apprehensions_plot
 ggsave(
   "analysis/weekly-apprehensions-plot.pdf",
   plot = weekly_apprehensions_plot,
+  width = 24,
+  height = 14,
+  units = "in",
+  limitsize = FALSE
+)
+
+ggsave(
+  "analysis/weekly-apprehensions-plot-2024.pdf",
+  plot = weekly_apprehensions_plot_2024,
   width = 24,
   height = 14,
   units = "in",

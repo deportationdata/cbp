@@ -1,4 +1,28 @@
 fiscal_year,fiscal_month,month_start,encounters_final_count,cbp_usb_encounter_count,difference,absolute_difference,percent_difference,exact_match,status
+2020,10,2019-10-01,36040,36040,0,0,0,TRUE,exact match
+2020,11,2019-11-01,34111,34111,0,0,0,TRUE,exact match
+2020,12,2019-12-01,33371,33371,0,0,0,TRUE,exact match
+2020,1,2020-01-01,29803,29803,0,0,0,TRUE,exact match
+2020,2,2020-02-01,30615,30615,0,0,0,TRUE,exact match
+2020,3,2020-03-01,30767,30767,0,0,0,TRUE,exact match
+2020,4,2020-04-01,16221,16221,0,0,0,TRUE,exact match
+2020,5,2020-05-01,21727,21727,0,0,0,TRUE,exact match
+2020,6,2020-06-01,31038,31038,0,0,0,TRUE,exact match
+2020,7,2020-07-01,38805,38805,0,0,0,TRUE,exact match
+2020,8,2020-08-01,47526,47526,0,0,0,TRUE,exact match
+2020,9,2020-09-01,55012,55012,0,0,0,TRUE,exact match
+2021,10,2020-10-01,69223,69223,0,0,0,TRUE,exact match
+2021,11,2020-11-01,69396,69396,0,0,0,TRUE,exact match
+2021,12,2020-12-01,71317,71317,0,0,0,TRUE,exact match
+2021,1,2021-01-01,75528,75528,0,0,0,TRUE,exact match
+2021,2,2021-02-01,97815,97815,0,0,0,TRUE,exact match
+2021,3,2021-03-01,169442,169442,0,0,0,TRUE,exact match
+2021,4,2021-04-01,173913,173913,0,0,0,TRUE,exact match
+2021,5,2021-05-01,172973,172973,0,0,0,TRUE,exact match
+2021,6,2021-06-01,178896,178896,0,0,0,TRUE,exact match
+2021,7,2021-07-01,200856,200856,0,0,0,TRUE,exact match
+2021,8,2021-08-01,196809,196809,0,0,0,TRUE,exact match
+2021,9,2021-09-01,185999,185999,0,0,0,TRUE,exact match
 2022,10,2021-10-01,159652,159652,0,0,0,TRUE,exact match
 2022,11,2021-11-01,167445,167445,0,0,0,TRUE,exact match
 2022,12,2021-12-01,171171,171171,0,0,0,TRUE,exact match
@@ -47,3 +71,13 @@ fiscal_year,fiscal_month,month_start,encounters_final_count,cbp_usb_encounter_co
 2025,7,2025-07-01,6167,6168,-1,1,-0.01621271076523995,FALSE,difference
 2025,8,2025-08-01,8078,8085,-7,7,-0.08658008658008658,FALSE,difference
 2025,9,2025-09-01,10192,10203,-11,11,-0.10781142801136921,FALSE,difference
+2026,10,2025-10-01,,9946,,,,,missing from encounters_final
+2026,11,2025-11-01,,9294,,,,,missing from encounters_final
+2026,12,2025-12-01,,8118,,,,,missing from encounters_final
+2026,1,2026-01-01,,7918,,,,,missing from encounters_final
+2026,2,2026-02-01,,8278,,,,,missing from encounters_final
+2026,3,2026-03-01,,10116,,,,,missing from encounters_final
+2026,4,2026-04-01,,10864,,,,,missing from encounters_final
+2026,5,2026-05-01,,11920,,,,,missing from encounters_final
+2026,6,2026-06-01,,11407,,,,,missing from encounters_final
+2026,7,2026-07-01,,11298,,,,,missing from encounters_final

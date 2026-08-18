@@ -22,11 +22,6 @@ encounters_final_path <- file.path(
   "encounters_final.parquet"
 )
 
-cbp_benchmark_path <- file.path(
-  validation_dir,
-  "nationwide-encounters-fy22-fy25-aor.csv"
-)
-
 cross_reference_csv_path <- file.path(
   validation_dir,
   "encounters_monthly_cross_reference.csv"
@@ -39,25 +34,55 @@ cross_reference_parquet_path <- file.path(
 
 #### CBP DASHBOARD: manually check pending updates ####
 
-# final FY2022-FY2025 area-of-responsibility dataset
-cbp_benchmark_url <- paste0(
-    "https://www.cbp.gov/sites/default/files/2025-11/nationwide-encounters-fy22-fy25-aor.csv"
+# area-of-responsibility tribble, 2021-2026
+cbp_benchmarks <- tribble(
+  ~benchmark_id, ~release_date, ~url,
+  "fy20_fy23", as.Date("2023-11-01"),
+  "https://www.cbp.gov/sites/default/files/assets/documents/2023-Nov/nationwide-encounters-fy20-fy23-aor.csv",
+  
+  "fy21_fy24", as.Date("2024-10-01"),
+  "https://www.cbp.gov/sites/default/files/2024-10/nationwide-encounters-fy21-fy24-aor.csv",
+  
+  "fy22_fy25", as.Date("2025-11-01"),
+  "https://www.cbp.gov/sites/default/files/2025-11/nationwide-encounters-fy22-fy25-aor.csv",
+  
+  "fy23_fy26_july", as.Date("2026-08-01"),
+  "https://www.cbp.gov/sites/default/files/2026-08/nationwide-encounters-fy23-fy26-jul-aor.csv"
+) |>
+  mutate(
+    local_path = file.path(
+      validation_dir,
+      basename(url)
+    )
   )
 
-# download local copy 
-cbp_response <- request(cbp_benchmark_url) |>
-  req_user_agent("Mozilla/5.0") |>
-  req_options(http_version = 1) |>
-  req_perform()
-
-writeBin(
-  resp_body_raw(cbp_response),
-  cbp_benchmark_path
+# download local copies
+walk2(
+  cbp_benchmarks$url,
+  cbp_benchmarks$local_path,
+  \(url, local_path) {
+    request(url) |>
+      req_user_agent("Mozilla/5.0") |>
+      req_options(http_version = 1) |>
+      req_perform(path = local_path)
+  }
 )
 
-cbp_raw <- read_csv(
-  cbp_benchmark_path,
-  show_col_types = FALSE
+cbp_raw <- pmap_dfr(
+  cbp_benchmarks,
+  \(benchmark_id, release_date, url, local_path) {
+    read_csv(
+      local_path,
+      col_types = cols(
+        `Fiscal Year` = col_character()
+      ),
+      show_col_types = FALSE
+    ) |>
+      mutate(
+        benchmark_id = benchmark_id,
+        benchmark_release_date = release_date
+      )
+  }
 )
 
 required_cbp_columns <- c(
@@ -88,7 +113,7 @@ cbp_usb_monthly <- cbp_raw |>
     Component == "U.S. Border Patrol"
   ) |>
   mutate(
-    fiscal_year = as.integer(`Fiscal Year`),
+    fiscal_year = parse_number(`Fiscal Year`),
     month_abbreviation = str_to_upper(`Month (abbv)`),
     fiscal_month = match(
       month_abbreviation,
@@ -114,6 +139,8 @@ cbp_usb_monthly <- cbp_usb_monthly |>
     )
   ) |>
   group_by(
+    benchmark_id,
+    benchmark_release_date,
     fiscal_year,
     fiscal_month,
     month_start
@@ -125,13 +152,18 @@ cbp_usb_monthly <- cbp_usb_monthly |>
     ),
     .groups = "drop"
   ) |>
+  group_by(month_start) |>
+  slice_max(
+    order_by = benchmark_release_date,
+    n = 1,
+    with_ties = FALSE
+  ) |>
+  ungroup() |>
   arrange(month_start)
 
 if (nrow(cbp_usb_monthly) == 0) {
   stop("No U.S. Border Patrol rows were found in the CBP benchmark.")
 }
-
-
 
 con <- dbConnect(
   duckdb()
@@ -166,7 +198,7 @@ benchmark_max_date_sql <- as.character(
   )
 )
 
-# event date fields 
+# event date fields
 event_date_sql <- paste0(
   "COALESCE(",
   "CAST(encounter_datetime AS DATE), ",
