@@ -245,13 +245,10 @@ crosswalk <- distinct_columns |>
       ) ~ "case_file_date",
       
       clean_column %in% c(
+        "unique_case_id_we_dont_provide",
+        "unique_case_identifier",
         "case_id_number"
       ) ~ "case_id",
-      
-      clean_column %in% c(
-        "unique_case_id_we_dont_provide",
-        "unique_case_identifier"
-      ) ~ "unique_case_id",
       
       # sector/location
       clean_column %in% c(

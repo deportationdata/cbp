@@ -54,18 +54,16 @@ It is important to note that files are identified by their URLs published on CBP
 
 We list and link each of our data sources here. 
 
-|  |  |  |
-|---------------------------|--------------------|--------------------------|
-| **Name** | **Source** | **Date(s) in FY** |
+| Name | Source | Date(s) in FY |
+|----|----|----|
 | [CBP Apprehensions Data](https://www.cbp.gov/document/foia-record/customs-and-border-protection-border-patrol-statistics) | CBP, USBP | 2008–2026 |
 | [CBP Inadmissibles Data](https://www.cbp.gov/document/foia-record/cbp-office-field-operations-statistics) | CBP, OFO | 2012–2026 |
 | [CBP Encounters Data](https://www.cbp.gov/document/foia-record/customs-and-border-protection-border-patrol-statistics) | CBP | 2010–2025 |
 
 ## Inspect Code
 
-|  |  |
-|------------------------------------|------------------------------------|
-| **Dataset** | **Code** |
+| Dataset | Code |
+|----|----|
 | Apprehensions | [\<\>](https://github.com/deportationdata/cbp/tree/main/code/apprehensions-code) |
 | Inadmissibles | [\<\>](https://github.com/deportationdata/cbp/tree/main/code/inadmissibles-code) |
 | Encounters | [\<\>](https://github.com/deportationdata/cbp/tree/main/code/encounters-code) |
@@ -73,118 +71,117 @@ We list and link each of our data sources here. 
 ## Final Dataset Fields
 
 | Canonical name | Associated raw names | Brief description | Dataset |
-|------------------|------------------|------------------|------------------|
-| `apprehension_datetime` | APPR_DT_TIME; APP_DT_TIME; APPR DT TIME | Apprehension date and time. | Both |
-| `apprehension_date` | APPREHENSION_DT; Apprehension Date | Apprehension date. | Apprehensions, Encounters |
-| `apprehension_time` | Apprehension Time | Apprehension time. | Apprehensions, Encounters |
-| `arrest_datetime` | Arrest DateTime | Arrest date and time. | Apprehensions |
-| `arrest_date` | Arrest Date | Arrest date. | Apprehensions |
-| `arrest_time` | Arrest Time | Arrest time. | Apprehensions |
-| `entry_date` | Entry Date; ENTRY_DT | Entry date. | Apprehensions |
-| `encounter_datetime` | ENCOUNTER_DT_TIME | Encounter date and time. | Encounters |
-| `earliest_apprehension_datetime` | Earliest APP Date Time | Earliest apprehension date and time. | Apprehensions |
-| `earliest_apprehension_date` | Earliest App Date; EARLIEST APPREHENSION DATE | Earliest apprehension date. | Encounters |
-| `earliest_encounter_datetime` | Earliest Encounter Date/Time | Earliest encounter date and time. | Apprehensions |
-| `earliest_encounter_date` | EARLIEST ENCOUNTER DATE | Earliest encounter date. | Encounters |
-| `most_recent_apprehension_date` | Most Recent App Date; MOST RECENT APPREHENSION DATE | Most recent apprehension date. | Encounters |
-| `most_recent_encounter_datetime` | Most Recent Encounter Date/Time; Most Recent Prior Encounter Date Time | Most recent encounter date and time. | Apprehensions |
-| `most_recent_encounter_date` | Most Recent Encounter Date; MOST RECENT ENCOUNTER DATE | Most recent encounter date. | Apprehensions, Encounters |
-| `most_recent_prior_entry_datetime` | Most Recent Prior Ent DateTime; Most Recent Prior Entry Date/Time | Most recent prior entry date and time. | Apprehensions |
-| `most_recent_prior_entry_date` | Most Recent Prior Entry Date | Most recent prior entry date. | Apprehensions |
-| `most_recent_prior_entry_time` | Most Recent Prior Entry Time | Most recent prior entry time. | Apprehensions |
-| `number_of_previous_apprehensions` | \# of Previous Apprehensions; #of Previous Apprehensions; Number of Previous Apprehensions; NUMBER OF PREVIOUS APPREHENSION; #of Previous Apps | Number of previous apprehensions. | Apprehensions, Encounters |
-| `number_of_previous_encounters` | NUMBER OF PREVIOUS ENCOUNTER | Number of previous encounters. | Encounters |
-| `case_file_date` | Case File Date; Case Filing Date; CASE FILING DATE(S); Case Filing Date(s) | Case filing date. | Apprehensions |
-| `final_bookout_datetime` | Final Bookout Date/Time; FINAL BOOKOUT DATETIME | Final bookout date and time. | Apprehensions, Encounters |
-| `final_bookout_date` | Final Bookout; FINAL BOOKOUT DATE; FINAL_BOOKOUT_DATE; Final Bookout Date | Final bookout date. | Apprehensions, Encounters |
-| `event_number` | EVENT_NUMBER; Event Number | Event identifier. | Apprehensions |
-| `case_id` | Case ID; Case ID# | Case identifier. | Apprehensions |
-| `unique_case_id` | Unique Case Id - we don't provide; Unique Case Identifier | Unique case identifier. | Apprehensions |
-| `subject_key` | Civ ID; Civ Id(Subject Key); Civ Id(Subject Key) Unique Identifier; SUBJECT_KEY | Subject identifier. | Apprehensions |
-| `unique_person_id` | Unique Person Id - we don't provide; Unique Person Identifier | Unique person identifier. | Apprehensions |
-| `subject_afile_number` | Subject AFILE# | Subject A-file number. | Apprehensions |
-| `alien_number` | Alien# | Alien number. | Apprehensions |
-| `number_of_people_in_event` | \# of people per Event; #of People per Event; \# of Subjects per Event | Number of people in the event. | Apprehensions |
-| `number_of_children_in_event` | #of Children in Event | Number of children in the event. | Apprehensions |
-| `border` | Arrest Border; Border; BORDER | Border associated with the event. | Apprehensions, Encounters |
-| `arrest_sector` | Arrest Sector; SECTOR; Sector; SECTOR_DISTRICT; Sector_District | Arrest sector. | Apprehensions |
-| `apprehension_sector` | APPREHENSION SECTOR; Apprehension Sector | Apprehension sector. | Encounters |
-| `bookout_sector` | Sector of Bookout; SECTOR OF BOOKED OUT | Bookout sector. | Apprehensions, Encounters |
-| `arrest_state` | Arrest State | State of arrest. | Apprehensions |
-| `apprehension_state` | APPREHENSION STATE; Apprehension State | State of apprehension. | Encounters |
-| `state` | STATE |  | Apprehensions |
-| `latitude` | Apprehension Latitude; Arrest Latitude; APPREHENSION LATITUDE; LATITUDE | Recorded event latitude. | Apprehensions, Encounters |
-| `latitude_redacted` | Generated during cleaning | Whether the original latitude contains a redaction marker. | Apprehensions, Encounters |
-| `arrest_landmark_desc` | Arrest Landmark Desc | Description of the arrest landmark. | Apprehensions |
-| `landmark_withheld_indicator` | Landmark; Landmark Name for Latest Apprehension; Landmark Name for Latest Apprehension Withheld in Full (b)(7)( E); Landmark Name for Latest Apprehension- Withheld in Full (b)(7)( E) | Indicates whether landmark information was withheld. | Apprehensions |
-| `arrest_at_checkpoint_indicator` | Arrest at Checkpoint (Y/N); Arrest SL Checkpoint Indicator; ARREST AT CHECKPOINT (Y/N); ARREST_AT_CHECKPOINT (Y/N) | Indicates whether arrest occurred at a checkpoint. | Apprehensions, Encounters |
-| `arrest_method` | ARREST METHOD; ARREST_METHOD; Arrest Method; Arrest Method Desc | Arrest method. | Apprehensions |
-| `agent_hash_id` | Agent Hash ID | Hashed agent identifier. | Apprehensions |
-| `arresting_agent_hash_number` | Arresting Agent Hash# | Hashed arresting-agent identifier. | Apprehensions |
-| `age` | Age; APP AGE; APP Age; Subject Age; APP_AGE | Subject age. | Apprehensions, Encounters |
+|----|----|----|----|
 | `adult_or_juvenile` | Adult or Juvenile; ADULT OR JUVENILE | Adult or juvenile classification. | Apprehensions, Encounters |
-| `gender` | GENDER; Gender; Subject Gender | Recorded gender. | Apprehensions, Encounters |
-| `subject_group_classification` | Demographic; Subject Demographic; Subject Demographic (SDI); DEMOGRAPHIC | Subject demographic classification. | Apprehensions, Encounters |
-| `marital_status` | MARITAL STATUS; Marital Status; Subject Marital Status; MARITAL_STATUS_CD | Marital status. | Apprehensions, Encounters |
-| `ethnicity` | Ethnicity; Subject Ethnicity Cd | Recorded ethnicity. | Apprehensions |
-| `language` | LANGUAGE; Language | Recorded language. | Apprehensions |
+| `age` | Age; APP AGE; APP Age; Subject Age; APP_AGE | Subject age. | Apprehensions, Encounters |
+| `agent_hash_id` | Agent Hash ID | Hashed agent identifier. | Apprehensions |
+| `alien_number` | Alien# | Alien number. | Apprehensions |
+| `apprehension_date` | APPREHENSION_DT; Apprehension Date | Apprehension date. | Apprehensions, Encounters |
+| `apprehension_datetime` | APPR_DT_TIME; APP_DT_TIME; APPR DT TIME | Apprehension date and time. | Both |
+| `apprehension_sector` | APPREHENSION SECTOR; Apprehension Sector | Apprehension sector. | Encounters |
+| `apprehension_state` | APPREHENSION STATE; Apprehension State | State of apprehension. | Encounters |
+| `apprehension_time` | Apprehension Time | Apprehension time. | Apprehensions, Encounters |
+| `arrest_at_checkpoint_indicator` | Arrest at Checkpoint (Y/N); Arrest SL Checkpoint Indicator; ARREST AT CHECKPOINT (Y/N); ARREST_AT_CHECKPOINT (Y/N) | Indicates whether arrest occurred at a checkpoint. | Apprehensions, Encounters |
+| `arrest_date` | Arrest Date | Arrest date. | Apprehensions |
+| `arrest_datetime` | Arrest DateTime | Arrest date and time. | Apprehensions |
+| `arrest_landmark_desc` | Arrest Landmark Desc | Description of the arrest landmark. | Apprehensions |
+| `arrest_method` | ARREST METHOD; ARREST_METHOD; Arrest Method; Arrest Method Desc | Arrest method. | Apprehensions |
+| `arrest_sector` | Arrest Sector; SECTOR; Sector; SECTOR_DISTRICT; Sector_District | Arrest sector. | Apprehensions |
+| `arrest_state` | Arrest State | State of arrest. | Apprehensions |
+| `arrest_time` | Arrest Time | Arrest time. | Apprehensions |
+| `arresting_agent_hash_number` | Arresting Agent Hash# | Hashed arresting-agent identifier. | Apprehensions |
 | `birth_date` | BIRTH_DATE | Birth date. | Apprehensions |
 | `birth_date_redacted` | Generated during cleaning | Whether the original birth date contains a redaction marker. | Apprehensions |
-| `city_of_birth` | Birth City; City of Birth | City of birth. | Apprehensions |
-| `state_of_birth` | Birth State; STATE_OF_BIRTH; State of Birth | State of birth. | Apprehensions |
-| `country_of_birth` | Birth Country; Country of Birth; COUNTRY_OF_BIRTH_CD | Country of birth. | Apprehensions |
+| `bookout_sector` | Sector of Bookout; SECTOR OF BOOKED OUT | Bookout sector. | Apprehensions, Encounters |
+| `border` | Arrest Border; Border; BORDER | Border associated with the event. | Apprehensions, Encounters |
+| `case_file_date` | Case File Date; Case Filing Date; CASE FILING DATE(S); Case Filing Date(s) | Case filing date. | Apprehensions |
+| `case_id` | Case ID; Case ID#; Unique Case Id - we don't provide; Unique Case Identifier | Case identifier. | Apprehensions |
+| `cds_program` | CDS Program; CDS Program Code; CDS PROGRAM(S); CDS Program(s) |  | Apprehensions |
+| `ces_indicator` | CES Criminal Indicator; CES INDICATOR; CES(Y/N) |  | Apprehensions, Encounters |
+| `charge_code` | Charge Code; CHARGE CODE(S); Charge Code(s); Charge Code / Statue Charge; Charge Code/Statue Code | Recorded charge code. | Apprehensions |
 | `citizenship` | CITIZENSHIP; Citizenship; CITIZENSHIP_CD | Recorded citizenship. | Apprehensions, Encounters |
-| `nationality` | Nationality | Recorded nationality. | Apprehensions |
-| `city_state_of_residence` | City/State of Residence | City and state of residence. | Apprehensions |
+| `city_of_birth` | Birth City; City of Birth | City of birth. | Apprehensions |
 | `city_of_residence` | CITY OF RESIDENCE; CITY_OF_RESIDENCE; City of Residence | City of residence. | Encounters |
+| `city_state_of_residence` | City/State of Residence | City and state of residence. | Apprehensions |
+| `country_of_birth` | Birth Country; Country of Birth; COUNTRY_OF_BIRTH_CD | Country of birth. | Apprehensions |
 | `country_of_residence` | Country of Residence; COUNTRY OF RESIDENCE; COUNTRY_OF_RESIDENCE; COUNTRY_OF_RES_CD | Country of residence. | Apprehensions, Encounters |
+| `credible_fear_indicator` | Credible Fear; Credible Fear Ind; CREDIBLE FEAR INDICATOR; Credible Fear Indicator | Recorded credible-fear indicator. | Apprehensions |
+| `criminal_conviction_indicator` | CRIMINAL_CONVICTION; Criminal Conviction | Indicates a recorded criminal conviction. | Apprehensions, Encounters |
+| `currency_seized_indicator` | Curency Seized During App (Y/N); Currency Seized During App (Y/N) | Indicates whether currency was seized. | Apprehensions |
+| `currency_seized_value` | Currency Seized During App (`$`Value); CURRENCY SEIZ DURING APP; CURRENCY_SEIZ_DURING_APP; Currency Seiz During App (`$`Value) | Recorded value of currency seized. | Apprehensions, Encounters |
+| `currency_seized_value_redacted` | Generated during cleaning | Whether the original currency value contains a redaction marker. | Encounters |
+| `dhs_status_code_lpr` | DHS STATUS CODE - LPR |  | Apprehensions |
+| `disposition` | DISPOSITION; Disposition; Subject Disposition Code | Recorded case disposition. | Apprehensions, Encounters |
+| `disposition_code_lpr` | Subject Disposition Code (LPR) |  | Apprehensions |
+| `drugs_seized_indicator` | Drugs Seized During App (Y/N); DRUGS SEIZED DURING APPREHENSION (Y/N) | Indicates whether drugs were seized. | Apprehensions, Encounters |
+| `earliest_apprehension_date` | Earliest App Date; EARLIEST APPREHENSION DATE | Earliest apprehension date. | Encounters |
+| `earliest_apprehension_datetime` | Earliest APP Date Time | Earliest apprehension date and time. | Apprehensions |
+| `earliest_encounter_date` | EARLIEST ENCOUNTER DATE | Earliest encounter date. | Encounters |
+| `earliest_encounter_datetime` | Earliest Encounter Date/Time | Earliest encounter date and time. | Apprehensions |
+| `encounter_datetime` | ENCOUNTER_DT_TIME | Encounter date and time. | Encounters |
+| `entry_date` | Entry Date; ENTRY_DT | Entry date. | Apprehensions |
+| `entry_status` | Entry Status; Entry Status (includes LPR); STATUS_AT_ENTRY; Status at Entry - LPR Status; STATUS_AT_ENTRY_CD | Recorded status at entry. | Apprehensions |
+| `ethnicity` | Ethnicity; Subject Ethnicity Cd | Recorded ethnicity. | Apprehensions |
+| `event_number` | EVENT_NUMBER; Event Number | Event identifier. | Apprehensions |
+| `final_bookout_date` | Final Bookout; FINAL BOOKOUT DATE; FINAL_BOOKOUT_DATE; Final Bookout Date | Final bookout date. | Apprehensions, Encounters |
+| `final_bookout_datetime` | Final Bookout Date/Time; FINAL BOOKOUT DATETIME | Final bookout date and time. | Apprehensions, Encounters |
 | `first_country_of_residence` | First Country of Residence; First Country of Residence (Foreign) | First country of residence. | Apprehensions |
 | `fmu_number` | Family Unit Group#; FMU Group Number; FMU NUMBER(S) | Family-unit group number. | Apprehensions |
 | `fmu_type` | FAMILY_UNIT_TYPE; Family Unit Type (Demographic) | Family-unit type. | Apprehensions |
 | `fmua_indication` | FMUA INDICATOR; FMUA Indicator |  | Apprehensions |
-| `number_of_children_and_nationality` | NUMBER_CHILDREN_AND_NATIONALITY; #Children / Nationality; #of Children and Nationality; NUMBER CHILDREN AND NATIONALITY | Number of children and nationality information. | Apprehensions, Encounters |
-| `juvenile_18_indicator` | Juvenile \<18 | Indicates whether the subject is under 18. | Apprehensions |
-| `unaccompanied_child_indicator` | UC INDICATOR; UC Indicator; UNACCOMPANIED CHILD; UNACCOMPANIED_CHILD; UC INDICATOR (Y/N) | Indicates unaccompanied-child status. | Apprehensions, Encounters |
-| `entry_status` | Entry Status; Entry Status (includes LPR); STATUS_AT_ENTRY; Status at Entry - LPR Status; STATUS_AT_ENTRY_CD | Recorded status at entry. | Apprehensions |
-| `dhs_status_code_lpr` | DHS STATUS CODE - LPR |  | Apprehensions |
-| `immigration_status_code_lpr` | Immigration Status Code (LPR); Subject Immigration Status Code (LPR) |  | Apprehensions |
-| `lpr` | LPR |  | Apprehensions |
-| `time_in_us` | Subject Time In US; Time in US; TIME IN US; TIME_IN_US; TIME_IN_US_CD | Recorded time in the United States. | Apprehensions, Encounters |
-| `general_processing_code` | GENERAL_PROCESSING_CODE | General processing code. | Apprehensions |
-| `cds_program` | CDS Program; CDS Program Code; CDS PROGRAM(S); CDS Program(s) |  | Apprehensions |
-| `ces_indicator` | CES Criminal Indicator; CES INDICATOR; CES(Y/N) |  | Apprehensions, Encounters |
-| `mpp_indicator` | MPP Indicator; MPP Indicator (Y/N); MPP INDICATOR (Y/N); MPP_INDICATOR (Y/N) |  | Apprehensions, Encounters |
-| `spp_program` | SPP Program(s); SPP PROGRAM(S) |  | Apprehensions, Encounters |
-| `credible_fear_indicator` | Credible Fear; Credible Fear Ind; CREDIBLE FEAR INDICATOR; Credible Fear Indicator | Recorded credible-fear indicator. | Apprehensions |
-| `disposition` | DISPOSITION; Disposition; Subject Disposition Code | Recorded case disposition. | Apprehensions, Encounters |
-| `disposition_code_lpr` | Subject Disposition Code (LPR) |  | Apprehensions |
-| `removal_type` | REMOVAL TYPE; Removal Type; Removal_Type | Recorded removal type. | Apprehensions |
-| `transfer_to` | TRANSFER_TO | Transfer destination. | Apprehensions |
-| `transfer_to_group` | Transfer To ERO; TRANSFER_TO_GROUP; Transferred To Group; Transferred to Group; Transferred to Group / Removal Type (ERO); TRANSFERRED TO GROUP; TRANSFERRED_TO_GROUP | Group receiving the transfer. | Apprehensions, Encounters |
-| `subject_prosecution_indicator` | Prosecution Indicator; Subject Prosecution Indicator | Recorded prosecution indicator. | Apprehensions |
-| `referred_prosecution` | REFERRED PROSECUTION; Referred Prosecution | Recorded prosecution referral. | Apprehensions |
-| `referred_for_prosecution_under_8usc1325_or_8usc1326` | Referred for Prosecution Under 8 USC 1325 or 8 USC 1326; Referred for Prosecution Under 8USC1325 OR 8USC1326; REFFERRED FOR PROSECUTION UNDER 8 USC 1325 OR 8 USC 1326 | Referral for prosecution under the named statutes. | Apprehensions, Encounters |
-| `statute_charge` | Statue Charge; Statute Charge; STATUTE_CHARGE(S); Statute Charge(s); STATUTE CHARGE(S) | Recorded statute charge. | Apprehensions, Encounters |
-| `highest_statute_charge` | Highest Statue Charge; Highest Statute Charge | Recorded highest statute charge. | Apprehensions |
-| `charge_code` | Charge Code; CHARGE CODE(S); Charge Code(s); Charge Code / Statue Charge; Charge Code/Statue Code | Recorded charge code. | Apprehensions |
-| `criminal_conviction_indicator` | CRIMINAL_CONVICTION; Criminal Conviction | Indicates a recorded criminal conviction. | Apprehensions, Encounters |
-| `ncic_charge_code` | NCIC Charge Code; NCIC Charge Code(s); NCIC_CHARGE_CODE(S); NCIC Code | Recorded NCIC charge code. | Apprehensions |
-| `ncic_charge_code_owned_by_doj` | NCIC Charge Code, Defer to DOJ; NCIC Charge Code, owned by DOJ not CBP | NCIC charge code identified as DOJ-owned. | Apprehensions |
-| `ncic_description` | NCIC Desc; NCIC_DESC(S); NCIC Description | Recorded NCIC description. | Apprehensions |
-| `ncic_desc_owned_by_doj` | NCIC Desc, Defer to DOJ; NCIC Desc, owned by DOJ not CBP | NCIC description identified as DOJ-owned. | Apprehensions |
-| `suspected_gang_member_indicator` | SUSPECTED_GANG_MEMBER | Indicates suspected gang membership. | Apprehensions |
-| `suspected_gang_member_indicator_redacted` | Generated during cleaning | Whether the original gang-membership indicator contains a redaction marker. | Apprehensions |
+| `gang_affiliation` | GANG AFFILIATION; Gang Affiliation | Recorded gang affiliation. | Encounters |
 | `gang_code` | Gang Code | Recorded gang code. | Apprehensions |
 | `gang_name` | Gang Name | Recorded gang name. | Apprehensions |
-| `gang_affiliation` | GANG AFFILIATION; Gang Affiliation | Recorded gang affiliation. | Encounters |
+| `gender` | GENDER; Gender; Subject Gender | Recorded gender. | Apprehensions, Encounters |
+| `general_processing_code` | GENERAL_PROCESSING_CODE | General processing code. | Apprehensions |
+| `highest_statute_charge` | Highest Statue Charge; Highest Statute Charge | Recorded highest statute charge. | Apprehensions |
+| `immigration_status_code_lpr` | Immigration Status Code (LPR); Subject Immigration Status Code (LPR) |  | Apprehensions |
+| `juvenile_18_indicator` | Juvenile \<18 | Indicates whether the subject is under 18. | Apprehensions |
+| `landmark_withheld_indicator` | Landmark; Landmark Name for Latest Apprehension; Landmark Name for Latest Apprehension Withheld in Full (b)(7)( E); Landmark Name for Latest Apprehension- Withheld in Full (b)(7)( E) | Indicates whether landmark information was withheld. | Apprehensions |
+| `language` | LANGUAGE; Language | Recorded language. | Apprehensions |
+| `latitude` | Apprehension Latitude; Arrest Latitude; APPREHENSION LATITUDE; LATITUDE | Recorded event latitude. | Apprehensions, Encounters |
+| `latitude_redacted` | Generated during cleaning | Whether the original latitude contains a redaction marker. | Apprehensions, Encounters |
+| `lpr` | LPR |  | Apprehensions |
+| `marital_status` | MARITAL STATUS; Marital Status; Subject Marital Status; MARITAL_STATUS_CD | Marital status. | Apprehensions, Encounters |
+| `most_recent_apprehension_date` | Most Recent App Date; MOST RECENT APPREHENSION DATE | Most recent apprehension date. | Encounters |
+| `most_recent_encounter_date` | Most Recent Encounter Date; MOST RECENT ENCOUNTER DATE | Most recent encounter date. | Apprehensions, Encounters |
+| `most_recent_encounter_datetime` | Most Recent Encounter Date/Time; Most Recent Prior Encounter Date Time | Most recent encounter date and time. | Apprehensions |
+| `most_recent_prior_entry_date` | Most Recent Prior Entry Date | Most recent prior entry date. | Apprehensions |
+| `most_recent_prior_entry_datetime` | Most Recent Prior Ent DateTime; Most Recent Prior Entry Date/Time | Most recent prior entry date and time. | Apprehensions |
+| `most_recent_prior_entry_time` | Most Recent Prior Entry Time | Most recent prior entry time. | Apprehensions |
+| `mpp_indicator` | MPP Indicator; MPP Indicator (Y/N); MPP INDICATOR (Y/N); MPP_INDICATOR (Y/N) |  | Apprehensions, Encounters |
+| `nationality` | Nationality | Recorded nationality. | Apprehensions |
+| `ncic_charge_code` | NCIC Charge Code; NCIC Charge Code(s); NCIC_CHARGE_CODE(S); NCIC Code | Recorded NCIC charge code. | Apprehensions |
+| `ncic_charge_code_owned_by_doj` | NCIC Charge Code, Defer to DOJ; NCIC Charge Code, owned by DOJ not CBP | NCIC charge code identified as DOJ-owned. | Apprehensions |
+| `ncic_desc_owned_by_doj` | NCIC Desc, Defer to DOJ; NCIC Desc, owned by DOJ not CBP | NCIC description identified as DOJ-owned. | Apprehensions |
+| `ncic_description` | NCIC Desc; NCIC_DESC(S); NCIC Description | Recorded NCIC description. | Apprehensions |
+| `number_of_children_and_nationality` | NUMBER_CHILDREN_AND_NATIONALITY; #Children / Nationality; #of Children and Nationality; NUMBER CHILDREN AND NATIONALITY | Number of children and nationality information. | Apprehensions, Encounters |
+| `number_of_children_in_event` | #of Children in Event | Number of children in the event. | Apprehensions |
+| `number_of_people_in_event` | \# of people per Event; #of People per Event; \# of Subjects per Event | Number of people in the event. | Apprehensions |
+| `number_of_previous_apprehensions` | \# of Previous Apprehensions; #of Previous Apprehensions; Number of Previous Apprehensions; NUMBER OF PREVIOUS APPREHENSION; #of Previous Apps | Number of previous apprehensions. | Apprehensions, Encounters |
+| `number_of_previous_encounters` | NUMBER OF PREVIOUS ENCOUNTER | Number of previous encounters. | Encounters |
+| `referred_for_prosecution_under_8usc1325_or_8usc1326` | Referred for Prosecution Under 8 USC 1325 or 8 USC 1326; Referred for Prosecution Under 8USC1325 OR 8USC1326; REFFERRED FOR PROSECUTION UNDER 8 USC 1325 OR 8 USC 1326 | Referral for prosecution under the named statutes. | Apprehensions, Encounters |
+| `referred_prosecution` | REFERRED PROSECUTION; Referred Prosecution | Recorded prosecution referral. | Apprehensions |
+| `removal_type` | REMOVAL TYPE; Removal Type; Removal_Type | Recorded removal type. | Apprehensions |
 | `smuggled_cost` | Smuggled Cost; Subject Smuggle Cost; SMUGGLED COST; SMUGGLED_COST | Recorded smuggling cost. | Apprehensions, Encounters |
-| `currency_seized_indicator` | Curency Seized During App (Y/N); Currency Seized During App (Y/N) | Indicates whether currency was seized. | Apprehensions |
-| `currency_seized_value` | Currency Seized During App (`$`Value); CURRENCY SEIZ DURING APP; CURRENCY_SEIZ_DURING_APP; Currency Seiz During App (`$`Value) | Recorded value of currency seized. | Apprehensions, Encounters |
-| `currency_seized_value_redacted` | Generated during cleaning | Whether the original currency value contains a redaction marker. | Encounters |
-| `drugs_seized_indicator` | Drugs Seized During App (Y/N); DRUGS SEIZED DURING APPREHENSION (Y/N) | Indicates whether drugs were seized. | Apprehensions, Encounters |
-| `type_of_drugs_seized` | Type of Drugs Seized During App; Type of Drugs Seized during App; TYPE OF DRUGS SEIZED DURING APPREHENSION | Type of drugs seized. | Apprehensions, Encounters |
 | `source_file` | Generated during part creation | Source file for the record. | Apprehensions, Encounters |
 | `source_sheet` | Generated during part creation | Source worksheet for the record. | Apprehensions, Encounters |
+| `spp_program` | SPP Program(s); SPP PROGRAM(S) |  | Apprehensions, Encounters |
+| `state` | STATE | State associated with the event. | Apprehensions |
+| `state_of_birth` | Birth State; STATE_OF_BIRTH; State of Birth | State of birth. | Apprehensions |
+| `statute_charge` | Statue Charge; Statute Charge; STATUTE_CHARGE(S); Statute Charge(s); STATUTE CHARGE(S) | Recorded statute charge. | Apprehensions, Encounters |
+| `subject_afile_number` | Subject AFILE# | Subject A-file number. | Apprehensions |
+| `subject_group_classification` | Demographic; Subject Demographic; Subject Demographic (SDI); DEMOGRAPHIC | Subject demographic classification. | Apprehensions, Encounters |
+| `subject_key` | Civ ID; Civ Id(Subject Key); Civ Id(Subject Key) Unique Identifier; SUBJECT_KEY | Subject identifier. | Apprehensions |
+| `subject_prosecution_indicator` | Prosecution Indicator; Subject Prosecution Indicator | Recorded prosecution indicator. | Apprehensions |
+| `suspected_gang_member_indicator` | SUSPECTED_GANG_MEMBER | Indicates suspected gang membership. | Apprehensions |
+| `suspected_gang_member_indicator_redacted` | Generated during cleaning | Whether the original gang-membership indicator contains a redaction marker. | Apprehensions |
+| `time_in_us` | Subject Time In US; Time in US; TIME IN US; TIME_IN_US; TIME_IN_US_CD | Recorded time in the United States. | Apprehensions, Encounters |
+| `transfer_to` | TRANSFER_TO | Transfer destination. | Apprehensions |
+| `transfer_to_group` | Transfer To ERO; TRANSFER_TO_GROUP; Transferred To Group; Transferred to Group; Transferred to Group / Removal Type (ERO); TRANSFERRED TO GROUP; TRANSFERRED_TO_GROUP | Group receiving the transfer. | Apprehensions, Encounters |
+| `type_of_drugs_seized` | Type of Drugs Seized During App; Type of Drugs Seized during App; TYPE OF DRUGS SEIZED DURING APPREHENSION | Type of drugs seized. | Apprehensions, Encounters |
+| `unaccompanied_child_indicator` | UC INDICATOR; UC Indicator; UNACCOMPANIED CHILD; UNACCOMPANIED_CHILD; UC INDICATOR (Y/N) | Indicates unaccompanied-child status. | Apprehensions, Encounters |
+| `unique_person_id` | Unique Person Id - we don't provide; Unique Person Identifier | Unique person identifier. | Apprehensions |
 
 ## Warnings and Limitations
 
@@ -196,7 +193,6 @@ Below are some limitations and things to consider when accessing this data:
 
 -   **Redaction codes:** CBP redaction codes used in released documents refer to standard Freedom of Information Act (FOIA) statutory exemptions. Common redaction codes that can be found in the data include:
 
-    -   **Exemption (b)(7)(A):** To interfere with enforcement proceedings.
     -   **Exemption (b)(7)(C):** To constitute an unwarranted invasion of the personal privacy of a third party/parties (in some instances by revealing an investigative interest in them).
     -   **Exemption (b)(7)(E):** Would disclose techniques and procedures for law enforcement investigations or prosecutions.
 
@@ -204,19 +200,21 @@ Below are some limitations and things to consider when accessing this data:
 
 -   **Lack of subject identifiers:** Subject identification columns are some of the columns that CBP redacted. As such, identifying individual people rather than data entries was impossible to safely completely. When using or interpreting data, keep in mind that each row does not necessarily represent an individual.
 
--   **Missing values:** It appears that missing values were not recorded in a standard fashion across datasets. Where some included "NA" values, others left cells blank. Many columns also contain redacted values. The differences in recording methods and missing information indications should be noted when interpreting this data.
+-   **Missing values:** Missing values were not recorded in a standard fashion across datasets. Where some included "NA" values, others left cells blank. Many columns also contain redacted values. The differences in recording methods and missing information indications should be noted when interpreting this data.
 
 -   **Excluded files:** As mentioned, if entire datasets were determined to be duplicates of each other, one was excluded from the final dataset. We have two instances of this, whose deletions we further explain here.
 
-    -   **Apprehensions: usbp_nationwide_apprehension_q4_fy_2024.xlsx** was deleted and not merged. This file was concluded to be an erroneous duplicate of **usbp_nationwide_apprehension_q3_fy_2024.xlsx**, and thus, its data was discarded.
+    -   **Apprehensions: `usbp_nationwide_apprehension_q4_fy_2024.xlsx`** was deleted and not merged. This file was concluded to be an erroneous duplicate of **`usbp_nationwide_apprehension_q3_fy_2024.xlsx`**, and thus, its data was discarded.
 
-    -   **Inadmissibles: ofo_inadmissible_case_by_case_feb_2025_0.xlsx** was deleted and not merged. This file was found to be an exact duplicate of **ofo_inadmissible_case_by_case_feb_2025.xlsx** and contributed no new information.
+    -   **Inadmissibles: `ofo_inadmissible_case_by_case_feb_2025_0.xlsx`** was deleted and not merged. This file was found to be an exact duplicate of **`ofo_inadmissible_case_by_case_feb_2025.xlsx`** and contributed no new information.
 
--   **Overlapping dates:** Several raw Apprehension and Inadmissible datasets were found to record overlapping periods of time. In these instances, we explored the extent to which granular datasets matched broader ones and manually decided which one to include in the final dataset. All raw and processed parts, regardless of inclusion in the final datasets, can be found in their respective folders. Reasoning for selection decisions can be found below.
+-   **Overlapping dates:** Several raw Apprehension and Inadmissible datasets were found to record overlapping periods of time. In these instances, we retained broader datasets over more granular ones to prioritize consistency. `cbp/data/<dataset>/processed/<dataset>.stacked.parquet` contains both types.
 
 -   **Column harmonization**: CBP lacks clear documentation about all of the headers included in our datasets. Our codebook indicates where intended meanings and methods of measurement were not apparent. Identical headers may not have had the same meaning across different datasets. Columns were merged to the best of our ability but still may contain errors.
 
 -   **USBP vs. OFO Encounters**: Our Encounters dataset contains only encounters recorded by USBP, including Title 8 apprehensions and Title 42 expulsions. It excludes Title 8 inadmissibles recorded by OFO. Aggregated data on all encounters can be found on [CBP’s website](https://www.cbp.gov/document/stats/nationwide-encounters). Individual-level data is available only for USBP encounters.
+
+-   **Manual function prompting:** Several scripts contain binary functions that must be manually set to `TRUE` or `FALSE` when updating data. Please visit the `README.md` for instructions on how to correctly run the scripts.
 
 ## Citation
 

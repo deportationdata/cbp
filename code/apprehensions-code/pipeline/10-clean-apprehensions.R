@@ -109,7 +109,6 @@ column_order <- c(
   # record / person identifiers
   "event_number",
   "case_id",
-  "unique_case_id",
   "subject_key",
   "unique_person_id",
   "subject_afile_number",
