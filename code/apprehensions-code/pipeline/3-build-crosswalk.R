@@ -193,6 +193,10 @@ crosswalk <- distinct_columns |>
         "subject_disposition_code_lpr"
       ) ~ "disposition_code_lpr",
       
+      clean_column %in% c(
+        "lpr"
+      ) ~ "lpr_indicator",
+      
       # family/minors
       clean_column %in% c(
         "family_unit_group_number",

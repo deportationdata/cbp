@@ -170,7 +170,7 @@ column_order <- c(
   "entry_status_cd",
   "dhs_status_code_lpr",
   "immigration_status_code_lpr",
-  "lpr",
+  "lpr_indicator",
   "time_in_us",
   
   # processing programs / indicators
@@ -551,7 +551,7 @@ time_unrecognized
 #### Inspect Logical Cols #### 
 
 logical_columns <- c(
-  "arrest_sl_checkpoint_indicator",
+  "arrest_at_checkpoint_indicator",
   "ces_indicator",
   "credible_fear_indicator",
   "criminal_conviction_indicator",
@@ -560,6 +560,7 @@ logical_columns <- c(
   "juvenile_18_indicator",
   "mpp_indicator",
   "landmark_withheld_indicator",
+  "lpr_indicator",
   "suspected_gang_member_indicator",
   "subject_prosecution_indicator",
   "unaccompanied_child_indicator"
@@ -627,9 +628,13 @@ if (length(logical_columns) > 0) {
     logical_columns,
     \(column) {
       
-      value_sql <- clean_string_sql(
-        column
-      )
+      value_sql <- clean_string_sql(column)
+      
+      column_valid_logical_sql <- if (column == "lpr_indicator") {
+        paste(sql_string(c(valid_logical_values, "LPR")), collapse = ", ")
+      } else {
+        valid_logical_sql
+      }
       
       sprintf(
         paste0(
@@ -647,7 +652,7 @@ if (length(logical_columns) > 0) {
         stacked_sql,
         value_sql,
         value_sql,
-        valid_logical_sql,
+        column_valid_logical_sql,
         value_sql
       )
     }
@@ -863,6 +868,12 @@ final_expression <- function(column) {
   # logical
   if (column %in% logical_columns) {
     
+    column_true_values_sql <- if (column == "lpr_indicator") {
+      paste(sql_string(c(true_values, "LPR")), collapse = ", ")
+    } else {
+      true_values_sql
+    }
+    
     return(
       sprintf(
         paste0(
@@ -875,7 +886,7 @@ final_expression <- function(column) {
           "END AS %4$s"
         ),
         value_sql,
-        true_values_sql,
+        column_true_values_sql,
         false_values_sql,
         column_sql
       )

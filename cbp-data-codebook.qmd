@@ -55,7 +55,7 @@ It is important to note that files are identified by their URLs published on CBP
 We list and link each of our data sources here. 
 
 | Name | Source | Date(s) in FY |
-|----|----|----|
+|------------------------|------------------------|------------------------|
 | [CBP Apprehensions Data](https://www.cbp.gov/document/foia-record/customs-and-border-protection-border-patrol-statistics) | CBP, USBP | 2008–2026 |
 | [CBP Inadmissibles Data](https://www.cbp.gov/document/foia-record/cbp-office-field-operations-statistics) | CBP, OFO | 2012–2026 |
 | [CBP Encounters Data](https://www.cbp.gov/document/foia-record/customs-and-border-protection-border-patrol-statistics) | CBP | 2010–2025 |
@@ -63,7 +63,7 @@ We list and link each of our data sources here. 
 ## Inspect Code
 
 | Dataset | Code |
-|----|----|
+|------------------------------------|------------------------------------|
 | Apprehensions | [\<\>](https://github.com/deportationdata/cbp/tree/main/code/apprehensions-code) |
 | Inadmissibles | [\<\>](https://github.com/deportationdata/cbp/tree/main/code/inadmissibles-code) |
 | Encounters | [\<\>](https://github.com/deportationdata/cbp/tree/main/code/encounters-code) |
@@ -71,7 +71,7 @@ We list and link each of our data sources here. 
 ## Final Dataset Fields
 
 | Canonical name | Associated raw names | Brief description | Dataset |
-|----|----|----|----|
+|------------------|------------------|------------------|------------------|
 | `adult_or_juvenile` | Adult or Juvenile; ADULT OR JUVENILE | Adult or juvenile classification. | Apprehensions, Encounters |
 | `age` | Age; APP AGE; APP Age; Subject Age; APP_AGE | Subject age. | Apprehensions, Encounters |
 | `agent_hash_id` | Agent Hash ID | Hashed agent identifier. | Apprehensions |
@@ -135,13 +135,13 @@ We list and link each of our data sources here. 
 | `gender` | GENDER; Gender; Subject Gender | Recorded gender. | Apprehensions, Encounters |
 | `general_processing_code` | GENERAL_PROCESSING_CODE | General processing code. | Apprehensions |
 | `highest_statute_charge` | Highest Statue Charge; Highest Statute Charge | Recorded highest statute charge. | Apprehensions |
-| `immigration_status_code_lpr` | Immigration Status Code (LPR); Subject Immigration Status Code (LPR) |  | Apprehensions |
+| `immigration_status_code_lpr` | Immigration Status Code (LPR); Subject Immigration Status Code (LPR) | Immigration status code LPR. | Apprehensions |
 | `juvenile_18_indicator` | Juvenile \<18 | Indicates whether the subject is under 18. | Apprehensions |
 | `landmark_withheld_indicator` | Landmark; Landmark Name for Latest Apprehension; Landmark Name for Latest Apprehension Withheld in Full (b)(7)( E); Landmark Name for Latest Apprehension- Withheld in Full (b)(7)( E) | Indicates whether landmark information was withheld. | Apprehensions |
 | `language` | LANGUAGE; Language | Recorded language. | Apprehensions |
 | `latitude` | Apprehension Latitude; Arrest Latitude; APPREHENSION LATITUDE; LATITUDE | Recorded event latitude. | Apprehensions, Encounters |
 | `latitude_redacted` | Generated during cleaning | Whether the original latitude contains a redaction marker. | Apprehensions, Encounters |
-| `lpr` | LPR |  | Apprehensions |
+| `lpr` | LPR | N/A (meaning unclear, likely license plate recognition) | Apprehensions |
 | `marital_status` | MARITAL STATUS; Marital Status; Subject Marital Status; MARITAL_STATUS_CD | Marital status. | Apprehensions, Encounters |
 | `most_recent_apprehension_date` | Most Recent App Date; MOST RECENT APPREHENSION DATE | Most recent apprehension date. | Encounters |
 | `most_recent_encounter_date` | Most Recent Encounter Date; MOST RECENT ENCOUNTER DATE | Most recent encounter date. | Apprehensions, Encounters |
@@ -166,7 +166,7 @@ We list and link each of our data sources here. 
 | `smuggled_cost` | Smuggled Cost; Subject Smuggle Cost; SMUGGLED COST; SMUGGLED_COST | Recorded smuggling cost. | Apprehensions, Encounters |
 | `source_file` | Generated during part creation | Source file for the record. | Apprehensions, Encounters |
 | `source_sheet` | Generated during part creation | Source worksheet for the record. | Apprehensions, Encounters |
-| `spp_program` | SPP Program(s); SPP PROGRAM(S) |  | Apprehensions, Encounters |
+| `spp_program` | SPP Program(s); SPP PROGRAM(S) | State partnership program. | Apprehensions, Encounters |
 | `state` | STATE | State associated with the event. | Apprehensions |
 | `state_of_birth` | Birth State; STATE_OF_BIRTH; State of Birth | State of birth. | Apprehensions |
 | `statute_charge` | Statue Charge; Statute Charge; STATUTE_CHARGE(S); Statute Charge(s); STATUTE CHARGE(S) | Recorded statute charge. | Apprehensions, Encounters |
