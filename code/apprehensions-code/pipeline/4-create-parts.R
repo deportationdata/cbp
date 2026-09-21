@@ -6,9 +6,9 @@ library(arrow)
 library(fs)
 
 # paths
-download_dir <- "data/apprehensions"
-metadata_dir <- file.path(download_dir, "metadata")
-processed_dir <- file.path(download_dir, "processed")
+dataset_dir <- "data/apprehensions"
+metadata_dir <- file.path(dataset_dir, "metadata")
+processed_dir <- file.path(dataset_dir, "processed")
 parts_to_stack_dir <- file.path(processed_dir, "parts-to-stack")
 
 dir.create(
@@ -325,3 +325,4 @@ if (length(dir_ls(parts_to_stack_dir, regexp = "\\.parquet$")) !=
   )
 }
 
+# END

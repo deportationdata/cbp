@@ -6,8 +6,8 @@ library(DBI)
 library(duckdb)
 
 # paths
-download_dir <- "data/inadmissibles"
-processed_dir <- file.path(download_dir, "processed")
+dataset_dir <- "data/inadmissibles"
+processed_dir <- file.path(dataset_dir, "processed")
 parts_to_stack_dir <- file.path(processed_dir, "parts-to-stack")
 
 inadmissibles_stacked_path <- file.path(
@@ -211,3 +211,4 @@ cat(
   inadmissibles_audit_path,
   "\n"
 )
+# END

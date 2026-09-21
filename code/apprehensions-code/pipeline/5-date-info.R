@@ -4,9 +4,9 @@ library(arrow)
 library(fs)
 
 # paths
-download_dir <- "data/apprehensions"
-metadata_dir <- file.path(download_dir, "metadata")
-processed_dir <- "data/apprehensions/processed"
+dataset_dir <- "data/apprehensions"
+metadata_dir <- file.path(dataset_dir, "metadata")
+processed_dir <- file.path(dataset_dir, "processed")
 
 # outputs 
 parts_to_stack_dir <- file.path(
@@ -48,8 +48,7 @@ date_columns <- c(
   "apprehension_datetime",
   "apprehension_date",
   "arrest_datetime",
-  "arrest_date",
-  "entry_date"
+  "arrest_date"
 )
 
 # convert CBP dates to date class
@@ -304,3 +303,4 @@ cat(
   "\n"
 )
 
+# END

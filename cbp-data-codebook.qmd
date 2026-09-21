@@ -193,8 +193,9 @@ Below are some limitations and things to consider when accessing this data:
 
 -   **Redaction codes:** CBP redaction codes used in released documents refer to standard Freedom of Information Act (FOIA) statutory exemptions. Common redaction codes that can be found in the data include:
 
-    -   **Exemption (b)(7)(C):** To constitute an unwarranted invasion of the personal privacy of a third party/parties (in some instances by revealing an investigative interest in them).
-    -   **Exemption (b)(7)(E):** Would disclose techniques and procedures for law enforcement investigations or prosecutions.
+    -   **Exemption (b)(6):** Protects information that would constitute an unwarranted invasion of personal privacy of individuals involved.
+    -   **Exemption (b)(7)(C):** Protects information that would constitute an unwarranted invasion of the personal privacy of a third party/parties (in some instances by revealing an investigative interest in them).
+    -   **Exemption (b)(7)(E):** Protects information that would disclose techniques and procedures for law enforcement investigations or prosecutions.
 
     More information can be found at [hhs.gov](https://www.hhs.gov/foia/exemptions-and-exclusions/index.html).
 

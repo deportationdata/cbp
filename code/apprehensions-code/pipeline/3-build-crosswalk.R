@@ -5,7 +5,8 @@ library(arrow)
 #### Write Crosswalk ####
 
 # paths
-metadata_dir <- "data/apprehensions/metadata"
+dataset_dir <- "data/apprehensions"
+metadata_dir <- file.path(dataset_dir, "metadata")
 dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
 
 # outputs 
@@ -451,3 +452,4 @@ collapsed_groups <- crosswalk |>
 
 print(collapsed_groups, n = Inf)
 
+# END

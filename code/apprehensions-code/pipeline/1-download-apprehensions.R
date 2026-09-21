@@ -9,16 +9,16 @@ library(arrow)
 apps_url <- "https://www.cbp.gov/document/foia-record/customs-and-border-protection-border-patrol-statistics"
 
 # set paths
-download_dir <- "data/apprehensions"
-raw_dir <- file.path(download_dir, "raw")
-manual_review_dir <- file.path(download_dir, "manual-review")
-metadata_dir <- file.path(download_dir, "metadata")
+dataset_dir <- "data/apprehensions"
+raw_dir <- file.path(dataset_dir, "raw")
+manual_review_dir <- file.path(dataset_dir, "manual-review")
+metadata_dir <- file.path(dataset_dir, "metadata")
 
 # outputs 
 link_inventory_path <- file.path(metadata_dir, "apprehension-links.parquet")
 
 # create folders
-dir.create(download_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(dataset_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(manual_review_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
@@ -85,7 +85,7 @@ print(apprehension_links, n = Inf)
 
 # create old encounter links if DNE
 old_apprehension_links <- if (file.exists(link_inventory_path)) {
-  read_parquet(link_inventory_path)
+  read_parquet(link_inventory_path, mmap = FALSE)
 } else {
   tibble(
     text = character(),
@@ -154,3 +154,4 @@ write_parquet(
 cat("New apprehension files:", length(downloaded_apprehension_files), "\n")
 cat("New manual-review files:", length(downloaded_manual_review_files), "\n")
 
+# END

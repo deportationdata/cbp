@@ -8,16 +8,16 @@ library(xml2)
 encounters_url <- "https://www.cbp.gov/document/foia-record/customs-and-border-protection-border-patrol-statistics"
 
 # set paths
-download_dir <- "data/encounters"
-raw_dir <- file.path(download_dir, "raw")
-manual_review_dir <- file.path(download_dir, "manual-review")
-metadata_dir <- file.path(download_dir, "metadata")
+dataset_dir <- "data/encounters"
+raw_dir <- file.path(dataset_dir, "raw")
+manual_review_dir <- file.path(dataset_dir, "manual-review")
+metadata_dir <- file.path(dataset_dir, "metadata")
 
 # outputs 
 link_inventory_path <- file.path(metadata_dir, "encounter-links.parquet")
 
 # create folders
-dir.create(download_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(dataset_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(manual_review_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
@@ -76,7 +76,7 @@ print(encounter_links, n = Inf)
 
 # create old encounter links if DNE
 old_encounter_links <- if (file.exists(link_inventory_path)) {
-  read_parquet(link_inventory_path)
+  read_parquet(link_inventory_path, mmap = FALSE)
 } else {
   tibble(
     text = character(),
@@ -148,3 +148,4 @@ cat("New manual-review files:", length(downloaded_manual_review_files), "\n")
 
 
 
+# END

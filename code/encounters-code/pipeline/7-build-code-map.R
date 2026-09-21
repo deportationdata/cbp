@@ -3,7 +3,8 @@ library(tidyverse)
 library(arrow)
 
 # paths
-metadata_dir <- "data/encounters/metadata"
+dataset_dir <- "data/encounters"
+metadata_dir <- file.path(dataset_dir, "metadata")
 code_map_path <- file.path(metadata_dir,"code-map.parquet")
 dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -257,3 +258,4 @@ cat(
   "\n"
 )
 
+# END

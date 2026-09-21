@@ -6,9 +6,9 @@ library(arrow)
 library(fs)
 
 # paths
-download_dir <- "data/apprehensions"
-raw_dir <- file.path(download_dir, "raw")
-metadata_dir <- file.path(download_dir, "metadata")
+dataset_dir <- "data/apprehensions"
+raw_dir <- file.path(dataset_dir, "raw")
+metadata_dir <- file.path(dataset_dir, "metadata")
 
 dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -278,3 +278,4 @@ if (nrow(failed_sheets_final) > 0) {
 
 
 
+# END

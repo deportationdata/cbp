@@ -119,8 +119,7 @@ date_columns <- c(
   "apprehension_datetime",
   "apprehension_date",
   "arrest_datetime",
-  "arrest_date",
-  "entry_date"
+  "arrest_date"
 )
 
 # convert CBP date vals to date class
@@ -377,3 +376,4 @@ cat(
   "\n"
 )
 
+# END

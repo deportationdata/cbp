@@ -6,9 +6,9 @@ library(arrow)
 library(fs)
 
 # paths
-download_dir <- "data/inadmissibles"
-raw_dir <- file.path(download_dir, "raw")
-metadata_dir <- file.path(download_dir, "metadata")
+dataset_dir <- "data/inadmissibles"
+raw_dir <- file.path(dataset_dir, "raw")
+metadata_dir <- file.path(dataset_dir, "metadata")
 
 dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -18,18 +18,18 @@ raw_column_inventory_path <- file.path(metadata_dir, "raw-column-inventory.parqu
 distinct_columns_path <- file.path(metadata_dir, "distinct-columns.parquet")
 failed_sheets_path <- file.path(metadata_dir, "failed-sheets.parquet")
 
-# list files
+# list all xlsx/xls files in raw/
 raw_files <- dir_ls(
   raw_dir,
   regexp = "\\.(xlsx|xls)$"
 )
 
-#### Rebuild Profiling Metadata? ####
-  # FALSE = only profile new files
-  # TRUE = rebuild everything
+#### Manual Entry Needed: Rebuild Profiling Metadata? ####
+
 # IMPORTANT:
-# If force_reprofile is set to TRUE, force_rebuild must also be
-# set to TRUE in 4-process-parts.R 
+  # FALSE = only profile new files, TRUE = rebuild everything
+  # If force_reprofile <- TRUE, set force_rebuild <- TRUE in 4-create-parts.R
+
 force_reprofile <- FALSE
 
 if (
@@ -45,9 +45,7 @@ if (
   
   if (length(new_files) == 0) {
     
-    message("No new Excel files detected. Skipping profiling.")
-    
-    stop("Nothing to profile.")
+    stop("No new Excel files detected. Skipping profiling.")
     
   } else {
     
@@ -58,7 +56,7 @@ if (
 }
 
 
-# old items inventory
+# old items inventory (empty tibbles)
 old_sheet_inventory <- tibble()
 old_column_inventory <- tibble()
 old_failed_sheets <- tibble()
@@ -81,34 +79,20 @@ raw_files <- raw_files[
   !str_detect(path_file(raw_files), "^~\\$")
 ]
 
-# drop fully empty columns
-drop_empty_columns <- function(df) {
-  
-  df |>
-    select(
-      where(
-        ~ any(
-          !is.na(.x) &
-            str_squish(as.character(.x)) != ""
-        )
-      )
-    )
-}
-
 # detect likely header row
 find_header_row <- function(file_path, sheet, n_max = 100, min_matches = 3) {
   
   header_terms <- paste(
     c(
-      "event reason", "custody date", "disposition",
-      "mode of transport", "north.*south indicator", "citizenship country",
-      "fmua", "uac", "single.*derived", "cred.*fear indicator",
-      "age at event", "birth country",
-      "presented to ausa", "duplicate subject indicator", "entry status",
-      "gender", "city name", "country name","custody transfer",
-      "gang affiliation", "field office", "marital status",
-      "destination address","approving supervisor", "alien file number",
-      "sigma subject", "sigma event", "subject/person id", "event subject count"
+      "event_reason", "custody_date", "disposition",
+      "mode_of_transport", "north.*south_indicator", "citizenship_country",
+      "fmua", "uac", "single.*derived", "cred.*fear_indicator",
+      "age_at_event", "birth_country",
+      "presented_to_ausa", "duplicate_subject_indicator", "entry_status",
+      "gender", "city_name", "country_name", "custody_transfer",
+      "gang_affiliation", "field_office", "marital_status",
+      "destination_address", "approving_supervisor", "alien_file_number",
+      "sigma_subject", "sigma_event", "subject_person_id", "event_subject_count"
     ),
     collapse = "|"
   )
@@ -117,17 +101,18 @@ find_header_row <- function(file_path, sheet, n_max = 100, min_matches = 3) {
     path = file_path,
     sheet = sheet,
     col_names = FALSE,
-    n_max = n_max,
-    .name_repair = "unique"
+    range = cell_rows(1:n_max)
   ) |>
     mutate(across(everything(), as.character))
   
+  # fix structure, pivot longer except row number
   row_scores <- raw_df |>
     mutate(row_number = row_number()) |>
     pivot_longer(
       -row_number,
       values_to = "value"
     ) |>
+    # clean to detect
     mutate(
       value = make_clean_names(str_squish(value)),
       has_header_term = str_detect(value, header_terms)
@@ -167,10 +152,8 @@ profile_sheet <- function(file_path, sheet) {
     sheet = sheet,
     col_names = FALSE,
     skip = header_row - 1,
-    n_max = 1,
-    .name_repair = "unique"
-  ) |>
-    drop_empty_columns()
+    n_max = 1
+  )
   
   header <- raw_df |>
     slice(1) |>
@@ -214,7 +197,7 @@ profile_results <- sheet_inventory |>
     )
   )
 
-# successful sheets
+# successful columns
 successful_columns <- profile_results |>
   mutate(data = map(result, "result")) |>
   filter(map_lgl(data, ~ !is.null(.x))) |>
@@ -248,7 +231,7 @@ if (nrow(successful_columns) == 0) {
   stop("No sheets were successfully profiled.")
 }
 
-# combine old + new
+# add new sheets/cols to inventory
 sheet_inventory_final <- bind_rows(
   old_sheet_inventory,
   sheet_inventory
@@ -283,11 +266,6 @@ write_parquet(sheet_inventory_final, sheet_inventory_path)
 write_parquet(raw_column_inventory, raw_column_inventory_path)
 write_parquet(distinct_columns, distinct_columns_path)
 
-if (nrow(failed_sheets_final) > 0) {
-  write_parquet(failed_sheets_final, failed_sheets_path)
-}
-
-
 # warn if individual sheets failed 
 if (nrow(failed_sheets_final) > 0) {
   
@@ -299,9 +277,8 @@ if (nrow(failed_sheets_final) > 0) {
   warning(
     nrow(failed_sheets_final),
     " sheet(s) failed profiling. Review ",
-    failed_sheets_path,
-    " before treating the dataset as complete."
+    failed_sheets_path
   )
 }
 
-
+# END

@@ -4,21 +4,21 @@ library(arrow)
 library(fs)
 
 # paths
-inadmissibles_dir <- "data/inadmissibles"
+dataset_dir <- "data/inadmissibles"
 
 parts_dir <- file.path(
-  inadmissibles_dir,
+  dataset_dir,
   "processed",
   "parts-to-stack"
 )
 
 metadata_dir <- file.path(
-  inadmissibles_dir,
+  dataset_dir,
   "metadata"
 )
 
 validation_dir <- file.path(
-  inadmissibles_dir,
+  dataset_dir,
   "validation"
 )
 
@@ -372,3 +372,4 @@ cat(
   contained_pairs_path,
   "\n"
 )
+# END

@@ -5,7 +5,8 @@ library(arrow)
 #### Write Crosswalk ####
 
 # paths
-metadata_dir <- "data/encounters/metadata"
+dataset_dir <- "data/encounters"
+metadata_dir <- file.path(dataset_dir, "metadata")
 
 # outputs 
 distinct_columns <- read_parquet(
@@ -183,3 +184,4 @@ collapsed_groups <- crosswalk |>
 
 print(collapsed_groups, n = Inf)
 
+# END

@@ -4,7 +4,8 @@ library(DBI)
 library(duckdb)
 
 # paths
-processed_dir <- "data/inadmissibles/processed"
+dataset_dir <- "data/inadmissibles"
+processed_dir <- file.path(dataset_dir, "processed")
 
 stacked_path <- file.path(
   processed_dir,
@@ -927,3 +928,4 @@ dbDisconnect(
   shutdown = TRUE
 )
 
+# END

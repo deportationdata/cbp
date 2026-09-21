@@ -4,7 +4,8 @@ library(DBI)
 library(duckdb)
 
 # paths
-processed_dir <- "data/encounters/processed"
+dataset_dir <- "data/encounters"
+processed_dir <- file.path(dataset_dir, "processed")
 
 encounters_stacked_path <- file.path(
   processed_dir,
@@ -16,7 +17,7 @@ encounters_final_path <- file.path(
   "encounters-final.parquet"
 )
 
-code_map_path <- "data/encounters/metadata/code-map.parquet"
+code_map_path <- file.path(dataset_dir, "metadata", "code-map.parquet")
 
 
 # connect to duckDB
@@ -1168,3 +1169,4 @@ dbDisconnect(
   con,
   shutdown = TRUE
 )
+# END

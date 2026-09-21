@@ -6,19 +6,19 @@ library(DBI)
 library(duckdb)
 
 # paths
-download_dir <- "data/apprehensions"
-processed_dir <- file.path(download_dir, "processed")
-metadata_dir <- file.path(download_dir, "metadata")
-validation_dir <- file.path(download_dir, "validation")
+dataset_dir <- "data/apprehensions"
+processed_dir <- file.path(dataset_dir, "processed")
+metadata_dir <- file.path(dataset_dir, "metadata")
+validation_dir <- file.path(dataset_dir, "validation")
 
 apprehensions_cleaned_path <- file.path(
   processed_dir,
   "apprehensions-cleaned.parquet"
 )
 
-apprehensions_final_path <- file.path(
+apprehensions_final_all_cols_path <- file.path(
   processed_dir,
-  "apprehensions-final.parquet"
+  "apprehensions-final-all-cols.parquet"
 )
 
 parts_metadata_path <- file.path(
@@ -75,7 +75,7 @@ cleaned_sql <- as.character(
 final_sql <- as.character(
   dbQuoteString(
     con,
-    apprehensions_final_path
+    apprehensions_final_all_cols_path
   )
 )
 
@@ -125,9 +125,7 @@ date_expressions <- c(
   arrest_datetime =
     "CAST(arrest_datetime AS DATE)",
   arrest_date =
-    "arrest_date",
-  entry_date =
-    "entry_date"
+    "arrest_date"
 )
 
 available_date_columns <- intersect(
@@ -337,8 +335,8 @@ original_rows <- dbGetQuery(
   pull(n)
 
 # remove output from a previous run
-if (file_exists(apprehensions_final_path)) {
-  file_delete(apprehensions_final_path)
+if (file_exists(apprehensions_final_all_cols_path)) {
+  file_delete(apprehensions_final_all_cols_path)
 }
 
 resolution_query <- paste0(
@@ -410,7 +408,7 @@ cat(
   "\nCleaned dataset:",
   apprehensions_cleaned_path,
   "\nFinal dataset:",
-  apprehensions_final_path,
+  apprehensions_final_all_cols_path,
   "\nResolution audit:",
   resolution_audit_path,
   "\n"
@@ -421,3 +419,4 @@ print(
   n = Inf
 )
 
+# END

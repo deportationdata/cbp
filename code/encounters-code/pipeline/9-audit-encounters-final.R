@@ -6,9 +6,9 @@ library(DBI)
 library(duckdb)
 
 # paths
-download_dir <- "data/encounters"
-processed_dir <- file.path(download_dir, "processed")
-metadata_dir <- file.path(download_dir, "metadata")
+dataset_dir <- "data/encounters"
+processed_dir <- file.path(dataset_dir, "processed")
+metadata_dir <- file.path(dataset_dir, "metadata")
 
 encounters_stacked_path <- file.path(
   processed_dir,
@@ -26,7 +26,6 @@ final_column_inventory_path <- file.path(
 )
 
 dir_create(metadata_dir)
-
 
 # check inputs
 input_paths <- c(
@@ -270,3 +269,4 @@ print(
   final_column_inventory,
   n = Inf
 )
+# END

@@ -9,16 +9,16 @@ library(arrow)
 inads_url <- "https://www.cbp.gov/document/foia-record/cbp-office-field-operations-statistics"
 
 # set paths
-download_dir <- "data/inadmissibles"
-raw_dir <- file.path(download_dir, "raw")
-manual_review_dir <- file.path(download_dir, "manual-review")
-metadata_dir <- file.path(download_dir, "metadata")
+dataset_dir <- "data/inadmissibles"
+raw_dir <- file.path(dataset_dir, "raw")
+manual_review_dir <- file.path(dataset_dir, "manual-review")
+metadata_dir <- file.path(dataset_dir, "metadata")
 
 # outputs 
 link_inventory_path <- file.path(metadata_dir, "inadmissibles-links.parquet")
 
 # create folders
-dir.create(download_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(dataset_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(manual_review_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
@@ -71,7 +71,7 @@ inadmissibles_links <- links |>
       # files we definitely want 
       (is_inadmissibles) & !is_too_specific ~ "include_inadmissibles",
       # manual review, anything that failed the above condition but still
-      # includes apprehension, apprehenion, or t8
+      # includes inadmissible, inadmissable, or inadmissble
       str_detect(text_lower, "inadmissible|inadmissable|inadmissble") ~ "manual_review",
       # exclude the rest 
       TRUE ~ "exclude"
@@ -82,9 +82,9 @@ inadmissibles_links <- links |>
 
 print(inadmissibles_links, n = Inf)
 
-# read previous link inventory if it exists
+# read previous inadmissibles links or create an empty table if DNE
 old_inadmissibles_links <- if (file.exists(link_inventory_path)) {
-  read_parquet(link_inventory_path)
+  read_parquet(link_inventory_path, mmap = FALSE)
 } else {
   tibble(
     text = character(),
@@ -101,21 +101,20 @@ old_inadmissibles_links <- if (file.exists(link_inventory_path)) {
 new_inadmissibles_links <- inadmissibles_links |>
   anti_join(old_inadmissibles_links, by = "full_url")
 
-# flag if manual review triggered
+# flag if manual review triggered (in new links)
 manual_count <- sum(new_inadmissibles_links$download_class == "manual_review")
 
 if (manual_count > 0) {
   warning(
-    paste0(
+    paste(
       manual_count,
-      "WARNING: File(s) flagged for manual review. Check data/inadmissibles/manual_review/"))
-  }
+      "WARNING: File(s) flagged for manual review. Check data/inadmissibles/manual-review/"))
+}
 
 print(new_inadmissibles_links, n = Inf)
 
 # function to download files
 download_cbp_file <- function(url, dest_dir) {
-  
   dest <- file.path(dest_dir, basename(url))
   
   cbp_request(url) |>
@@ -130,7 +129,7 @@ downloaded_inadmissibles_files <- new_inadmissibles_links |>
   pull(full_url) |>
   map_chr(download_cbp_file, dest_dir = raw_dir)
 
-# download manual review files into manual_review/
+# download manual review files into manual-review/
 downloaded_manual_review_files <- new_inadmissibles_links |>
   filter(download_class == "manual_review") |>
   pull(full_url) |>
@@ -154,3 +153,4 @@ write_parquet(
 cat("New inadmissibles files:", length(downloaded_inadmissibles_files), "\n")
 cat("New manual-review files:", length(downloaded_manual_review_files), "\n")
 
+# END

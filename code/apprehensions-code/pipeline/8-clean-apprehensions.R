@@ -4,7 +4,8 @@ library(DBI)
 library(duckdb)
 
 # paths
-processed_dir <- "data/apprehensions/processed"
+dataset_dir <- "data/apprehensions"
+processed_dir <- file.path(dataset_dir, "processed")
 
 apprehensions_stacked_path <- file.path(
   processed_dir,
@@ -16,7 +17,7 @@ apprehensions_cleaned_path <- file.path(
   "apprehensions-cleaned.parquet"
 )
 
-code_map_path <- "data/apprehensions/metadata/code-map.parquet"
+code_map_path <- file.path(dataset_dir, "metadata", "code-map.parquet")
 
  
 # connect to duckDB
@@ -339,7 +340,7 @@ date_columns <- c(
   "apprehension_date",
   "arrest_date",
   "birth_date",
-  # "case_file_date", multiple so leave out for now
+  # "case_file_date", list of multiple so don't clean for now
   "entry_date",
   "final_bookout_date",
   "most_recent_encounter_date",
@@ -1257,3 +1258,4 @@ dbDisconnect(
   con,
   shutdown = TRUE
 )
+# END

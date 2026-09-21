@@ -7,9 +7,9 @@ library(DBI)
 library(duckdb)
 
 # paths
-apprehensions_dir <- "data/apprehensions"
-processed_dir <- file.path(apprehensions_dir, "processed")
-validation_dir <- file.path(apprehensions_dir, "validation")
+dataset_dir <- "data/apprehensions"
+processed_dir <- file.path(dataset_dir, "processed")
+validation_dir <- file.path(dataset_dir, "validation")
 
 dir.create(
   validation_dir,
@@ -17,9 +17,9 @@ dir.create(
   showWarnings = FALSE
 )
 
-apprehensions_final_path <- file.path(
+apprehensions_final_all_cols_path <- file.path(
   processed_dir,
-  "apprehensions-final.parquet"
+  "apprehensions-final-all-cols.parquet"
 )
 
 cross_reference_parquet_path <- file.path(
@@ -103,7 +103,7 @@ if (length(missing_cbp_columns) > 0) {
   )
 }
 
-# apprehensions_final contains USBP Title 8 apprehension records only
+# apprehensions_final_all_cols contains USBP Title 8 apprehension records only
 # retain only USBP Title 8 apprehensions (not T42 expulsions)
 cbp_usb_monthly <- cbp_raw |>
   filter(
@@ -174,10 +174,10 @@ dbExecute(
 )
 
 # apprehensions final monthly counts
-apprehensions_final_sql <- as.character(
+apprehensions_final_all_cols_sql <- as.character(
   dbQuoteString(
     con,
-    apprehensions_final_path
+    apprehensions_final_all_cols_path
   )
 )
 
@@ -209,14 +209,14 @@ apprehensions_monthly_query <- sprintf(
   paste0(
     "SELECT ",
     "DATE_TRUNC('month', %1$s)::DATE AS month_start, ",
-    "COUNT(*) AS apprehensions_final_count ",
+    "COUNT(*) AS apprehensions_final_all_cols_count ",
     "FROM read_parquet(%2$s) ",
     "WHERE %1$s BETWEEN %3$s::DATE AND %4$s::DATE ",
     "GROUP BY 1 ",
     "ORDER BY 1"
   ),
   event_date_sql,
-  apprehensions_final_sql,
+  apprehensions_final_all_cols_sql,
   benchmark_min_date_sql,
   benchmark_max_date_sql
 )
@@ -255,7 +255,7 @@ cross_reference <- cbp_usb_monthly |>
       fiscal_month,
       month(month_start)
     ),
-    difference = apprehensions_final_count - cbp_usbp_apprehension_count,
+    difference = apprehensions_final_all_cols_count - cbp_usbp_apprehension_count,
     absolute_difference = abs(difference),
     percent_difference = if_else(
       cbp_usbp_apprehension_count == 0,
@@ -264,7 +264,7 @@ cross_reference <- cbp_usb_monthly |>
     ),
     exact_match = difference == 0,
     status = case_when(
-      is.na(apprehensions_final_count) ~ "missing from apprehensions_final",
+      is.na(apprehensions_final_all_cols_count) ~ "missing from apprehensions_final_all_cols",
       is.na(cbp_usbp_apprehension_count) ~ "missing from CBP benchmark",
       exact_match ~ "exact match",
       TRUE ~ "difference"
@@ -275,7 +275,7 @@ cross_reference <- cbp_usb_monthly |>
     fiscal_year,
     fiscal_month,
     month_start,
-    apprehensions_final_count,
+    apprehensions_final_all_cols_count,
     cbp_usbp_apprehension_count,
     difference,
     absolute_difference,
@@ -298,7 +298,7 @@ comparison_summary <- cross_reference |>
     differing_months = sum(status == "difference"),
     missing_months = sum(
       status %in% c(
-        "missing from apprehensions_final",
+        "missing from apprehensions_final_all_cols",
         "missing from CBP benchmark"
       )
     ),
@@ -324,3 +324,4 @@ if (any(cross_reference$status != "exact match")) {
     cross_reference_parquet_path
   )
 }
+# END

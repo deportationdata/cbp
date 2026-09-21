@@ -6,8 +6,8 @@ library(DBI)
 library(duckdb)
 
 # paths
-download_dir <- "data/apprehensions"
-processed_dir <- file.path(download_dir, "processed")
+dataset_dir <- "data/apprehensions"
+processed_dir <- file.path(dataset_dir, "processed")
 parts_to_stack_dir <- file.path(processed_dir, "parts-to-stack")
 
 apprehensions_stacked_path <- file.path(
@@ -215,3 +215,4 @@ cat(
   apprehensions_audit_path,
   "\n"
 )
+# END

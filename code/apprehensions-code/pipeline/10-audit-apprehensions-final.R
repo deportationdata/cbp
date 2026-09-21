@@ -5,10 +5,10 @@ library(DBI)
 library(duckdb)
 
 # paths
-download_dir <- "data/apprehensions"
-processed_dir <- file.path(download_dir, "processed")
-metadata_dir <- file.path(download_dir, "metadata")
-validation_dir <- file.path(download_dir, "validation")
+dataset_dir <- "data/apprehensions"
+processed_dir <- file.path(dataset_dir, "processed")
+metadata_dir <- file.path(dataset_dir, "metadata")
+validation_dir <- file.path(dataset_dir, "validation")
 
 apprehensions_stacked_path <- file.path(
   processed_dir,
@@ -20,9 +20,9 @@ apprehensions_cleaned_path <- file.path(
   "apprehensions-cleaned.parquet"
 )
 
-apprehensions_final_path <- file.path(
+apprehensions_final_all_cols_path <- file.path(
   processed_dir,
-  "apprehensions-final.parquet"
+  "apprehensions-final-all-cols.parquet"
 )
 
 empty_before_cleaning_path <- file.path(
@@ -52,7 +52,7 @@ dir_create(validation_dir)
 input_paths <- c(
   apprehensions_stacked_path,
   apprehensions_cleaned_path,
-  apprehensions_final_path
+  apprehensions_final_all_cols_path
 )
 
 missing_paths <- input_paths[
@@ -101,7 +101,7 @@ cleaned_sql <- as.character(
 final_sql <- as.character(
   dbQuoteString(
     con,
-    apprehensions_final_path
+    apprehensions_final_all_cols_path
   )
 )
 
@@ -555,3 +555,4 @@ print(
   excluded_by_overlap,
   n = Inf
 )
+# END

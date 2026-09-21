@@ -4,9 +4,9 @@ library(arrow)
 library(fs)
 
 # paths
-download_dir <- "data/inadmissibles"
-metadata_dir <- file.path(download_dir, "metadata")
-processed_dir <- file.path(download_dir, "processed")
+dataset_dir <- "data/inadmissibles"
+metadata_dir <- file.path(dataset_dir, "metadata")
+processed_dir <- file.path(dataset_dir, "processed")
 parts_to_stack_dir <- file.path(processed_dir, "parts-to-stack")
 
 # outputs
@@ -284,3 +284,4 @@ for (pair_number in seq_len(nrow(same_date))) {
   
   identical_counts
 }
+# END

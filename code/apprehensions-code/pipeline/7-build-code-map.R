@@ -3,7 +3,8 @@ library(tidyverse)
 library(arrow)
 
 # paths
-metadata_dir <- "data/apprehensions/metadata"
+dataset_dir <- "data/apprehensions"
+metadata_dir <- file.path(dataset_dir, "metadata")
 code_map_path <- file.path(metadata_dir,"code-map.parquet")
 dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -238,6 +239,8 @@ entry_mapping <- tribble(
   "PWA",  "Present Without Admission",
   "NIC",  "Not in Custody",
   "VWP",  "Visa Waiver Program",
+  "OFC", "Oral False Claim",
+  "DFC", "Documented False Claim",
   
   # unsure = left as is
   "R",    "R",
@@ -245,15 +248,13 @@ entry_mapping <- tribble(
   "A",    "A",
   "C",    "C",
   "I",    "I",
-  "OFC",  "OFC",
-  "DFC",  "DFC",
   
   # truncated labels
   "False Claim with Counterfeit D", "False Claim with Counterfeit Document",
   "False Claim with Valid Documen", "False Claim with Valid Document",
   "False Claim with Altered Docum", "False Claim with Altered Document",
   "ORAL FALSE CLAIMS TO OTHER THA", "Oral False Claim to Other Tha",
-  "Oral False Claim to U.S. Citiz", "Oral False Claim to U.S. Citiz"
+  "Oral False Claim to U.S. Citiz", "Oral False Claim to U.S. Citizen"
 )
 
 
@@ -331,3 +332,4 @@ cat(
   "\n"
 )
 
+# END

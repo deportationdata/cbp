@@ -7,9 +7,9 @@ library(DBI)
 library(duckdb)
 
 # paths
-encounters_dir <- "data/encounters"
-processed_dir <- file.path(encounters_dir, "processed")
-validation_dir <- file.path(encounters_dir, "validation")
+dataset_dir <- "data/encounters"
+processed_dir <- file.path(dataset_dir, "processed")
+validation_dir <- file.path(dataset_dir, "validation")
 
 dir.create(
   validation_dir,
@@ -321,3 +321,4 @@ if (any(cross_reference$status != "exact match")) {
     cross_reference_parquet_path
   )
 }
+# END

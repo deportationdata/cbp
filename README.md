@@ -42,7 +42,7 @@ In the `cbp` repository, there are three main folders through which you can navi
 
 ### 1. Download Source Files
 
-Scripts: `1-download-apprehensions.R`, `1-download-inadmissibles.R`, and `1-download-encounters.R`.
+Scripts: `1-download-<dataset>.R`
 
 These scripts scrape the relevant CBP records page, identify downloadable links, differentiate between certain matches and files intended for manual review, and download links that are not already recorded in the existing link inventory.
 
@@ -58,7 +58,7 @@ Because the link inventory identifies files by URL, the script will not recogniz
 
 ### 2. Profile Worksheets and Headers
 
-Scripts: `2-profile-apprehensions.R`, `2-profile-inadmissibles.R`, and `2-profile-encounters.R`.
+Scripts: `2-profile-<dataset>.R`
 
 These scripts identify the likely header row in each worksheet and inventory the columns found in all `raw/` files.
 
@@ -115,37 +115,9 @@ Outputs in `data/<dataset>/metadata/`:
 
 Review parts with missing date columns and pairs with the same date range. The list of possible date fields in each script should be updated if a new canonical date field is introduced.
 
-### 6. Explore Matching Date Ranges
+### 6. Stack the Parts
 
-Scripts: `6-explore-mismatches.R` for apprehensions and inadmissibles.
-
-These scripts compare pairs identified in `same-date-ranges.parquet`. They record rows found in only one part and compare non-empty columns across the pair.
-
-Outputs are written to `data/<dataset>/metadata/unique-rows/`:
-
--   `pair-<n>-rows-only-in-a.parquet`: part containing rows that are unique to part `a`
--   `pair-<n>-rows-only-in-b.parquet`: part containing rows that are unique to part `b`
--   `pair-<n>-column-differences.parquet`: examines diagnostics among columns shared between same date range files, listing the shared column name, values only in each part, and flagging columns that contain unique values
-
-These files are diagnostic only and should be used to explore whether two parts are duplicates, complementary, or entirely different datasets. Any part to be excluded from the final dataset must be manually added by name to `parts_to_delete` in `<n>-stack-<dataset>.R`. The encounters pipeline does not currently have a mismatch exploration step because there were no exact date range matches among files.
-
-### 7. Validate Broader Overlaps
-
-Scripts: `7-validate-apprehension-overlaps.R` and `9-validate-inadmissible-overlaps.R`.
-
-These scripts identify parts whose full date ranges are contained within other parts. They then compare daily record counts between each pair.
-
-Outputs in `data/<dataset>/validation/`:
-
--   `<dataset>-contained-pairs.parquet`: lists parts whose dates are contained within others, including part names, paths, and minimum and maximum dates
--   `<dataset>-overlap-daily-comparison.parquet`: examines individual days covered by overlapping datasets, displaying part names and paths, minimum and maximum dates, daily apprehension or inadmissible count, daily count difference between each part, and a logical flag indicating whether daily counts match
--   `<dataset>-overlap-pair-summary.parquet`: summarizes overlapping pairs, including counts for number of days compared, number of matching and differing days, percentage of days matching, number of records in each part's overlapping time period, total count difference, maximum absolute daily difference, and a logical flag indicating whether all daily counts match
-
-The overlapping pair summary and daily comparison should be reviewed before deciding how overlap should be resolved. This script does not remove records and is merely exploratory. Overlap resolution occurs later in the pipeline. The encounters pipeline does not currently validate overlaps because it has no overlapping files.
-
-### 8. Stack the Parts
-
-Scripts: `8-stack-apprehensions.R`, `7-stack-inadmissibles.R`, and `6-stack-encounters.R`.
+Scripts: `6-stack-apprehensions.R`, `7-stack-inadmissibles.R`, and `6-stack-encounters.R`.
 
 These scripts combine the remaining parts by column name and verify that the final row count equals the sum of the included parts.
 
@@ -156,9 +128,9 @@ Outputs in `data/<dataset>/processed/`:
 
 Before running the apprehensions or inadmissibles stack, review `parts_to_delete` near the beginning of the script. This list is maintained manually based on the overlap review and removes known faulty or duplicate parts only. The script deletes listed files from `parts-to-stack/`, so the parts must be fully rebuilt if an exclusion is to be reversed. Encounters currently has no duplicate or erroneous parts to remove.
 
-### 9. Build Code Column Map
+### 7. Build Code Column Map
 
-Scripts: `9-build-code-map.R` for apprehensions and `7-build-code-map.R` for encounters.
+Scripts: `7-build-code-map.R`
 
 These scripts create lookup tables (or "maps") that translate coded values into readable labels. Each mapping identifies the field, original code, and corresponding full name. Uncertain codes are retained as they are originally written.
 
@@ -170,9 +142,9 @@ Outputs:
 
 The mapping tables are maintained manually and should be reviewed when new coded columns or values appear in the stacked data.
 
-### 10. Clean the Combined Data
+### 8. Clean the Combined Data
 
-Scripts: `10-clean-apprehensions.R`, `8-clean-inadmissibles.R`, and `8-clean-encounters.R`.
+Scripts: `8-clean-<dataset>.R`
 
 These scripts standardize redaction codes, convert fields to their intended data types, order columns, and write the cleaned data.
 
@@ -189,9 +161,9 @@ The apprehensions and encounters cleaning scripts use the code maps generated in
 
 Review all warnings about unrecognized values or columns absent from `column_order`. Columns not assigned another type remain character fields by default. Parts that overlap in date are retained in this step. In using this dataset, note that the same entry may be represented multiple times in overlapping datasets.
 
-### 11. Resolve Apprehension Overlaps
+### 9. Resolve Apprehension Overlaps
 
-Script: `11-resolve-apprehension-overlaps.R`.
+Script: `9-resolve-apprehension-overlaps.R`.
 
 This step resolves overlapping parts by prioritizing broader source parts, using more granular parts to fill gaps in dates not already represented. Rows without a usable event date are excluded with a warning.
 
@@ -202,9 +174,9 @@ Outputs:
 
 Review the resolution audit to confirm which dates were selected from each source.
 
-### 12. Audit the Final Apprehensions Data
+### 10. Audit the Final Data
 
-Script: `12-audit-apprehensions-final.R`.
+Script: `10-audit-<dataset>-final.R`.
 
 This script compares column population across the stacked, cleaned, and final apprehensions files.
 
@@ -217,9 +189,9 @@ Outputs:
 
 Consider excluded columns before distributing final datasets.
 
-### 13. Cross-Reference Datasets
+### 11. Cross-Reference Datasets
 
-Scripts: `9-cross-reference-encounters.R` and `13-cross-reference-apprehensions.R`.
+Scripts: `10-cross-reference-encounters.R` and `11-cross-reference-apprehensions.R`.
 
 These scripts compare monthly counts in `<dataset>-final.parquet` with published CBP dashboard extracts.
 
