@@ -14,16 +14,6 @@ parts_to_stack_dir <- file.path(
   "parts-to-stack"
 )
 
-unique_rows_dir <- file.path(
-  processed_dir,
-  "unique-rows"
-)
-
-dir.create(
-  unique_rows_dir,
-  recursive = TRUE,
-  showWarnings = FALSE
-)
 
 parts_metadata_path <- file.path(
   metadata_dir,
