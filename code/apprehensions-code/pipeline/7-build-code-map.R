@@ -239,15 +239,13 @@ entry_mapping <- tribble(
   "PWA",  "Present Without Admission",
   "NIC",  "Not in Custody",
   "VWP",  "Visa Waiver Program",
-  "OFC", "Oral False Claim",
-  "DFC", "Documented False Claim",
-  
-  # unsure = left as is
-  "R",    "R",
-  "324",  "324",
-  "A",    "A",
-  "C",    "C",
-  "I",    "I",
+  "OFC", "Oral False Claim", # NIEM slight mismatch but consistent here
+  "DFC", "Documented False Claim", # NIEM slight mismatch but consistent here
+  "R",    "Refugee",
+  "324",  "Smuggler",
+  "A",    "Asylum",
+  "C",    "Crew",
+  "I",    "Immigrant",
   
   # truncated labels
   "False Claim with Counterfeit D", "False Claim with Counterfeit Document",
@@ -255,6 +253,17 @@ entry_mapping <- tribble(
   "False Claim with Altered Docum", "False Claim with Altered Document",
   "ORAL FALSE CLAIMS TO OTHER THA", "Oral False Claim to Other Tha",
   "Oral False Claim to U.S. Citiz", "Oral False Claim to U.S. Citizen"
+)
+
+# border mappings
+border_mapping <- tribble(
+  ~code, ~full_name,
+  "SBO",  "Southwest Border",
+  "CBO",  "Coastal Border",
+  "NBO",  "Northern Border",
+  "SB",   "Southwest Border",
+  "CB",   "Coastal Border",
+  "NB",   "Northern Border"
 )
 
 
@@ -276,7 +285,10 @@ code_map <- bind_rows(
     mutate(field = "entry_status"),
   
   ethnicity_mapping |>
-    mutate(field = "ethnicity")
+    mutate(field = "ethnicity"),
+  
+  border_mapping |>
+    mutate(field = "border")
 ) |>
   select(
     field,

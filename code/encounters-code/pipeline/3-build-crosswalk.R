@@ -25,11 +25,9 @@ crosswalk <- distinct_columns |>
       # apprehension/arrest datetime
       clean_column %in% c(
         "app_dt_time",
-        "appr_dt_time"
-      ) ~ "apprehension_datetime",
-      
-      clean_column %in% c(
-        "encounter_dt_time"
+        "appr_dt_time",
+        "encounter_dt_time",
+        "apprehension_datetime"
       ) ~ "encounter_datetime",
       
       clean_column %in% c(
