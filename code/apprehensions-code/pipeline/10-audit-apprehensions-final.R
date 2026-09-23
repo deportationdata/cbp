@@ -803,6 +803,10 @@ final_column_matrix <- matrix_sources |>
       n_rows == 0,
       "No retained rows",
       "Retained rows"
+    ),
+    across(
+      all_of(matrix_fields),
+      ~ if_else(is.na(.x), NA_character_, sprintf("%.2f%%", .x))
     )
   ) |>
   relocate(n_rows, status, .after = source_end_date) |>
