@@ -197,7 +197,6 @@ benchmark_max_date_sql <- as.character(
 event_date_sql <- paste0(
   "COALESCE(",
   "CAST(encounter_datetime AS DATE), ",
-  "CAST(apprehension_datetime AS DATE), ",
   "apprehension_date",
   ")"
 )

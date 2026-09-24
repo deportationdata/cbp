@@ -283,44 +283,70 @@ sql_string <- function(x) {
   )
 }
 
-# SQL redaction / whitespace patterns 
-redaction_e_pattern <- "\\(b\\)\\s*\\(7\\)\\s*\\(\\s*E\\s*\\)"
-redaction_c_pattern <- "\\(b\\)\\s*\\(6\\)\\s*\\(b\\)\\s*\\(7\\)\\s*\\(\\s*C\\s*\\)"
+# SQL redaction / whitespace patterns
+
+redaction_b6_pattern <- "\\(\\s*b\\s*\\)\\s*\\(\\s*6\\s*\\)"
+redaction_b7c_pattern <- "\\(\\s*b\\s*\\)\\s*\\(\\s*7\\s*\\)\\s*\\(\\s*C\\s*\\)"
+redaction_b7e_pattern <- "\\(\\s*b\\s*\\)\\s*\\(\\s*7\\s*\\)\\s*\\(\\s*E\\s*\\)"
+
+# boundary between one complete code and the next (b)
+redaction_separator_pattern <- "\\)\\s*[,;]*\\s*\\(b\\)"
+
 whitespace_pattern <- "\\s+"
 
-redaction_e_pattern_sql <- sql_string(redaction_e_pattern)
-redaction_c_pattern_sql <- sql_string(redaction_c_pattern)
-whitespace_pattern_sql <- sql_string(whitespace_pattern)
+# standardize redaction codes, separators, and whitespace
 
-# standardize redaction code and whitespace
 clean_string_sql <- function(column) {
   
-  column_sql <- sql_identifier(
-    column
+  value_sql <- sprintf(
+    "CAST(%s AS VARCHAR)",
+    sql_identifier(column)
   )
   
+  # standardize each distinct code
+  patterns <- c(
+    redaction_b6_pattern,
+    redaction_b7c_pattern,
+    redaction_b7e_pattern
+  )
+  
+  replacements <- c(
+    "(b)(6)",
+    "(b)(7)(C)",
+    "(b)(7)(E)"
+  )
+  
+  for (i in seq_along(patterns)) {
+    value_sql <- sprintf(
+      "regexp_replace(%s, %s, %s, 'gi')",
+      value_sql,
+      sql_string(patterns[i]),
+      sql_string(replacements[i])
+    )
+  }
+  
+  # separate adjacent codes with a comma and space
+  value_sql <- sprintf(
+    "regexp_replace(%s, %s, %s, 'g')",
+    value_sql,
+    sql_string(redaction_separator_pattern),
+    sql_string("), (b)")
+  )
+  
+  # collapse whitespace, trim, and convert empty strings to NULL
   sprintf(
-    paste0(
-      "NULLIF(",
-      "TRIM(",
-      "regexp_replace(",
-      "regexp_replace(",
-      "regexp_replace(",
-      "CAST(%s AS VARCHAR), ",
-      "%s, '(b)(7)(E)', 'gi'",
-      "), ",
-      "%s, '(b)(6)(b)(7)(C)', 'gi'",
-      "), ",
-      "%s, ' ', 'g'",
-      ")",
-      "), ",
-      "''",
-      ")"
-    ),
-    column_sql,
-    redaction_e_pattern_sql,
-    redaction_c_pattern_sql,
-    whitespace_pattern_sql
+    "NULLIF(TRIM(regexp_replace(%s, %s, ' ', 'g')), '')",
+    value_sql,
+    sql_string(whitespace_pattern)
+  )
+}
+
+#### Remove /E from `arrest_sector` ####
+if (column == "arrest_sector") {
+  value_sql <- sprintf(
+    "regexp_replace(%s, %s, '')",
+    value_sql,
+    sql_string("/E\\s*$")
   )
 }
 
