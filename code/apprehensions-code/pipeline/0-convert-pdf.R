@@ -427,6 +427,6 @@ structured_table_clean |>
     actions = action_levels(warn_at = 0.0001, stop_at = 0.001)
   )
 
-# Write out--what format? Parquet, Excel, 1 Excel per original file, 1 Excel per month?
+arrow::write_parquet(structured_table_clean, "data/apprehensions/raw/usbp_apprehensions_nationwide_fy14.parquet")
 
 # END.
