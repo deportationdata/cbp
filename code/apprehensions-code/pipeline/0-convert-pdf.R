@@ -1,3 +1,4 @@
+# Setup
 library(tidyverse)
 library(pdftools)
 library(pointblank)
@@ -8,16 +9,20 @@ files <- list.files(
     full.names = TRUE
   )
 
+# Read files in pdf_data format (x,y coordinates per word token)
 pdf_data_list <- lapply(files, function(file) {
   pdftools::pdf_data(file)
 })
 
+# Identify files by name
 names(pdf_data_list) <- basename(files)
 
+# ...and page no. within each file. All files contain 500 pp (except last, 518 pp)
 pdf_df <- imap_dfr(pdf_data_list, ~ bind_rows(.x, .id = "page") %>%
                      mutate(page = as.numeric(page),
                             file = .y))
 
+# Column names
 cols <- c(
   "CITIZENSHIP",
   "GENDER",
@@ -42,6 +47,7 @@ cols <- c(
   "SUBJECT_ID" # redacted
 )
 
+# Column max x coordinate values for sorting
 CITIZENSHIP_max <- 77
 GENDER_max <- 111
 APP_AGE_max <- 117
@@ -64,15 +70,17 @@ ERO_TRANSFER_max <- 707
 ERO_TRANSFER_DT_max <- 739
 SUBJECT_ID_max <- 800
 
-page_1_header_height <- 91
+# File 1 page 1 has additional header info
+file_1_page_1_header_height <- 91
 other_pages_header_height <- 63
 
+# Flag header and footer rows based on y values
 pdf_df_cols <- pdf_df |>
   group_by(page) |>
   mutate(
     header = case_when(
-      page == 1 & y <= page_1_header_height ~ TRUE,
-      page > 1 & y <= other_pages_header_height ~ TRUE,
+      file == "fy14-1.pdf" & page == 1 & y <= file_1_page_1_header_height ~ TRUE,
+      y <= other_pages_header_height ~ TRUE,
       TRUE ~ FALSE
     ),
     footer = case_when(
@@ -80,9 +88,82 @@ pdf_df_cols <- pdf_df |>
       TRUE ~ FALSE
     )
   ) |>
-  ungroup() |>
-  filter(header == FALSE,     # Currently we lose these, figure out a better way if we need to keep.
-         footer == FALSE) |>  # Or use here to validate page no, make sure no unexpected vals in header/footer
+  ungroup()
+
+# To check whether contains non-header data
+header_and_footer_cols <- pdf_df_cols |>
+  filter(header == TRUE | footer == TRUE)
+
+header_and_footer_text <- as_tibble(header_and_footer_cols$text)
+
+header_footer_expected_text <- c(
+  "U.S.",
+  "Border",
+  "Patrol",
+  "Nationwide",
+  "Apprehensions",
+  "FY2014",
+  "Data",
+  "includes",
+  "Deportable",
+  "Aliens",
+  "Only",
+  "Source:",
+  "(b)(7)(E",
+  ")",
+  "(Unofficial)",
+  "as",
+  "of",
+  "End",
+  "Year",
+  "Date;",
+  "Prosecution",
+  "8/16/19",
+  "CITIZENSHIP",
+  "GENDER",
+  "APP_AGE",
+  "UAC_IND",
+  "FMUA_IND",
+  "NUMBER_CHILDREN_",
+  "CREDIBLE_FEAR_IND",
+  "AND_NATIONALITY",
+  "MARITAL_STATUS",
+  "ENTRY_DT",
+  "STATUS_AT_ENTRY",
+  "DHS_STATUS_CD",
+  "Page",
+  "APP_DT_TIME",
+  "SECTOR",
+  "CDS",
+  "PROGRAM(S)",
+  "ARREST_METHOD",
+  "DISPOSITION",
+  "FMU",
+  "NUMBER",
+  "CASE",
+  "FILING",
+  "ERO",
+  "DATE",
+  "TRANSFER",
+  "DT",
+  "SUBJECT_ID"
+)
+
+page_nos <- as.character(seq(1:5018))
+
+header_footer_expected_values <- c(header_footer_expected_text, page_nos)
+
+header_and_footer_text |>
+  col_vals_in_set(
+    value,
+    header_footer_expected_values,
+    actions = action_levels(warn_at = 0.0001, stop_at = 0.001)
+  )
+
+# Assign columns based on x boundary values
+pdf_df_cols <- pdf_df_cols |>
+  filter(header == FALSE,
+         footer == FALSE) |>
   mutate(
     column_name = case_when(
       x <= CITIZENSHIP_max ~ "CITIZENSHIP",
@@ -109,8 +190,10 @@ pdf_df_cols <- pdf_df |>
       .default = NA_character_)
     )
 
+# Tolerance for slight differences in y heights between lines
 y_tolerance <- 3
 
+# Split columns into rows and columns
 structured_table <- pdf_df_cols %>%
   arrange(file, page, y, x) |>
   group_by(page) |>
@@ -127,6 +210,7 @@ structured_table <- pdf_df_cols %>%
   ) |>
   relocate(file, page, line_id, any_of(cols))
   
+# Clean some messy values created by overlapping x coordinates
 structured_table_clean <- structured_table |>
   mutate(
     GENDER = case_when(
@@ -146,8 +230,10 @@ structured_table_clean <- structured_table |>
       TRUE ~ CITIZENSHIP
     ),
     ARREST_METHOD = case_when(
-      CDS_PROGRAMS == "OASISS, STR_PROSPatrol" ~ "Patrol Border", # Checked for file 1, but could be "Patrol Interior"
-      CDS_PROGRAMS == "OASISS, STR_PROSTraffic" ~ "Traffic Chec",
+      # Checked for file 1, but could conceivably be "Patrol Interior"
+      CDS_PROGRAMS == "OASISS, STR_PROSPatrol" ~ "Patrol Border", 
+      CDS_PROGRAMS == "OASISS, STR_PROSTraffic" ~ "Traffic Check",
+      # Inferred value for these fields, better to leave truncated?
       ARREST_METHOD == "Law Enforcement Agency Response Uni" ~ "Law Enforcement Agency Response Unit",
       ARREST_METHOD == "Organized Crime Drug Enforcement Tas" ~ "Organized Crime Drug Enforcement Task Force",
       TRUE ~ ARREST_METHOD
@@ -157,42 +243,38 @@ structured_table_clean <- structured_table |>
       CDS_PROGRAMS == "OASISS, STR_PROSTraffic" ~ "OASISS, STR_PROS",
       TRUE ~ CDS_PROGRAMS
     ),
+    DHS_STATUS_CD = case_when(
+      STATUS_AT_ENTRY == "False Claim with Valid DocumNO" ~ "NO",
+      STATUS_AT_ENTRY == "ORAL FALSE CLAIMS TO ONO" ~ "NO",
+      TRUE ~ DHS_STATUS_CD
+    ),
+    STATUS_AT_ENTRY = case_when(
+      STATUS_AT_ENTRY == "False Claim with Valid DocumNO" ~ "False Claim with Valid Docum...",
+      STATUS_AT_ENTRY == "ORAL FALSE CLAIMS TO ONO" ~ "ORAL FALSE CLAIMS TO O...",
+      TRUE ~ STATUS_AT_ENTRY
+    ),
+    # Convert to desired data types
     ENTRY_DT = mdy(ENTRY_DT),
     APP_DT_TIME = mdy(APP_DT_TIME),
-    CASE_FILING_DATE = mdy(CASE_FILING_DATE),
+    CASE_FILING_DATE = mdy(CASE_FILING_DATE), # Some cells contain list of multiple dates which are truncated and unparseable
     APP_AGE = as.numeric(APP_AGE)
   )
 
-# unique(structured_table_clean$CITIZENSHIP)
-# unique(structured_table_clean$GENDER)
-# unique(structured_table_clean$APP_AGE)
-# unique(structured_table_clean$UAC_IND)
-# unique(structured_table_clean$FMUA_IND)
-# unique(structured_table_clean$CREDIBLE_FEAR_IND)
-# unique(structured_table_clean$NUMBER_CHILDREN_AND_NATIONALITY)
-# unique(structured_table_clean$MARITAL_STATUS)
-# unique(structured_table_clean$ENTRY_DT)
-# unique(structured_table_clean$STATUS_AT_ENTRY)
-# unique(structured_table_clean$DHS_STATUS_CD)
-# unique(structured_table_clean$APP_DT_TIME)
-# unique(structured_table_clean$SECTOR)
-# unique(structured_table_clean$CDS_PROGRAMS)
-# unique(structured_table_clean$ARREST_METHOD)
-# unique(structured_table_clean$DISPOSITION)
-# unique(structured_table_clean$FMU_NUMBER)
-# unique(structured_table_clean$CASE_FILING_DATE) # Includes multiple dates, additional dates unparseable
-# unique(structured_table_clean$ERO_TRANSFER)
-# unique(structured_table_clean$ERO_TRANSFER_DT) # Both literal "N/A" and missingness
-# unique(structured_table_clean$SUBJECT_ID)
-
 # ---- Pointblank Validation ----
+
+# Expect a total of 5018 pages read in (9 * 500 + 518)
+pages_read <- structured_table_clean |>
+  group_by(file) |>
+  summarize(pages = max(page))
+
+stop_if_not(sum(pages_read$pages) == 5018)
 
 structured_table_clean |>
   # -- Date range checks --
   col_vals_between(
     APP_DT_TIME,
-    as.Date("2013-09-01"),
-    Sys.Date(),
+    as.Date("2013-10-01"),
+    as.Date("2014-09-30"),
     na_pass = TRUE,
     actions = action_levels(warn_at = 0.001, stop_at = 0.01)
   ) |>
@@ -209,8 +291,142 @@ structured_table_clean |>
     GENDER,
     c("Male", "Female", "Unknown", NA),
     actions = action_levels(warn_at = 0.0001, stop_at = 0.001)
+  ) |>
+  col_vals_in_set(
+    UAC_IND,
+    c("NO", "YES"),
+    actions = action_levels(warn_at = 0.0001, stop_at = 0.001)
+  ) |>
+  col_vals_in_set(
+    STATUS_AT_ENTRY,
+    c(
+      "PWA Mexico",
+      "Parolee",
+      "Immigrant",
+      "Border Crossing Card",
+      "Visitor",
+      "Non-Immigrant",
+      "PWA Other",
+      "Legal Permanent Resident",
+      "Temporary Worker Other",
+      "US Citizen",
+      "PWA Canada",
+      "Other",
+      "Imposter",
+      "Temporary Work Agriculture",
+      "Student",
+      "False Claim with Valid Docum...",
+      "False Claim with Counterfeit",
+      "ORAL FALSE CLAIMS TO O...",
+      "Crew",
+      "Asylum",
+      "Refugee",
+      "Smuggler",
+      "Stowaway",
+      "Conditional Resident",
+      "Not Applicable",
+      "Not in Custody",
+      "Temporary Resident",
+      NA
+    ),
+    actions = action_levels(warn_at = 0.0001, stop_at = 0.001)
+  ) |>
+  col_vals_in_set(
+    DHS_STATUS_CD,
+    c("NO", "LPR"),
+    actions = action_levels(warn_at = 0.0001, stop_at = 0.001)
+  ) |>
+  col_vals_in_set(
+    SECTOR,
+    c(
+      "BBT",
+      "BLW",
+      "BUN",
+      "DRT",
+      "DTM",
+      "ELC",
+      "EPT",
+      "GFN",
+      "HLT",
+      "HVM",
+      "LRT",
+      "MIP",
+      "NLL",
+      "RGV",
+      "RMY",
+      "SDC",
+      "SPW",
+      "SWB",
+      "TCA",
+      "YUM"
+    ),
+    actions = action_levels(warn_at = 0.0001, stop_at = 0.001)
+  ) |>
+  col_vals_in_set(
+    CDS_PROGRAMS,
+    c(
+      "ATEP",
+      "ATEP, OASISS",
+      "ATEP, OASISS, STR",
+      "ATEP, STR_PROS",
+      "ATEP, STRMLINE",
+      "OASISS",
+      "OASISS, STR_PROS",
+      "OASISS, STRMLINE",
+      "STR_PROS",
+      "STR_PROS, STRML",
+      "STRMLINE",
+      NA
+    ),
+    actions = action_levels(warn_at = 0.0001, stop_at = 0.001)
+  ) |>
+  col_vals_in_set(
+    ARREST_METHOD,
+    c(
+      "Anti-Smuggling",
+      "Boat Patrol",
+      "CAP Federal Incarceration",
+      "CAP Local Incarceration",
+      "CAP State Incarceration",
+      "Crewman/Stowaway",
+      "Inspections",
+      "Law Enforcement Agency Response Unit",
+      "Located",
+      "Organized Crime Drug Enforcement Task Force",
+      "Other Agency (turned over to INS)",
+      "Other efforts",
+      "Other Task Force",
+      "Patrol Border",
+      "Patrol Interior",
+      "Traffic Check",
+      "Transportation Check Aircraft",
+      "Transportation Check Bus",
+      "Transportation Check Freight Train",
+      "Transportation Check Passenger Train",
+      "Worksite Enforcement"
+    ),
+    actions = action_levels(warn_at = 0.0001, stop_at = 0.001)
+  ) |>
+  col_vals_in_set(
+    DISPOSITION,
+    c(
+      "B",
+      "ER",
+      "ER/CF",
+      "I",
+      "NTA",
+      "P",
+      "REINST",
+      "REL",
+      "T",
+      "TOT",
+      "V",
+      "VWPPRM",
+      "WA/NTA"
+    ),
+    actions = action_levels(warn_at = 0.0001, stop_at = 0.001)
   )
 
-# Write out--what format?
+# Write out--what format? Parquet, Excel, 1 Excel per original file, 1 Excel per month?
 
 # END.
