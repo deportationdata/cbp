@@ -24,6 +24,15 @@ raw_files <- dir_ls(
   regexp = "\\.(xlsx|xls)$"
 )
 
+# Exclude Excel lock files before checking for new workbooks.
+raw_files <- raw_files[
+  !str_detect(path_file(raw_files), "^~\\$")
+]
+
+if (length(raw_files) == 0) {
+  stop("No Excel workbooks found in ", raw_dir, ".")
+}
+
 #### Manual Entry Needed: Rebuild Profiling Metadata? ####
 
 # IMPORTANT:
@@ -73,11 +82,6 @@ if (!force_reprofile) {
   }
 }
 
-
-# remove temp excel lock files
-raw_files <- raw_files[
-  !str_detect(path_file(raw_files), "^~\\$")
-]
 
 # detect likely header row
 find_header_row <- function(file_path, sheet, n_max = 100, min_matches = 3) {

@@ -197,13 +197,8 @@ benchmark_max_date_sql <- as.character(
   )
 )
 
-# event date fields
-event_date_sql <- paste0(
-  "COALESCE(",
-  "CAST(apprehension_datetime AS DATE), ",
-  "apprehension_date",
-  ")"
-)
+# event date from the combined datetime
+event_date_sql <- "CAST(apprehension_datetime AS DATE)"
 
 apprehensions_monthly_query <- sprintf(
   paste0(

@@ -104,7 +104,6 @@ column_order <- c(
   
   # case / custody timing
   "case_file_date",
-  "final_bookout_datetime",
   "final_bookout_date",
   
   # record / person identifiers
@@ -136,6 +135,7 @@ column_order <- c(
   # demographic information
   "age",
   "adult_or_juvenile",
+  "juvenile_18_indicator",
   "gender",
   "subject_group_classification",
   "marital_status",
@@ -163,7 +163,6 @@ column_order <- c(
   "fmu_type",
   "fmua_indication",
   "number_of_children_and_nationality",
-  "juvenile_18_indicator",
   "unaccompanied_child_indicator",
   
   # immigration / entry status
@@ -263,7 +262,9 @@ final_columns <- c(
   remaining_columns
 )
 
-#### Standardize Redaction Codes #### 
+#### Standardize values #### 
+## standardize redaction codes 
+
 # helpers for safely constructing SQL
 sql_identifier <- function(x) {
   as.character(
@@ -333,20 +334,20 @@ clean_string_sql <- function(column) {
     sql_string("), (b)")
   )
   
+  ## remove /E from `arrest_sector`
+  if (column == "arrest_sector") {
+    value_sql <- sprintf(
+      "regexp_replace(%s, %s, '')",
+      value_sql,
+      sql_string("/E\\s*$")
+    )
+  }
+  
   # collapse whitespace, trim, and convert empty strings to NULL
   sprintf(
     "NULLIF(TRIM(regexp_replace(%s, %s, ' ', 'g')), '')",
     value_sql,
     sql_string(whitespace_pattern)
-  )
-}
-
-#### Remove /E from `arrest_sector` ####
-if (column == "arrest_sector") {
-  value_sql <- sprintf(
-    "regexp_replace(%s, %s, '')",
-    value_sql,
-    sql_string("/E\\s*$")
   )
 }
 
@@ -357,7 +358,6 @@ datetime_columns <- c(
   "arrest_datetime",
   "earliest_apprehension_datetime",
   "earliest_encounter_datetime",
-  "final_bookout_datetime",
   "most_recent_encounter_datetime",
   "most_recent_prior_entry_datetime"
 )
@@ -1054,19 +1054,52 @@ dbExecute(
   )
 )
 
+#### Combine date and time to datetime ####
+
+# use midnight as a placeholder when the date is known but time is missing
+dbExecute(
+  con,
+  "CREATE OR REPLACE TEMP VIEW combined_input AS
+   SELECT
+     * EXCLUDE (
+         arrest_date,
+         arrest_time,
+         apprehension_date,
+         apprehension_time,
+         most_recent_prior_entry_date,
+         most_recent_prior_entry_time
+       )
+       REPLACE (
+         COALESCE(
+           apprehension_datetime,
+           apprehension_date + COALESCE(apprehension_time, TIME '00:00:00'),
+           arrest_date + COALESCE(arrest_time, TIME '00:00:00')
+         ) AS apprehension_datetime,
+         COALESCE(
+           most_recent_prior_entry_datetime,
+           most_recent_prior_entry_date +
+             COALESCE(most_recent_prior_entry_time, TIME '00:00:00')
+         ) AS most_recent_prior_entry_datetime
+       )
+   FROM cleaned_input"
+)
+
 cleaned_columns <- dbGetQuery(
   con,
-  "DESCRIBE cleaned_input"
+  "DESCRIBE combined_input"
 )$column_name
 
-# column pairing
+#### Code map pairs #### 
 code_pairs <- list(
   citizenship = "citizenship_cd",
   country_of_birth = "country_of_birth_cd",
   country_of_residence = "country_of_residence_cd",
   marital_status = "marital_status_cd",
   entry_status = "entry_status_cd",
-  ethnicity = "ethnicity_cd"
+  ethnicity = "ethnicity_cd",
+  border = character(),
+  arrest_sector = character(),
+  bookout_sector = character()
   )
 
 # retain existing code columns only 
@@ -1202,7 +1235,7 @@ final_query <- sprintf(
     "COPY (",
     "\n  SELECT",
     "\n    %s",
-    "\n  FROM cleaned_input s",
+    "\n  FROM combined_input s",
     "\n  %s",
     "\n)",
     "\nTO %s (",

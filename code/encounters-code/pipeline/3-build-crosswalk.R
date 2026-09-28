@@ -74,6 +74,10 @@ crosswalk <- distinct_columns |>
       
       # location 
       clean_column %in% c(
+        "apprehension_sector"
+      ) ~ "arrest_sector",
+      
+      clean_column %in% c(
         "sector_of_booked_out",
         "sector_of_bookout"
       ) ~ "bookout_sector",
@@ -97,21 +101,26 @@ crosswalk <- distinct_columns |>
       
       # other dates (not encounter)
       clean_column %in% c(
-        "earliest_app_date"
-      ) ~ "earliest_apprehension_date",
+        "earliest_app_date",
+        "earliest_apprehension_date"
+      ) ~ "earliest_encounter_date",
       
+      clean_column %in% c(
+        "most_recent_app_date",
+        "most_recent_apprehension_date"
+      ) ~ "most_recent_encounter_date",
+      
+      clean_column %in% c(
+        "final_bookout_date"
+      ) ~ "final_bookout_datetime",
+      
+      # previous encounters
       clean_column %in% c(
         "number_of_previous_apprehension",
-        "number_of_previous_apps"
-      ) ~ "number_of_previous_apprehensions",
-      
-      clean_column %in% c(
+        "number_of_previous_apps",
+        "number_of_previous_apprehensions",
         "number_of_previous_encounter"
       ) ~ "number_of_previous_encounters",
-      
-      clean_column %in% c(
-        "most_recent_app_date"
-      ) ~ "most_recent_apprehension_date",
       
       # criminal conviction
       clean_column %in% c(

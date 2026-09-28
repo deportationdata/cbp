@@ -48,17 +48,15 @@ crosswalk <- distinct_columns |>
         "app_dt_time",
         "appr_dt_time",
         "apprehension_datetime",
-        "encounter_dt_time"
+        "encounter_dt_time",
+        "arrest_date_time",
+        "arrest_datetime"
       ) ~ "apprehension_datetime",
       
       clean_column %in% c(
         "apprehension_date",
         "apprehension_dt"
       ) ~ "apprehension_date",
-      
-      clean_column %in% c(
-        "arrest_date_time"
-      ) ~ "arrest_datetime",
       
       # birth / residence location
       clean_column %in% c(
@@ -88,12 +86,10 @@ crosswalk <- distinct_columns |>
       # final bookout
       clean_column %in% c(
         "final_bookout",
-        "final_bookout_date"
+        "final_bookout_date",
+        "final_bookout_date_time",
+        "final_bookout_datetime"
       ) ~ "final_bookout_date",
-      
-      clean_column %in% c(
-        "final_bookout_date_time"
-      ) ~ "final_bookout_datetime",
       
       # programs
       clean_column %in% c(
@@ -125,7 +121,8 @@ crosswalk <- distinct_columns |>
       clean_column %in% c(
         "statue_charge",
         "statute_charge",
-        "statute_charge_s"
+        "statute_charge_s",
+        "highest_statute_charge"
       ) ~ "statute_charge",
       
       clean_column %in% c(
@@ -150,8 +147,9 @@ crosswalk <- distinct_columns |>
       
       clean_column %in% c(
         "ncic_desc_defer_to_doj",
-        "ncic_desc_owned_by_doj_not_cbp"
-      ) ~ "ncic_desc_owned_by_doj",
+        "ncic_desc_owned_by_doj_not_cbp",
+        "ncic_desc_owned_by_doj"
+      ) ~ "ncic_description_owned_by_doj",
       
       # arrest method
       clean_column %in% c(
@@ -161,6 +159,10 @@ crosswalk <- distinct_columns |>
       clean_column %in% c(
         "arrest_sl_checkpoint_indicator"
       ) ~ "arrest_at_checkpoint_indicator",
+      
+      clean_column %in% c(
+        "arresting_agent_hash_number"
+      ) ~ "agent_hash_id",
       
       # credible fear
       clean_column %in% c(
@@ -191,8 +193,14 @@ crosswalk <- distinct_columns |>
       ) ~ "immigration_status_code_lpr",
       
       clean_column %in% c(
-        "subject_disposition_code_lpr"
-      ) ~ "disposition_code_lpr",
+        "subject_disposition_code_lpr",
+        "disposition_code_lpr"
+      ) ~ "disposition_code",
+      
+      clean_column %in% c(
+        "subject_prosecution_indicator",
+        "referred_prosecution"
+      ) ~ "referred_prosecution_indicator",
       
       clean_column %in% c(
         "lpr"
@@ -236,6 +244,10 @@ crosswalk <- distinct_columns |>
         "civ_id_subject_key",
         "civ_id_subject_key_unique_identifier"
       ) ~ "subject_key",
+      
+      clean_column %in% c(
+        "alien_number"
+      ) ~ "subject_afile_number",
       
       clean_column %in% c(
         "unique_person_identifier",
@@ -296,12 +308,10 @@ crosswalk <- distinct_columns |>
       
       # other dates (not apprehension)
       clean_column %in% c(
-        "earliest_encounter_date_time"
+        "earliest_encounter_date_time",
+        "earliest_app_date_time",
+        "earliest_apprehension_datetime"
       ) ~ "earliest_encounter_datetime",
-      
-      clean_column %in% c(
-        "earliest_app_date_time"
-      ) ~ "earliest_apprehension_datetime",
       
       clean_column %in% c(
         "earliest_app_date",
@@ -326,10 +336,8 @@ crosswalk <- distinct_columns |>
       clean_column %in% c(
         "number_of_previous_apprehension",
         "number_of_previous_apprehensions",
-        "number_of_previous_apps"
-      ) ~ "number_of_previous_apprehensions",
-      
-      clean_column %in% c(
+        "number_of_previous_apps",
+        "number_of_previous_apprehensions",
         "number_of_previous_encounter"
       ) ~ "number_of_previous_encounters",
       

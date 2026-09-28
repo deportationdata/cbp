@@ -288,7 +288,13 @@ code_map <- bind_rows(
     mutate(field = "ethnicity"),
   
   border_mapping |>
-    mutate(field = "border")
+    mutate(field = "border"),
+  
+  sector_mapping |>
+    mutate(field = "arrest_sector"),
+  
+  sector_mapping |>
+    mutate(field = "bookout_sector")
 ) |>
   select(
     field,

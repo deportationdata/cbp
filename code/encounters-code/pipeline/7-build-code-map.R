@@ -193,6 +193,41 @@ marital_mapping <- tribble(
   "X",   "X"
 )
 
+border_mapping <- tribble(
+  ~code, ~full_name,
+  "SBO",  "Southwest Border",
+  "CBO",  "Coastal Border",
+  "NBO",  "Northern Border",
+  "SB",   "Southwest Border",
+  "CB",   "Coastal Border",
+  "NB",   "Northern Border" 
+)
+
+# sector mappings
+sector_mapping <- tribble(
+  ~code, ~full_name,
+  "BBT", "Big Bend",
+  "BLW", "Blaine",
+  "BUN", "Buffalo",
+  "DRT", "Del Rio",
+  "DTM", "Detroit",
+  "ELC", "El Centro",
+  "EPT", "El Paso",
+  "GFN", "Grand Forks",
+  "HLT", "Houlton",
+  "HVM", "Havre",
+  "LRT", "Laredo",
+  "MIP", "Miami",
+  "NLL", "New Orleans",
+  "RGV", "Rio Grande Valley",
+  "RMY", "Ramey",
+  "SDC", "San Diego",
+  "SPW", "Spokane",
+  "SWB", "Swanton",
+  "TCA", "Tucson",
+  "YUM", "Yuma"
+)
+
 # combine mappings
 code_map <- bind_rows(
   country_mapping |>
@@ -202,7 +237,16 @@ code_map <- bind_rows(
     mutate(field = "country_of_residence"),
   
   marital_mapping |>
-    mutate(field = "marital_status")
+    mutate(field = "marital_status"),
+  
+  border_mapping |>
+    mutate(field = "border"),
+  
+  sector_mapping |>
+    mutate(field = "arrest_sector"),
+  
+  sector_mapping |>
+    mutate(field = "bookout_sector")
 ) |>
   select(
     field,

@@ -14,7 +14,7 @@ encounters_stacked_path <- file.path(
 
 encounters_final_path <- file.path(
   processed_dir,
-  "encounters-final.parquet"
+  "encounters-final-all-cols.parquet"
 )
 
 code_map_path <- file.path(dataset_dir, "metadata", "code-map.parquet")
@@ -84,21 +84,15 @@ cat(
 column_order <- c(
   
   # event timing
-  "apprehension_date",
-  "apprehension_time",
   "encounter_datetime",
   
   # encounter / entry history
-  "earliest_apprehension_date",
   "earliest_encounter_date",
-  "most_recent_apprehension_date",
   "most_recent_encounter_date",
-  "number_of_previous_apprehensions",
   "number_of_previous_encounters",
   
   # case / custody timing
   "final_bookout_datetime",
-  "final_bookout_date",
   
   # location / arrest information
   "border",
@@ -202,7 +196,9 @@ final_columns <- c(
   remaining_columns
 )
 
-#### Standardize Redaction Codes #### 
+#### Standardize values #### 
+## standardize redaction codes 
+
 # helpers for safely constructing SQL
 sql_identifier <- function(x) {
   as.character(
@@ -289,15 +285,8 @@ datetime_columns <- c(
 
 date_columns <- c(
   "apprehension_date",
-  "earliest_apprehension_date",
   "earliest_encounter_date",
-  "most_recent_apprehension_date",
-  "most_recent_encounter_date",
-  "final_bookout_date"
-)
-
-time_columns <- c(
-  "apprehension_time"
+  "most_recent_encounter_date"
 )
 
 # keep only columns that exist
@@ -308,11 +297,6 @@ datetime_columns <- intersect(
 
 date_columns <- intersect(
   date_columns,
-  stacked_columns
-)
-
-time_columns <- intersect(
-  time_columns,
   stacked_columns
 )
 
@@ -457,45 +441,6 @@ date_unrecognized <- map_dfr(
 
 date_unrecognized
 
-# inspect unrecognized time values
-
-time_unrecognized <- map_dfr(
-  time_columns,
-  \(column) {
-    
-    value_sql <- clean_string_sql(
-      column
-    )
-    
-    dbGetQuery(
-      con,
-      sprintf(
-        paste0(
-          "SELECT ",
-          "%s AS column, ",
-          "%s AS raw_value, ",
-          "COUNT(*) AS n ",
-          "FROM read_parquet(%s) ",
-          "WHERE %s IS NOT NULL ",
-          "AND UPPER(%s) NOT IN ('NA', 'N/A', 'NULL') ",
-          "AND TRY_CAST(%s AS TIME) IS NULL ",
-          "AND TRY_CAST(%s AS DOUBLE) IS NULL ",
-          "GROUP BY %s"
-        ),
-        sql_string(column),
-        value_sql,
-        stacked_sql,
-        value_sql,
-        value_sql,
-        value_sql,
-        value_sql,
-        value_sql
-      )
-    )
-  }
-)
-
-time_unrecognized
 
 #### Inspect Logical Cols #### 
 
@@ -622,7 +567,6 @@ logical_unrecognized
 
 integer_columns <- c(
   "age",
-  "number_of_previous_apprehensions",
   "number_of_previous_encounters"
 )
 
@@ -768,8 +712,7 @@ final_expression <- function(column) {
   }
   
   # time
-  if (column %in% time_columns) {
-    
+  if (column == "apprehension_time") {
     return(
       sprintf(
         paste0(
@@ -779,19 +722,10 @@ final_expression <- function(column) {
           "WHEN TRY_CAST(%1$s AS DOUBLE) IS NOT NULL ",
           "THEN CAST(",
           "TIME '00:00:00' + ",
-          "to_microseconds(",
-          "CAST(",
-          "ROUND(",
-          "(",
-          "TRY_CAST(%1$s AS DOUBLE) - ",
-          "FLOOR(TRY_CAST(%1$s AS DOUBLE))",
-          ") * 86400000000",
-          ") ",
-          "AS BIGINT",
-          ")",
-          ") ",
-          "AS TIME",
-          ") ",
+          "to_microseconds(CAST(ROUND(",
+          "(TRY_CAST(%1$s AS DOUBLE) - ",
+          "FLOOR(TRY_CAST(%1$s AS DOUBLE))) * 86400000000",
+          ") AS BIGINT)) AS TIME) ",
           "ELSE NULL ",
           "END AS %2$s"
         ),
@@ -800,7 +734,7 @@ final_expression <- function(column) {
       )
     )
   }
-  
+
   # logical
   if (column %in% logical_columns) {
     
@@ -876,6 +810,40 @@ final_select <- map(
   )
 
 
+# use existing cleaning query 
+dbExecute(
+  con,
+  sprintf(
+    "CREATE OR REPLACE TEMP VIEW cleaned_input AS
+     SELECT %s
+     FROM read_parquet(%s)",
+    final_select,
+    stacked_sql
+  )
+)
+
+#### Combine `date` and `time` to `datetime` #### 
+# use midnight as a placeholder when the date is known but time is missing
+dbExecute(
+  con,
+  "CREATE OR REPLACE TEMP VIEW combined_input AS
+   SELECT
+     * EXCLUDE (apprehension_date, apprehension_time)
+       REPLACE (
+         COALESCE(
+           encounter_datetime,
+           apprehension_date + COALESCE(apprehension_time, TIME '00:00:00')
+         ) AS encounter_datetime
+       )
+   FROM cleaned_input"
+)
+
+
+cleaned_columns <- dbGetQuery(
+  con,
+  "DESCRIBE combined_input"
+)$column_name
+
 #### Consolidate Code Columns #### 
 
 # access code map in SQL
@@ -945,28 +913,14 @@ if (nrow(mapping_conflicts) > 0) {
   stop("Resolve conflicting code mappings before continuing.")
 }
 
-# use existing cleaning query 
-dbExecute(
-  con,
-  sprintf(
-    "CREATE OR REPLACE TEMP VIEW cleaned_input AS
-     SELECT %s
-     FROM read_parquet(%s)",
-    final_select,
-    stacked_sql
-  )
-)
-
-cleaned_columns <- dbGetQuery(
-  con,
-  "DESCRIBE cleaned_input"
-)$column_name
-
 # column pairing
 code_pairs <- list(
   citizenship = "citizenship_cd",
   country_of_residence = "country_of_residence_cd",
-  marital_status = "marital_status_cd"
+  marital_status = "marital_status_cd",
+  border = character(),
+  arrest_sector = character(),
+  bookout_sector = character()
 )
 
 # retain existing code columns only 
@@ -1102,7 +1056,7 @@ final_query <- sprintf(
     "COPY (",
     "\n  SELECT",
     "\n    %s",
-    "\n  FROM cleaned_input s",
+    "\n  FROM combined_input s",
     "\n  %s",
     "\n)",
     "\nTO %s (",
@@ -1171,9 +1125,6 @@ column_types |>
     ),
     date_columns = sum(
       type == "DATE"
-    ),
-    time_columns = sum(
-      type == "TIME"
     )
   ) |>
   print()

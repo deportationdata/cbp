@@ -19,7 +19,7 @@ dir.create(
 
 encounters_final_path <- file.path(
   processed_dir,
-  "encounters-final.parquet"
+  "encounters-final-all-cols.parquet"
 )
 
 cross_reference_parquet_path <- file.path(
@@ -194,12 +194,7 @@ benchmark_max_date_sql <- as.character(
 )
 
 # event date fields
-event_date_sql <- paste0(
-  "COALESCE(",
-  "CAST(encounter_datetime AS DATE), ",
-  "apprehension_date",
-  ")"
-)
+event_date_sql <- "CAST(encounter_datetime AS DATE)"
 
 encounters_monthly_query <- sprintf(
   paste0(

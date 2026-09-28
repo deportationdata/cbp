@@ -57,14 +57,14 @@ final_column_inventory_path <- file.path(
   "final-column-inventory.parquet"
 )
 
-raw_column_matrix_path <- file.path(
+raw_column_missingness_matrix_path <- file.path(
   metadata_dir,
-  "raw-column-matrix.parquet"
+  "raw-column-missingness-matrix.parquet"
 )
 
-final_column_matrix_path <- file.path(
+final_column_missingness_matrix_path <- file.path(
   metadata_dir,
-  "final-column-matrix.parquet"
+  "final-column-missingness-matrix.parquet"
 )
 
 dir_create(metadata_dir)
@@ -720,7 +720,7 @@ for (i in seq_len(nrow(source_sheets))) {
         TRUE ~ sprintf("%.2f%%", percent)
       )
     ) |>
-    select(metric, column, value) |>
+    select(column, value) |>
     pivot_wider(
       names_from = column,
       values_from = value
@@ -737,12 +737,12 @@ for (i in seq_len(nrow(source_sheets))) {
   raw_matrix_rows[[i]] <- raw_matrix
 }
 
-raw_column_matrix <- bind_rows(raw_matrix_rows) |>
+raw_column_missingness_matrix <- bind_rows(raw_matrix_rows) |>
   arrange(source_start_date, source_file, source_sheet)
 
 write_parquet(
-  raw_column_matrix,
-  raw_column_matrix_path
+  raw_column_missingness_matrix,
+  raw_column_missingness_matrix_path
 )
 
 
@@ -792,7 +792,7 @@ matrix_sources <- source_sheets |>
     source_end_date
   )
 
-final_column_matrix <- matrix_sources |>
+final_column_missingness_matrix <- matrix_sources |>
   full_join(
     final_source_matrix,
     by = c("source_file", "source_sheet")
@@ -813,8 +813,8 @@ final_column_matrix <- matrix_sources |>
   arrange(source_start_date, source_file, source_sheet)
 
 write_parquet(
-  final_column_matrix,
-  final_column_matrix_path
+  final_column_missingness_matrix,
+  final_column_missingness_matrix_path
 )
 
 dbDisconnect(
