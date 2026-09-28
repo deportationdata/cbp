@@ -3,6 +3,9 @@ library(tidyverse)
 library(fs)
 library(DBI)
 library(duckdb)
+library(arrow)
+library(readxl)
+library(janitor)
 
 # paths
 dataset_dir <- "data/apprehensions"
