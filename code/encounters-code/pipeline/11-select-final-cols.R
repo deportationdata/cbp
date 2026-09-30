@@ -29,9 +29,9 @@ final_columns <- c(
   
   # arrest information
   "border",
-  "apprehension_sector",
+  "arrest_sector",
   "bookout_sector",
-  "apprehension_state",
+  "arrest_state",
   "arrest_at_checkpoint_indicator",
   
   
@@ -40,8 +40,8 @@ final_columns <- c(
   "adult_or_juvenile",
   "gender",
   "citizenship",
-  "city_of_residence",
-  "country_of_residence",
+  "residence_city",
+  "residence_country",
   "marital_status",
   "subject_group_classification",
   

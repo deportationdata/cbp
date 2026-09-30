@@ -115,81 +115,94 @@ read_standardized_sheet <- function(file_path, sheet_name) {
     ) |>
     arrange(column_position)
   
-  rows_to_skip <- unique(sheet_cols$rows_to_skip)
+  # read Parquet rows directly, without removing a header row
+  if (str_to_lower(path_ext(file_path)) == "parquet") {
+    
+    part_df <- read_parquet(file_path)
+    names(part_df) <- make_clean_names(str_squish(names(part_df)))
+    
+    part_df <- part_df |>
+      mutate(across(everything(), as.character)) |>
+      drop_empty_columns()
+    
+  } else {
+    rows_to_skip <- unique(sheet_cols$rows_to_skip)
+    
+    # skip count = 1 
+    if (length(rows_to_skip) != 1) {
+      stop(
+        "rows_to_skip issue for: ",
+        file_path,
+        " / ",
+        sheet_name
+      )
+    }
+    
+    raw_df <- suppressMessages(
+      read_excel(
+        path = file_path,
+        sheet = sheet_name,
+        col_names = FALSE,
+        col_types = "text",
+        skip = rows_to_skip
+      )
+    ) |>
+      drop_empty_columns()
+    
+    header <- raw_df |>
+      slice(1) |>
+      unlist(use.names = FALSE) |>
+      as.character() |>
+      str_squish()
+    
+    keep_cols <- !is.na(header) & header != ""
+    
+    header <- header[keep_cols]
+    
+    part_df <- raw_df |>
+      slice(-1) |>
+      select(which(keep_cols))
+    
+    names(part_df) <- make_clean_names(
+      header,
+      allow_dupes = TRUE
+    )
+    
+  # remove repeated header rows
+  header_values <- names(part_df) |>
+    str_to_lower() |>
+    str_replace_all("[^a-z0-9]+", "_") |>
+    str_replace_all("^_|_$", "")
   
-  # skip count = 1 
-  if (length(rows_to_skip) != 1) {
-    stop(
-      "rows_to_skip issue for: ",
-      file_path,
+  row_header_matches <- map_dfc(
+    seq_along(part_df),
+    function(j) {
+      part_df[[j]] |>
+        as.character() |>
+        str_squish() |>
+        str_to_lower() |>
+        str_replace_all("[^a-z0-9]+", "_") |>
+        str_replace_all("^_|_$", "") == header_values[j]
+    }
+  )
+  
+  rows_to_remove <- rowSums(row_header_matches, na.rm = TRUE) >= 2
+  
+  if (any(rows_to_remove)) {
+    message(
+      "Removing ",
+      sum(rows_to_remove),
+      " repeated header row(s) from ",
+      path_file(file_path),
       " / ",
       sheet_name
     )
+    
+    part_df <- part_df |>
+      filter(!rows_to_remove)
   }
-  
-  raw_df <- suppressMessages(
-    read_excel(
-      path = file_path,
-      sheet = sheet_name,
-      col_names = FALSE,
-      col_types = "text",
-      skip = rows_to_skip
-    )
-  ) |>
-    drop_empty_columns()
-  
-  header <- raw_df |>
-    slice(1) |>
-    unlist(use.names = FALSE) |>
-    as.character() |>
-    str_squish()
-  
-  keep_cols <- !is.na(header) & header != ""
-  
-  header <- header[keep_cols]
-  
-  part_df <- raw_df |>
-    slice(-1) |>
-    select(which(keep_cols))
-  
-  names(part_df) <- make_clean_names(
-    header,
-    allow_dupes = TRUE
-  )
-  
-# remove repeated header rows
-header_values <- names(part_df) |>
-  str_to_lower() |>
-  str_replace_all("[^a-z0-9]+", "_") |>
-  str_replace_all("^_|_$", "")
-
-row_header_matches <- map_dfc(
-  seq_along(part_df),
-  function(j) {
-    part_df[[j]] |>
-      as.character() |>
-      str_squish() |>
-      str_to_lower() |>
-      str_replace_all("[^a-z0-9]+", "_") |>
-      str_replace_all("^_|_$", "") == header_values[j]
+    
   }
-)
-
-rows_to_remove <- rowSums(row_header_matches, na.rm = TRUE) >= 2
-
-if (any(rows_to_remove)) {
-  message(
-    "Removing ",
-    sum(rows_to_remove),
-    " repeated header row(s) from ",
-    path_file(file_path),
-    " / ",
-    sheet_name
-  )
-  
-  part_df <- part_df |>
-    filter(!rows_to_remove)
-}
   
   rename_lookup <- crosswalk |>
     select(

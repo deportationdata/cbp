@@ -18,10 +18,10 @@ raw_column_inventory_path <- file.path(metadata_dir, "raw-column-inventory.parqu
 distinct_columns_path <- file.path(metadata_dir, "distinct-columns.parquet")
 failed_sheets_path <- file.path(metadata_dir, "failed-sheets.parquet")
 
-# list all xlsx/xls files in raw/
+# list Excel and Parquet files in raw/
 raw_files <- dir_ls(
   raw_dir,
-  regexp = "\\.(xlsx|xls)$"
+  regexp = "\\.(xlsx|xls|parquet)$"
 )
 
 # Exclude Excel lock files before checking for new workbooks.
@@ -30,14 +30,14 @@ raw_files <- raw_files[
 ]
 
 if (length(raw_files) == 0) {
-  stop("No Excel workbooks found in ", raw_dir, ".")
+  stop("No Excel or Parquet inputs found in ", raw_dir, ".")
 }
 
 #### Manual Entry Needed: Rebuild Profiling Metadata? ####
 
 # IMPORTANT:
   # FALSE = only profile new files, TRUE = rebuild everything
-  # If force_reprofile <- TRUE, set force_rebuild <- TRUE in 4-process-parts.R
+  # If force_reprofile <- TRUE, set force_rebuild <- TRUE in 4-create-parts.R
 
 force_reprofile <- FALSE
 
@@ -54,7 +54,7 @@ if (
   
   if (length(new_files) == 0) {
   
-    stop("No new Excel files detected. Skipping profiling.")
+    stop("No new input files detected. Skipping profiling.")
     
   } else {
     
@@ -135,6 +135,31 @@ find_header_row <- function(file_path, sheet, n_max = 100, min_matches = 3) {
 # profile one sheet
 profile_sheet <- function(file_path, sheet) {
   
+  # use existing column names for Parquet inputs
+  if (str_to_lower(path_ext(file_path)) == "parquet") {
+    
+    parquet_input <- open_dataset(file_path, format = "parquet")
+    header <- str_squish(names(parquet_input))
+    
+    if (length(header) == 0 || anyNA(header) || any(header == "")) {
+      stop("Parquet input has missing or blank column names.")
+    }
+    
+    return(
+      tibble(
+        file_name = path_file(file_path),
+        file_path = as.character(file_path),
+        sheet_name = sheet,
+        header_row = NA_integer_,
+        rows_to_skip = NA_integer_,
+        ncol = length(header),
+        raw_column = header,
+        clean_column = make_clean_names(header),
+        column_position = seq_along(header)
+      )
+    )
+  }
+  
   header_row <- find_header_row(
     file_path,
     sheet
@@ -177,11 +202,20 @@ profile_sheet <- function(file_path, sheet) {
 # sheet inventory
 sheet_inventory <- map_dfr(
   raw_files,
-  ~ tibble(
-    file_name = path_file(.x),
-    file_path = as.character(.x),
-    sheet_name = excel_sheets(.x)
-  )
+  function(file_path) {
+    
+    sheet_names <- if (str_to_lower(path_ext(file_path)) == "parquet") {
+      "pdf_extract"
+    } else {
+      excel_sheets(file_path)
+    }
+    
+    tibble(
+      file_name = path_file(file_path),
+      file_path = as.character(file_path),
+      sheet_name = sheet_names
+    )
+  }
 )
 
 # safely process sheets

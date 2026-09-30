@@ -251,7 +251,7 @@ entry_mapping <- tribble(
   "False Claim with Counterfeit D", "False Claim with Counterfeit Document",
   "False Claim with Valid Documen", "False Claim with Valid Document",
   "False Claim with Altered Docum", "False Claim with Altered Document",
-  "ORAL FALSE CLAIMS TO OTHER THA", "Oral False Claim to Other Tha",
+  "ORAL FALSE CLAIMS TO OTHER THA", "Oral False Claim to Other Than CBP",
   "Oral False Claim to U.S. Citiz", "Oral False Claim to U.S. Citizen"
 )
 
@@ -266,6 +266,31 @@ border_mapping <- tribble(
   "NB",   "Northern Border"
 )
 
+# sector mappings
+sector_mapping <- tribble(
+  ~code, ~full_name,
+  "BBT", "Big Bend",
+  "BLW", "Blaine",
+  "BUN", "Buffalo",
+  "DRT", "Del Rio",
+  "DTM", "Detroit",
+  "ELC", "El Centro",
+  "EPT", "El Paso",
+  "GFN", "Grand Forks",
+  "HLT", "Houlton",
+  "HVM", "Havre",
+  "LRT", "Laredo",
+  "MIP", "Miami",
+  "NLL", "New Orleans",
+  "RGV", "Rio Grande Valley",
+  "RMY", "Ramey",
+  "SDC", "San Diego",
+  "SPW", "Spokane",
+  "SWB", "Swanton",
+  "TCA", "Tucson",
+  "YUM", "Yuma"
+)
+
 
 # combine mappings
 code_map <- bind_rows(
@@ -273,10 +298,10 @@ code_map <- bind_rows(
     mutate(field = "citizenship"),
   
   country_mapping |>
-    mutate(field = "country_of_birth"),
+    mutate(field = "birth_country"),
   
   country_mapping |>
-    mutate(field = "country_of_residence"),
+    mutate(field = "residence_country"),
   
   marital_mapping |>
     mutate(field = "marital_status"),

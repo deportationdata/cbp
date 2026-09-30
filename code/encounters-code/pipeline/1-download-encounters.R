@@ -89,12 +89,8 @@ old_encounter_links <- if (file.exists(link_inventory_path)) {
   )
 }
 
-# links not already downloaded/recorded
-new_encounter_links <- encounter_links |>
-  anti_join(old_encounter_links, by = "full_url")
-
-# flag if manual review triggered (in new links)
-manual_count <- sum(new_encounter_links$download_class == "manual_review")
+# flag current links for manual review
+manual_count <- sum(encounter_links$download_class == "manual_review")
 
 if (manual_count > 0) {
   warning(
@@ -103,12 +99,19 @@ if (manual_count > 0) {
       "WARNING: File(s) flagged for manual review. Check data/encounters/manual_review/"))
   }
 
-print(new_encounter_links, n = Inf)
 
 # function to download files
 download_cbp_file <- function(url, dest_dir) {
   
   dest <- file.path(dest_dir, basename(url))
+
+  # skip files already downloaded
+  if (file.exists(dest) && file.info(dest)$size > 0) {
+    message("Skipping existing file: ", basename(url))
+    return(dest)
+  }
+
+  message("Downloading: ", basename(url))
   
   cbp_request(url) |>
     req_perform(path = dest)
@@ -117,13 +120,13 @@ download_cbp_file <- function(url, dest_dir) {
 }
 
 # download included encounter files into raw/
-downloaded_encounter_files <- new_encounter_links |>
+downloaded_encounter_files <- encounter_links |>
   filter(download_class == "include_encounters") |>
   pull(full_url) |>
   map_chr(download_cbp_file, dest_dir = raw_dir)
 
 # download manual review files into manual_review/
-downloaded_manual_review_files <- new_encounter_links |>
+downloaded_manual_review_files <- encounter_links |>
   filter(download_class == "manual_review") |>
   pull(full_url) |>
   map_chr(download_cbp_file, dest_dir = manual_review_dir)
@@ -143,8 +146,8 @@ write_parquet(
   link_inventory_path
 )
 
-cat("New encounter files:", length(downloaded_encounter_files), "\n")
-cat("New manual-review files:", length(downloaded_manual_review_files), "\n")
+cat("Available encounter files:", length(downloaded_encounter_files), "\n")
+cat("Available manual-review files:", length(downloaded_manual_review_files), "\n")
 
 
 

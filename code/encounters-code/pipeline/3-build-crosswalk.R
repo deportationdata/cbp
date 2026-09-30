@@ -17,10 +17,85 @@ distinct_columns <- read_parquet(
 crosswalk <- distinct_columns |>
   mutate(
     canonical_name = case_when(
+      # standardize NCIC names
+      clean_column %in% c(
+        "ncic_charge_code",
+        "ncic_charge_code_s",
+        "ncic_code",
+        "ncic_charge_code_defer_to_doj",
+        "ncic_charge_code_owned_by_doj_not_cbp",
+        "ncic_charge_code_owned_by_doj"
+      ) ~ "ncic_charge_code",
+      
+      clean_column %in% c(
+        "ncic_description",
+        "ncic_desc",
+        "ncic_desc_s",
+        "ncic_desc_defer_to_doj",
+        "ncic_desc_owned_by_doj_not_cbp",
+        "ncic_desc_owned_by_doj",
+        "ncic_description_owned_by_doj"
+      ) ~ "ncic_description",
+      
+      
+      # standardize birth and residence names
+      clean_column %in% c(
+        "birth_city",
+        "city_of_birth"
+      ) ~ "birth_city",
+      
+      clean_column %in% c(
+        "birth_state",
+        "state_of_birth"
+      ) ~ "birth_state",
+      
+      clean_column %in% c(
+        "birth_country",
+        "country_of_birth"
+      ) ~ "birth_country",
+      
+      clean_column %in% c(
+        "birth_country_cd",
+        "country_of_birth_cd"
+      ) ~ "birth_country_cd",
+      
+      clean_column %in% c(
+        "residence_country",
+        "country_of_residence"
+      ) ~ "residence_country",
+      
+      clean_column %in% c(
+        "residence_country_cd",
+        "country_of_residence_cd",
+        "country_of_res_cd"
+      ) ~ "residence_country_cd",
+      
+      clean_column %in% c(
+        "residence_city",
+        "city_of_residence"
+      ) ~ "residence_city",
+      
+      clean_column %in% c(
+        "residence_city_state",
+        "city_state_of_residence"
+      ) ~ "residence_city_state",
+      
+      clean_column %in% c(
+        "first_residence_country",
+        "first_country_of_residence",
+        "first_country_of_residence_foreign"
+      ) ~ "first_residence_country",
+      
       # age 
       clean_column %in% c(
         "app_age"
       ) ~ "age",
+      
+      # arrest state
+      clean_column %in% c(
+        "apprehension_state",
+        "arrest_state"
+      ) ~ "arrest_state",
       
       # apprehension/arrest datetime
       clean_column %in% c(
@@ -82,9 +157,8 @@ crosswalk <- distinct_columns |>
         "sector_of_bookout"
       ) ~ "bookout_sector",
       
-      clean_column %in% c(
-        "country_of_res_cd"
-      ) ~ "country_of_residence_cd",
+      
+      
       
       clean_column %in% c(
         "apprehension_latitude"

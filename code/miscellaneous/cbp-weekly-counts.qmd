@@ -10,18 +10,16 @@ library(tidyverse)
 library(arrow)
 library(lubridate)
 library(ggrepel)
-
+library(here)
 ```
 
 ## Encounters Over Time
 
 ```{r ENCOUNTERS}
-setwd("/Users/simone/Desktop/DDP/cbp")
-
 # paths
-encounters_dir <- "data/encounters"
-processed_dir <- file.path(encounters_dir, "processed")
-metadata_dir <- file.path(encounters_dir, "metadata")
+dataset_dir <- here("data", "encounters")
+processed_dir <- file.path(dataset_dir, "processed")
+metadata_dir <- file.path(dataset_dir, "metadata")
 
 encounters_final_path <- file.path(
   processed_dir,
@@ -54,16 +52,11 @@ weekly_encounters <- encounters_final_path |>
   open_dataset() |>
   select(
     encounter_datetime,
-    apprehension_datetime,
-    apprehension_date,
     source_file,
     source_sheet
   ) |>
   mutate(
-    event_date = coalesce(
-      as.Date(encounter_datetime),
-      as.Date(apprehension_datetime),
-      apprehension_date),
+    event_date = as.Date(encounter_datetime),
     week_start = floor_date(
       event_date,
       unit = "week",
@@ -121,7 +114,7 @@ weekly_encounters_plot
 
 # save plot
 ggsave(
-  "analysis/weekly-encounters-plot.pdf",
+  here("analysis", "weekly-apprehensions-plot.pdf"),
   plot = weekly_encounters_plot,
   width = 24,
   height = 14,
@@ -131,15 +124,314 @@ ggsave(
 
 ```
 
+## Apprehensions Over Time
+
+```{r APPREHENSIONS }
+# paths
+dataset_dir <- here("data", "apprehensions")
+processed_dir <- file.path(dataset_dir, "processed")
+metadata_dir <- file.path(dataset_dir, "metadata")
+
+apprehensions_final_path <- file.path(
+  processed_dir,
+  "apprehensions-final.parquet"
+)
+
+parts_metadata_path <- file.path(
+  metadata_dir,
+  "parts-metadata.parquet"
+)
+
+parts_metadata <- read_parquet(
+  parts_metadata_path
+)
+
+# part lookup 
+part_lookup <- parts_metadata |>
+  transmute(
+    source_file,
+    part_number = str_sub(
+      part_file,
+      start = 1,
+      end = 4
+    )
+  ) |>
+  distinct()
+
+
+# select date data
+weekly_apprehensions <- apprehensions_final_path |>
+  open_dataset() |>
+  select(
+    apprehension_datetime,
+    source_file,
+    source_sheet
+  ) |>
+  mutate(
+    event_date = as.Date(apprehension_datetime),
+    week_start = floor_date(
+      event_date,
+      unit = "week",
+      week_start = 1
+    )
+  ) |>
+  filter(
+    !is.na(week_start)
+  ) |>
+  group_by(
+    source_file,
+    source_sheet,
+    week_start
+  ) |>
+  summarize(
+    apprehension_count = n(),
+    .groups = "drop"
+  ) |>
+  collect() |>
+  left_join(
+  part_lookup,
+  by = "source_file"
+) |>
+  arrange(
+    part_number,
+    week_start
+  )
+
+
+# plot (2024)
+line_labels_2024 <- weekly_apprehensions |>
+  filter(
+    week_start >= as.Date("2024-01-01")
+  ) |>
+  group_by(
+    part_number
+  ) |> 
+  slice_max(
+    week_start,
+    n = 1,
+    with_ties = FALSE
+) |>
+  ungroup()
+
+weekly_apprehensions_plot_2024 <- ggplot(
+  weekly_apprehensions,
+  aes(
+    x = week_start,
+    y = apprehension_count,
+    group = part_number,
+    color = part_number
+  )
+) +
+  geom_line(
+    linewidth = 0.5
+  ) +
+  coord_cartesian(xlim = as.Date(c("2024-01-01", NA))) +
+  scale_x_date(
+    date_breaks = "1 year",
+    date_labels = "%Y"
+  ) +
+  labs(
+    title = "Weekly USBP Apprehensions by Source Part",
+    x = NULL,
+    y = "Apprehension Count",
+    caption = "Source: U.S. Customs and Border Protection"
+  ) +
+   geom_text_repel(
+    data = line_labels_2024,
+    aes(label = part_number)) +
+  theme_minimal()
+
+weekly_apprehensions_plot_2024
+
+
+# plot
+weekly_apprehensions_plot <- ggplot(
+  weekly_apprehensions,
+  aes(
+    x = week_start,
+    y = apprehension_count,
+    group = part_number,
+    color = part_number
+  )
+) +
+  geom_line(
+    linewidth = 0.5
+  ) +
+  scale_x_date(
+    date_breaks = "1 year",
+    date_labels = "%Y"
+  ) +
+  labs(
+    title = "Weekly USBP Apprehensions by Source Part",
+    x = NULL,
+    y = "Apprehension Count",
+    caption = "Source: U.S. Customs and Border Protection"
+  ) +
+  theme_minimal()
+
+weekly_apprehensions_plot
+
+# save plot
+ggsave(
+  here("analysis/weekly-apprehensions-plot.pdf"),
+  plot = weekly_apprehensions_plot,
+  width = 24,
+  height = 14,
+  units = "in",
+  limitsize = FALSE
+)
+
+ggsave(
+  here("analysis/weekly-apprehensions-plot-2024.pdf"),
+  plot = weekly_apprehensions_plot_2024,
+  width = 24,
+  height = 14,
+  units = "in",
+  limitsize = FALSE
+)
+```
+
+
+## Encounters and Apprehensions 
+```{r SUPERIMPOSED}
+# paths
+encounters_dir <- here("data", "encounters")
+apprehensions_dir <- here("data", "apprehensions")
+
+encounters_processed_dir <- file.path(encounters_dir, "processed")
+apprehensions_processed_dir <- file.path(apprehensions_dir, "processed")
+
+encounters_final_path <- file.path(
+  encounters_processed_dir,
+  "encounters-final.parquet"
+)
+apprehensions_final_path <- file.path(
+  apprehensions_processed_dir,
+  "apprehensions-final.parquet"
+)
+
+
+# count apprehensions by date
+apprehensions_daily <- open_dataset(apprehensions_final_path) |>
+  mutate(
+    event_date = as.Date(apprehension_datetime)
+  ) |>
+  filter(
+    !is.na(event_date)
+  ) |>
+  group_by(event_date) |>
+  summarize(
+    count = n(),
+    .groups = "drop"
+  ) |>
+  collect() |>
+  mutate(
+    dataset = "Apprehensions"
+  )
+
+# count encounters by date
+encounters_daily <- open_dataset(encounters_final_path) |>
+  mutate(
+    event_date = as.Date(encounter_datetime)
+  ) |>
+  filter(
+    !is.na(event_date)
+  ) |>
+  group_by(event_date) |>
+  summarize(
+    count = n(),
+    .groups = "drop"
+  ) |>
+  collect() |>
+  mutate(
+    dataset = "Encounters"
+  )
+
+# combine weekly counts
+weekly_comparison <- bind_rows(
+  apprehensions_daily,
+  encounters_daily
+) |>
+  mutate(
+    week_start = floor_date(
+      event_date,
+      unit = "week",
+      week_start = 1
+    )
+  ) |>
+  group_by(
+    dataset,
+    week_start
+  ) |>
+  summarize(
+    count = sum(count),
+    .groups = "drop"
+  ) |>
+  arrange(
+    dataset,
+    week_start
+  )
+
+# plot
+weekly_comparison_plot <- ggplot(
+  weekly_comparison,
+  aes(
+    x = week_start,
+    y = count,
+    color = dataset,
+    linetype = dataset
+  )
+) +
+  geom_line(
+    linewidth = 0.6,
+    alpha = 0.8
+  ) +
+  scale_color_manual(
+    values = c(
+      "Apprehensions" = "#0072B2",
+      "Encounters" = "#D55E00"
+    )
+  ) +
+  scale_x_date(
+    date_breaks = "1 year",
+    date_labels = "%Y"
+  ) +
+  scale_y_continuous(
+    labels = scales::label_comma()
+  ) +
+  labs(
+    title = "Weekly USBP Apprehensions and Encounters",
+    x = NULL,
+    y = "Weekly record count",
+    color = NULL,
+    linetype = NULL,
+    caption = "Source: U.S. Customs and Border Protection."
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom"
+  )
+
+weekly_comparison_plot
+
+
+ggsave(
+  here("analysis/weekly-encounters-and-apprehensions.pdf"),
+  plot = weekly_apprehensions_plot,
+  width = 24,
+  height = 14,
+  units = "in",
+  limitsize = FALSE
+)
+```
+
 ## Inadmissibles Over Time
 
 ```{r INADMISSIBLES}
-setwd("/Users/simone/Desktop/DDP/cbp")
-
 # paths
-inadmissibles_dir <- "data/inadmissibles"
-processed_dir <- file.path(inadmissibles_dir, "processed")
-metadata_dir <- file.path(inadmissibles_dir, "metadata")
+dataset_dir <- here("data", "apprehensions")
+processed_dir <- file.path(dataset_dir, "processed")
+metadata_dir <- file.path(dataset_dir, "metadata")
 
 inadmissibles_final_path <- file.path(
   processed_dir,
@@ -294,197 +586,6 @@ ggsave(
 ggsave(
   "analysis/weekly-inadmissibles-plot-2024.pdf",
   plot = weekly_inadmissibles_plot_2024,
-  width = 24,
-  height = 14,
-  units = "in",
-  limitsize = FALSE
-)
-```
-
-## Apprehensions Over Time
-
-```{r APPREHENSIONS }
-setwd("/Users/simone/Desktop/DDP/cbp")
-
-# paths
-apprehensions_dir <- "data/apprehensions"
-processed_dir <- file.path(apprehensions_dir, "processed")
-metadata_dir <- file.path(apprehensions_dir, "metadata")
-
-apprehensions_final_path <- file.path(
-  processed_dir,
-  "apprehensions-final.parquet"
-)
-
-parts_metadata_path <- file.path(
-  metadata_dir,
-  "parts-metadata.parquet"
-)
-
-parts_metadata <- read_parquet(
-  parts_metadata_path
-)
-
-# part lookup 
-part_lookup <- parts_metadata |>
-  transmute(
-    source_file,
-    part_number = str_sub(
-      part_file,
-      start = 1,
-      end = 4
-    )
-  ) |>
-  distinct()
-
-
-# select date data
-weekly_apprehensions <- apprehensions_final_path |>
-  open_dataset() |>
-  select(
-    apprehension_datetime,
-    apprehension_date,
-    arrest_datetime,
-    arrest_date,
-    source_file,
-    source_sheet
-  ) |>
-  mutate(
-    event_date = coalesce(
-      as.Date(apprehension_datetime),
-      apprehension_date,
-      as.Date(arrest_datetime),
-      arrest_date
-    ),
-    week_start = floor_date(
-      event_date,
-      unit = "week",
-      week_start = 1
-    )
-  ) |>
-  filter(
-    !is.na(week_start)
-  ) |>
-  group_by(
-    source_file,
-    source_sheet,
-    week_start
-  ) |>
-  summarize(
-    apprehension_count = n(),
-    .groups = "drop"
-  ) |>
-  collect() |>
-  left_join(
-  part_lookup,
-  by = "source_file"
-) |>
-  arrange(
-    part_number,
-    week_start
-  )
-
-
-# plot (2024)
-line_labels_2024 <- weekly_apprehensions |>
-  filter(
-    week_start >= as.Date("2024-01-01")
-  ) |>
-  group_by(
-    part_number
-  ) |> 
-  slice_max(
-    week_start,
-    n = 1,
-    with_ties = FALSE
-) |>
-  ungroup()
-
-line_labels_2024 <- weekly_apprehensions |>
-  filter(
-    week_start >= as.Date("2024-01-01")
-  ) |>
-  group_by(
-    part_number
-  ) |> 
-  slice_max(
-    week_start,
-    n = 1,
-    with_ties = FALSE
-) |>
-  ungroup()
-
-weekly_apprehensions_plot_2024 <- ggplot(
-  weekly_apprehensions,
-  aes(
-    x = week_start,
-    y = apprehension_count,
-    group = part_number,
-    color = part_number
-  )
-) +
-  geom_line(
-    linewidth = 0.5
-  ) +
-  coord_cartesian(xlim = as.Date(c("2024-01-01", NA))) +
-  scale_x_date(
-    date_breaks = "1 year",
-    date_labels = "%Y"
-  ) +
-  labs(
-    title = "Weekly USBP Apprehensions by Source Part",
-    x = NULL,
-    y = "Apprehension Count",
-    caption = "Source: U.S. Customs and Border Protection"
-  ) +
-   geom_text_repel(
-    data = line_labels_2024,
-    aes(label = part_number)) +
-  theme_minimal()
-
-weekly_apprehensions_plot_2024
-
-
-# plot
-weekly_apprehensions_plot <- ggplot(
-  weekly_apprehensions,
-  aes(
-    x = week_start,
-    y = apprehension_count,
-    group = part_number,
-    color = part_number
-  )
-) +
-  geom_line(
-    linewidth = 0.5
-  ) +
-  scale_x_date(
-    date_breaks = "1 year",
-    date_labels = "%Y"
-  ) +
-  labs(
-    title = "Weekly USBP Apprehensions by Source Part",
-    x = NULL,
-    y = "Apprehension Count",
-    caption = "Source: U.S. Customs and Border Protection"
-  ) +
-  theme_minimal()
-
-weekly_apprehensions_plot
-
-# save plot
-ggsave(
-  "analysis/weekly-apprehensions-plot.pdf",
-  plot = weekly_apprehensions_plot,
-  width = 24,
-  height = 14,
-  units = "in",
-  limitsize = FALSE
-)
-
-ggsave(
-  "analysis/weekly-apprehensions-plot-2024.pdf",
-  plot = weekly_apprehensions_plot_2024,
   width = 24,
   height = 14,
   units = "in",

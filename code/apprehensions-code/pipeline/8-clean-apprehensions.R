@@ -93,14 +93,14 @@ column_order <- c(
   "entry_date",
   
   # encounter / entry history
-  "earliest_apprehension_datetime",
   "earliest_encounter_datetime",
+  "earliest_encounter_date",
   "most_recent_encounter_datetime",
   "most_recent_encounter_date",
   "most_recent_prior_entry_datetime",
   "most_recent_prior_entry_date",
   "most_recent_prior_entry_time",
-  "number_of_previous_apprehensions",
+  "number_of_previous_encounters",
   
   # case / custody timing
   "case_file_date",
@@ -144,19 +144,19 @@ column_order <- c(
   "ethnicity_cd",
   "language",
   "birth_date",
-  "city_of_birth",
-  "state_of_birth",
-  "country_of_birth",
-  "country_of_birth_cd",
+  "birth_city",
+  "birth_state",
+  "birth_country",
+  "birth_country_cd",
   "citizenship",
   "citizenship_cd",
   "nationality",
   
   # residence information
-  "city_state_of_residence",
-  "country_of_residence",
-  "country_of_residence_cd",
-  "first_country_of_residence",
+  "residence_city_state",
+  "residence_country",
+  "residence_country_cd",
+  "first_residence_country",
   
   # family / child information
   "fmu_number",
@@ -183,7 +183,7 @@ column_order <- c(
   
   # disposition / removal
   "disposition",
-  "disposition_code_lpr",
+  "disposition_code",
   "removal_type",
   
   # custody transfer
@@ -201,9 +201,7 @@ column_order <- c(
   "charge_code",
   "criminal_conviction_indicator",
   "ncic_charge_code",
-  "ncic_charge_code_owned_by_doj",
   "ncic_description",
-  "ncic_desc_owned_by_doj",
   
   # gang information
   "suspected_gang_member_indicator",
@@ -356,13 +354,13 @@ clean_string_sql <- function(column) {
 datetime_columns <- c(
   "apprehension_datetime",
   "arrest_datetime",
-  "earliest_apprehension_datetime",
   "earliest_encounter_datetime",
   "most_recent_encounter_datetime",
   "most_recent_prior_entry_datetime"
 )
 
 date_columns <- c(
+  "earliest_encounter_date",
   "apprehension_date",
   "arrest_date",
   "birth_date",
@@ -714,7 +712,7 @@ integer_columns <- c(
   "age",
   "number_of_children_in_event",
   "number_of_people_in_event",
-  "number_of_previous_apprehensions"
+  "number_of_previous_encounters"
 )
 
 double_columns <- c(
@@ -1092,8 +1090,8 @@ cleaned_columns <- dbGetQuery(
 #### Code map pairs #### 
 code_pairs <- list(
   citizenship = "citizenship_cd",
-  country_of_birth = "country_of_birth_cd",
-  country_of_residence = "country_of_residence_cd",
+  birth_country = "birth_country_cd",
+  residence_country = "residence_country_cd",
   marital_status = "marital_status_cd",
   entry_status = "entry_status_cd",
   ethnicity = "ethnicity_cd",

@@ -625,29 +625,37 @@ for (i in seq_len(nrow(source_sheets))) {
     info$source_sheet
   )
   
-  # explicit range starts at the recorded worksheet header row
-  sheet <- read_excel(
-    path = info$file_path,
-    sheet = info$source_sheet,
-    range = cell_limits(
-      c(info$header_row, 1),
-      c(NA, NA)
-    ),
-    col_names = FALSE,
-    col_types = "text",
-    .name_repair = "unique"
-  )
-  
-  header <- sheet |>
-    slice(1) |>
-    unlist(use.names = FALSE) |>
-    as.character() |>
-    str_squish()
-  
-  keep_columns <- !is.na(header) & header != ""
-  
-  raw_data <- sheet[-1, keep_columns, drop = FALSE]
-  header <- header[keep_columns]
+  # read Parquet rows directly, use recorded headers for Excel
+  if (tolower(tools::file_ext(info$file_path)) == "parquet") {
+    raw_data <- read_parquet(info$file_path) |>
+      mutate(across(everything(), as.character))
+    header <- str_squish(names(raw_data))
+  } else {
+    # explicit range starts at the recorded worksheet header row
+    sheet <- read_excel(
+      path = info$file_path,
+      sheet = info$source_sheet,
+      range = cell_limits(
+        c(info$header_row, 1),
+        c(NA, NA)
+      ),
+      col_names = FALSE,
+      col_types = "text",
+      .name_repair = "unique"
+    )
+    
+    header <- sheet |>
+      slice(1) |>
+      unlist(use.names = FALSE) |>
+      as.character() |>
+      str_squish()
+    
+    keep_columns <- !is.na(header) & header != ""
+    
+    raw_data <- sheet[-1, keep_columns, drop = FALSE]
+    header <- header[keep_columns]
+    
+  }
   
   names(raw_data) <- make_clean_names(header)
   

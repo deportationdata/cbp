@@ -18,6 +18,75 @@ distinct_columns <- read_parquet(
 crosswalk <- distinct_columns |>
   mutate(
     canonical_name = case_when(
+      # standardize NCIC names
+      clean_column %in% c(
+        "ncic_charge_code",
+        "ncic_charge_code_s",
+        "ncic_code",
+        "ncic_charge_code_defer_to_doj",
+        "ncic_charge_code_owned_by_doj_not_cbp",
+        "ncic_charge_code_owned_by_doj"
+      ) ~ "ncic_charge_code",
+      
+      clean_column %in% c(
+        "ncic_description",
+        "ncic_desc",
+        "ncic_desc_s",
+        "ncic_desc_defer_to_doj",
+        "ncic_desc_owned_by_doj_not_cbp",
+        "ncic_desc_owned_by_doj",
+        "ncic_description_owned_by_doj"
+      ) ~ "ncic_description",
+      
+      
+      # standardize birth and residence names
+      clean_column %in% c(
+        "birth_city",
+        "city_of_birth"
+      ) ~ "birth_city",
+      
+      clean_column %in% c(
+        "birth_state",
+        "state_of_birth"
+      ) ~ "birth_state",
+      
+      clean_column %in% c(
+        "birth_country",
+        "country_of_birth"
+      ) ~ "birth_country",
+      
+      clean_column %in% c(
+        "birth_country_cd",
+        "country_of_birth_cd"
+      ) ~ "birth_country_cd",
+      
+      clean_column %in% c(
+        "residence_country",
+        "country_of_residence"
+      ) ~ "residence_country",
+      
+      clean_column %in% c(
+        "residence_country_cd",
+        "country_of_residence_cd",
+        "country_of_res_cd"
+      ) ~ "residence_country_cd",
+      
+      clean_column %in% c(
+        "residence_city",
+        "city_of_residence"
+      ) ~ "residence_city",
+      
+      clean_column %in% c(
+        "residence_city_state",
+        "city_state_of_residence"
+      ) ~ "residence_city_state",
+      
+      clean_column %in% c(
+        "first_residence_country",
+        "first_country_of_residence",
+        "first_country_of_residence_foreign"
+      ) ~ "first_residence_country",
+      
       
       # age
       clean_column %in% c(
@@ -59,25 +128,11 @@ crosswalk <- distinct_columns |>
       ) ~ "apprehension_date",
       
       # birth / residence location
-      clean_column %in% c(
-        "birth_city"
-      ) ~ "city_of_birth",
       
-      clean_column %in% c(
-        "birth_state"
-      ) ~ "state_of_birth",
       
-      clean_column %in% c(
-        "birth_country"
-      ) ~ "country_of_birth",
       
-      clean_column %in% c(
-        "country_of_res_cd"
-      ) ~ "country_of_residence_cd",
       
-      clean_column %in% c(
-        "first_country_of_residence_foreign"
-      ) ~ "first_country_of_residence",
+      
       
       clean_column %in% c(
         "subject_ethnicity_cd"
@@ -94,6 +149,7 @@ crosswalk <- distinct_columns |>
       # programs
       clean_column %in% c(
         "cds_program",
+        "cds_programs",
         "cds_program_s",
         "cds_program_code"
       ) ~ "cds_program",
@@ -122,34 +178,13 @@ crosswalk <- distinct_columns |>
         "statue_charge",
         "statute_charge",
         "statute_charge_s",
-        "highest_statute_charge"
+        "highest_statute_charge",
+        "highest_statue_charge"
       ) ~ "statute_charge",
       
-      clean_column %in% c(
-        "highest_statue_charge"
-      ) ~ "highest_statute_charge",
       
-      clean_column %in% c(
-        "ncic_charge_code",
-        "ncic_charge_code_s",
-        "ncic_code"
-      ) ~ "ncic_charge_code",
       
-      clean_column %in% c(
-        "ncic_charge_code_defer_to_doj",
-        "ncic_charge_code_owned_by_doj_not_cbp"
-      ) ~ "ncic_charge_code_owned_by_doj",
       
-      clean_column %in% c(
-        "ncic_desc",
-        "ncic_desc_s"
-      ) ~ "ncic_description",
-      
-      clean_column %in% c(
-        "ncic_desc_defer_to_doj",
-        "ncic_desc_owned_by_doj_not_cbp",
-        "ncic_desc_owned_by_doj"
-      ) ~ "ncic_description_owned_by_doj",
       
       # arrest method
       clean_column %in% c(
@@ -198,11 +233,6 @@ crosswalk <- distinct_columns |>
       ) ~ "disposition_code",
       
       clean_column %in% c(
-        "subject_prosecution_indicator",
-        "referred_prosecution"
-      ) ~ "referred_prosecution_indicator",
-      
-      clean_column %in% c(
         "lpr"
       ) ~ "lpr_indicator",
       
@@ -214,7 +244,8 @@ crosswalk <- distinct_columns |>
       ) ~ "fmu_number",
       
       clean_column %in% c(
-        "fmua_indicator"
+        "fmua_indicator",
+        "fmua_ind"
       ) ~ "fmua_indication",
       
       clean_column %in% c(
@@ -225,7 +256,8 @@ crosswalk <- distinct_columns |>
       clean_column %in% c(
         "uc_indicator",
         "uc_indicator_y_n",
-        "unaccompanied_child"
+        "unaccompanied_child",
+        "uac_ind"
       ) ~ "unaccompanied_child_indicator",
       
       clean_column %in% c(
@@ -242,17 +274,19 @@ crosswalk <- distinct_columns |>
       clean_column %in% c(
         "civ_id",
         "civ_id_subject_key",
-        "civ_id_subject_key_unique_identifier"
+        "civ_id_subject_key_unique_identifier",
+        "subject_key",
+        "subject_id"
       ) ~ "subject_key",
-      
-      clean_column %in% c(
-        "alien_number"
-      ) ~ "subject_afile_number",
       
       clean_column %in% c(
         "unique_person_identifier",
         "unique_person_id_we_dont_provide"
       ) ~ "unique_person_id",
+      
+      clean_column %in% c(
+        "alien_number"
+      ) ~ "subject_afile_number",
       
       # case info
       clean_column %in% c(
@@ -310,18 +344,21 @@ crosswalk <- distinct_columns |>
       clean_column %in% c(
         "earliest_encounter_date_time",
         "earliest_app_date_time",
+        "earliest_apprehension_date_time",
         "earliest_apprehension_datetime"
       ) ~ "earliest_encounter_datetime",
       
       clean_column %in% c(
         "earliest_app_date",
-        "earliest_apprehension_date"
-      ) ~ "earliest_apprehension_date",
+        "earliest_apprehension_date",
+        "earliest_encounter_date"
+      ) ~ "earliest_encounter_date",
       
       clean_column %in% c(
         "most_recent_app_date",
-        "most_recent_apprehension_date"
-      ) ~ "most_recent_apprehension_date",
+        "most_recent_apprehension_date",
+        "most_recent_encounter_date"
+      ) ~ "most_recent_encounter_date",
       
       clean_column %in% c(
         "most_recent_prior_ent_date_time",
@@ -330,7 +367,10 @@ crosswalk <- distinct_columns |>
       
       clean_column %in% c(
         "most_recent_prior_encounter_date_time",
-        "most_recent_encounter_date_time"
+        "most_recent_encounter_date_time",
+        "most_recent_app_date_time",
+        "most_recent_apprehension_date_time",
+        "most_recent_apprehension_datetime"
       ) ~ "most_recent_encounter_datetime",
       
       clean_column %in% c(
@@ -354,20 +394,21 @@ crosswalk <- distinct_columns |>
       # prosecution
       clean_column %in% c(
         "prosecution_indicator",
-        "subject_prosecution_indicator"
+        "subject_prosecution_indicator",
+        "referred_prosecution"
       ) ~ "subject_prosecution_indicator",
       
       clean_column %in% c(
         "referred_for_prosecution_under_8_usc_1325_or_8_usc_1326"
       ) ~ "referred_for_prosecution_under_8usc1325_or_8usc1326",
-        # referred_prosecution is kept separate
       
       # transfer
       clean_column %in% c(
         "transfer_to_group",
         "transferred_to_group",
         "transferred_to_group_removal_type_ero",
-        "transfer_to_ero"
+        "transfer_to_ero",
+        "ero_transfer"
       ) ~ "transfer_to_group",
       
       # currency/drugs

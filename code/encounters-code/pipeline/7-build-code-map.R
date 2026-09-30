@@ -234,7 +234,7 @@ code_map <- bind_rows(
     mutate(field = "citizenship"),
   
   country_mapping |>
-    mutate(field = "country_of_residence"),
+    mutate(field = "residence_country"),
   
   marital_mapping |>
     mutate(field = "marital_status"),

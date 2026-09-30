@@ -97,12 +97,8 @@ old_inadmissibles_links <- if (file.exists(link_inventory_path)) {
   )
 }
 
-# keep only links not already downloaded/recorded
-new_inadmissibles_links <- inadmissibles_links |>
-  anti_join(old_inadmissibles_links, by = "full_url")
-
-# flag if manual review triggered (in new links)
-manual_count <- sum(new_inadmissibles_links$download_class == "manual_review")
+# flag current links for manual review
+manual_count <- sum(inadmissibles_links$download_class == "manual_review")
 
 if (manual_count > 0) {
   warning(
@@ -111,11 +107,18 @@ if (manual_count > 0) {
       "WARNING: File(s) flagged for manual review. Check data/inadmissibles/manual-review/"))
 }
 
-print(new_inadmissibles_links, n = Inf)
 
 # function to download files
 download_cbp_file <- function(url, dest_dir) {
   dest <- file.path(dest_dir, basename(url))
+
+  # skip files already downloaded
+  if (file.exists(dest) && file.info(dest)$size > 0) {
+    message("Skipping existing file: ", basename(url))
+    return(dest)
+  }
+
+  message("Downloading: ", basename(url))
   
   cbp_request(url) |>
     req_perform(path = dest)
@@ -124,13 +127,13 @@ download_cbp_file <- function(url, dest_dir) {
 }
 
 # download included inadmissibles files into raw/
-downloaded_inadmissibles_files <- new_inadmissibles_links |>
+downloaded_inadmissibles_files <- inadmissibles_links |>
   filter(download_class == "include_inadmissibles") |>
   pull(full_url) |>
   map_chr(download_cbp_file, dest_dir = raw_dir)
 
 # download manual review files into manual-review/
-downloaded_manual_review_files <- new_inadmissibles_links |>
+downloaded_manual_review_files <- inadmissibles_links |>
   filter(download_class == "manual_review") |>
   pull(full_url) |>
   map_chr(download_cbp_file, dest_dir = manual_review_dir)
@@ -150,7 +153,7 @@ write_parquet(
   link_inventory_path
 )
 
-cat("New inadmissibles files:", length(downloaded_inadmissibles_files), "\n")
-cat("New manual-review files:", length(downloaded_manual_review_files), "\n")
+cat("Available inadmissibles files:", length(downloaded_inadmissibles_files), "\n")
+cat("Available manual-review files:", length(downloaded_manual_review_files), "\n")
 
 # END

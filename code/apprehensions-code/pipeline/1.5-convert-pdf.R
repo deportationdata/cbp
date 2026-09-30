@@ -1,10 +1,17 @@
-# Setup
+# packages
 library(tidyverse)
 library(pdftools)
 library(pointblank)
 
+# set paths
+dataset_dir <- "data/apprehensions"
+raw_dir <- file.path(dataset_dir, "raw")
+pdf_dir <- file.path(raw_dir, "pdfs")
+dir.create(pdf_dir, recursive = TRUE, showWarnings = FALSE)
+
+# list files 
 files <- list.files(
-    here::here("data/apprehensions/raw/"),
+    here::here("data/apprehensions/raw/pdfs/"),
     pattern = "*.pdf",
     full.names = TRUE
   )
@@ -429,4 +436,4 @@ structured_table_clean |>
 
 arrow::write_parquet(structured_table_clean, "data/apprehensions/raw/usbp_apprehensions_nationwide_fy14.parquet")
 
-# END.
+# END

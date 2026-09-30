@@ -96,9 +96,9 @@ column_order <- c(
   
   # location / arrest information
   "border",
-  "apprehension_sector",
+  "arrest_sector",
   "bookout_sector",
-  "apprehension_state",
+  "arrest_state",
   "latitude",
   "arrest_at_checkpoint_indicator",
   
@@ -113,9 +113,9 @@ column_order <- c(
   "citizenship_cd",
   
   # residence information
-  "city_of_residence",
-  "country_of_residence",
-  "country_of_residence_cd",
+  "residence_city",
+  "residence_country",
+  "residence_country_cd",
   
   # family / child information
   "number_of_children_and_nationality",
@@ -916,7 +916,7 @@ if (nrow(mapping_conflicts) > 0) {
 # column pairing
 code_pairs <- list(
   citizenship = "citizenship_cd",
-  country_of_residence = "country_of_residence_cd",
+  residence_country = "residence_country_cd",
   marital_status = "marital_status_cd",
   border = character(),
   arrest_sector = character(),

@@ -98,12 +98,8 @@ old_apprehension_links <- if (file.exists(link_inventory_path)) {
   )
 }
 
-# keep only links not already downloaded/recorded
-new_apprehension_links <- apprehension_links |>
-  anti_join(old_apprehension_links, by = "full_url")
-
-# flag if manual review triggered (in new links)
-manual_count <- sum(new_apprehension_links$download_class == "manual_review")
+# flag current links for manual review
+manual_count <- sum(apprehension_links$download_class == "manual_review")
 
 if (manual_count > 0) {
   warning(
@@ -112,11 +108,18 @@ if (manual_count > 0) {
       "WARNING: File(s) flagged for manual review. Check data/apprehensions/manual-review/"))
   }
 
-print(new_apprehension_links, n = Inf)
 
 # function to download files
 download_cbp_file <- function(url, dest_dir) {
   dest <- file.path(dest_dir, basename(url))
+
+  # skip files already downloaded
+  if (file.exists(dest) && file.info(dest)$size > 0) {
+    message("Skipping existing file: ", basename(url))
+    return(dest)
+  }
+
+  message("Downloading: ", basename(url))
   
   cbp_request(url) |>
     req_perform(path = dest)
@@ -125,13 +128,13 @@ download_cbp_file <- function(url, dest_dir) {
 }
 
 # download included apprehension files into raw/
-downloaded_apprehension_files <- new_apprehension_links |>
+downloaded_apprehension_files <- apprehension_links |>
   filter(download_class == "include_apprehensions") |>
   pull(full_url) |>
   map_chr(download_cbp_file, dest_dir = raw_dir)
 
 # download manual review files into manual_review/
-downloaded_manual_review_files <- new_apprehension_links |>
+downloaded_manual_review_files <- apprehension_links |>
   filter(download_class == "manual_review") |>
   pull(full_url) |>
   map_chr(download_cbp_file, dest_dir = manual_review_dir)
@@ -151,7 +154,7 @@ write_parquet(
   link_inventory_path
 )
 
-cat("New apprehension files:", length(downloaded_apprehension_files), "\n")
-cat("New manual-review files:", length(downloaded_manual_review_files), "\n")
+cat("Available apprehension files:", length(downloaded_apprehension_files), "\n")
+cat("Available manual-review files:", length(downloaded_manual_review_files), "\n")
 
 # END

@@ -79,7 +79,6 @@ We list and link each of our data sources here. 
 | `apprehension_date` | APPREHENSION_DT; Apprehension Date | Apprehension date. | Apprehensions, Encounters |
 | `apprehension_datetime` | APPR_DT_TIME; APP_DT_TIME; APPR DT TIME | Apprehension date and time. | Both |
 | `apprehension_sector` | APPREHENSION SECTOR; Apprehension Sector | Apprehension sector. | Encounters |
-| `apprehension_state` | APPREHENSION STATE; Apprehension State | State of apprehension. | Encounters |
 | `apprehension_time` | Apprehension Time | Apprehension time. | Apprehensions, Encounters |
 | `arrest_at_checkpoint_indicator` | Arrest at Checkpoint (Y/N); Arrest SL Checkpoint Indicator; ARREST AT CHECKPOINT (Y/N); ARREST_AT_CHECKPOINT (Y/N) | Indicates whether arrest occurred at a checkpoint. | Apprehensions, Encounters |
 | `arrest_date` | Arrest Date | Arrest date. | Apprehensions |
@@ -87,7 +86,7 @@ We list and link each of our data sources here. 
 | `arrest_landmark_desc` | Arrest Landmark Desc | Description of the arrest landmark. | Apprehensions |
 | `arrest_method` | ARREST METHOD; ARREST_METHOD; Arrest Method; Arrest Method Desc | Arrest method. | Apprehensions |
 | `arrest_sector` | Arrest Sector; SECTOR; Sector; SECTOR_DISTRICT; Sector_District | Arrest sector. | Apprehensions |
-| `arrest_state` | Arrest State | State of arrest. | Apprehensions |
+| `arrest_state` | Arrest State; APPREHENSION STATE; Apprehension State | State of arrest or apprehension. | Apprehensions, Encounters |
 | `arrest_time` | Arrest Time | Arrest time. | Apprehensions |
 | `arresting_agent_hash_number` | Arresting Agent Hash# | Hashed arresting-agent identifier. | Apprehensions |
 | `birth_date` | BIRTH_DATE | Birth date. | Apprehensions |
