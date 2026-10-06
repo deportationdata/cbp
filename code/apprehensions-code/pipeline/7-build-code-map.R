@@ -1,3 +1,6 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
 # load packages
 library(tidyverse)
 library(arrow)
@@ -269,28 +272,70 @@ border_mapping <- tribble(
 # sector mappings
 sector_mapping <- tribble(
   ~code, ~full_name,
-  "BBT", "Big Bend",
-  "BLW", "Blaine",
-  "BUN", "Buffalo",
-  "DRT", "Del Rio",
-  "DTM", "Detroit",
-  "ELC", "El Centro",
-  "EPT", "El Paso",
-  "GFN", "Grand Forks",
-  "HLT", "Houlton",
-  "HVM", "Havre",
-  "LRT", "Laredo",
-  "MIP", "Miami",
-  "NLL", "New Orleans",
-  "RGV", "Rio Grande Valley",
-  "RMY", "Ramey",
-  "SDC", "San Diego",
-  "SPW", "Spokane",
-  "SWB", "Swanton",
-  "TCA", "Tucson",
-  "YUM", "Yuma"
+  "BBT", "Big Bend Sector",
+  "BLW", "Blaine Sector",
+  "BUN", "Buffalo Sector",
+  "DRT", "Del Rio Sector",
+  "DTM", "Detroit Sector",
+  "ELC", "El Centro Sector",
+  "EPT", "El Paso Sector",
+  "GFN", "Grand Forks Sector",
+  "HLT", "Houlton Sector",
+  "HVM", "Havre Sector",
+  "LRT", "Laredo Sector",
+  "MIP", "Miami Sector",
+  "NLL", "New Orleans Sector",
+  "RGV", "Rio Grande Valley Sector",
+  "RMY", "Ramey Sector",
+  "SDC", "San Diego Sector",
+  "SPW", "Spokane Sector",
+  "SWB", "Swanton Sector",
+  "TCA", "Tucson Sector",
+  "YUM", "Yuma Sector"
 )
 
+method_mapping <- tribble(
+  ~code, ~full_name,
+  "Organized Crime Drug Enforcement Task Fo", "Organized Crime Drug Enforcement Task Force"
+)
+
+# gender mappings
+gender_mapping <- tribble(
+  ~code, ~full_name,
+  "F", "Female",
+  "M", "Male"
+)
+
+# disposition mappings
+disposition_mapping <- tribble(
+  ~code, ~full_name,
+  "ADMDPT", "Administrative Deportation I-851/I-851A",
+  "ADMIT", "Admitted",
+  "B", "Bag and Baggage",
+  "DTNR", "Detainer",
+  "ER", "Expedited Removal (I-860)",
+  "ER/CF", "Expedited Removal with Credible Fear",
+  "ER/LR", "Expedited Removal Limited Review",
+  "EX", "Exclusion",
+  "I", "I-210",
+  "NAR", "Not Amenable to Removal",
+  "NTA", "Notice to Appear Released (I-862)",
+  "NTA/DT", "Notice to Appear Detained (I-862)",
+  "P", "Paroled",
+  "REINRF", "Reinstatement of Deportation Reasonable Fear",
+  "REINST", "Reinstatement of Deportation Order I-871",
+  "REL", "Release",
+  "STOW", "Stowaway",
+  "T", "Other",
+  "TOT", "Turned Over To",
+  "V", "Voluntary Return",
+  "VWP/CF", "VWP with I-863 Notice to Refer (Refer to IJ)",
+  "VWPPRM", "VWPP Removal",
+  "VWPRM", "VWP Removal",
+  "WA/NTA", "Warrant of Arrest/Notice to Appear"
+)
+
+# charge code mappings
 
 # combine mappings
 code_map <- bind_rows(
@@ -319,7 +364,16 @@ code_map <- bind_rows(
     mutate(field = "arrest_sector"),
   
   sector_mapping |>
-    mutate(field = "bookout_sector")
+    mutate(field = "bookout_sector"),
+  
+  method_mapping |>
+    mutate(field = "arrest_method"),
+  
+  gender_mapping |>
+    mutate(field = "gender_mapping"),
+  
+  disposition_mapping |>
+    mutate(field = "disposition")
 ) |>
   select(
     field,

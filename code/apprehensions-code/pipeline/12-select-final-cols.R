@@ -1,3 +1,6 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
 # packages
 library(tidyverse)
 library(arrow)
@@ -33,7 +36,6 @@ final_columns <- c(
   "age",
   "gender",
   "citizenship",
-  "state",
   "marital_status",
   
   # family / child information
@@ -45,7 +47,7 @@ final_columns <- c(
   "entry_status",
   "credible_fear_indicator",
   "cds_program",
-  "subject_prosecution_indicator",
+  "prosecution_indicator",
   
   # charges / disposition
   "statute_charge",
@@ -63,6 +65,15 @@ apprehensions_final <- read_parquet(
   col_select = all_of(final_columns),
   mmap = FALSE
 )
+
+# label datetime columns as UTC before writing
+apprehensions_final <- apprehensions_final |>
+  mutate(
+    across(
+      where(is.POSIXct),
+      ~ lubridate::with_tz(.x, "UTC")
+    )
+  )
 
 write_parquet(
   apprehensions_final,

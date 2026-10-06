@@ -407,6 +407,29 @@ weekly_comparison_plot <- ggplot(
     linetype = NULL,
     caption = "Source: U.S. Customs and Border Protection."
   ) +
+  annotate(
+    "segment",
+    x = as.Date("2020-03-21"),
+    xend = as.Date("2023-05-11"),
+    y = max(weekly_comparison$count, na.rm = TRUE) * 1.08,
+    yend = max(weekly_comparison$count, na.rm = TRUE) * 1.08,
+    linewidth = 0.5
+  ) +
+  annotate(
+    "text",
+    x = as.Date("2021-10-15"),
+    y = max(weekly_comparison$count, na.rm = TRUE) * 1.13,
+    label = "Title 42 in effect",
+    size = 2.5
+  ) +
+  annotate(
+    "segment",
+    x = as.Date(c("2020-03-21", "2023-05-11")),
+    xend = as.Date(c("2020-03-21", "2023-05-11")),
+    y = max(weekly_comparison$count, na.rm = TRUE) * 1.06,
+    yend = max(weekly_comparison$count, na.rm = TRUE) * 1.10,
+    linewidth = 0.5
+  ) +
   theme_minimal() +
   theme(
     legend.position = "bottom"
@@ -416,8 +439,8 @@ weekly_comparison_plot
 
 
 ggsave(
-  here("analysis/weekly-encounters-and-apprehensions.pdf"),
-  plot = weekly_apprehensions_plot,
+  here("analysis/weekly-encounters-and-apprehensions.png"),
+  plot = weekly_comparison_plot,
   width = 24,
   height = 14,
   units = "in",

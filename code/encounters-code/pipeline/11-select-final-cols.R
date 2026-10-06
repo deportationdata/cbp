@@ -1,3 +1,6 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
 # packages
 library(tidyverse)
 library(arrow)
@@ -70,6 +73,15 @@ encounters_final <- read_parquet(
   col_select = all_of(final_columns),
   mmap = FALSE
 )
+
+# label datetime columns as UTC before writing
+encounters_final <- encounters_final |>
+  mutate(
+    across(
+      where(is.POSIXct),
+      ~ lubridate::with_tz(.x, "UTC")
+    )
+  )
 
 write_parquet(
   encounters_final,

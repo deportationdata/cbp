@@ -1,3 +1,6 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
 # load packages
 library(tidyverse)
 library(arrow)
@@ -24,9 +27,9 @@ apprehensions_audit_path <- file.path(
 
 # to delete from parts-to-stack
 parts_to_delete <- c(
-  "0065-usbp-nationwide-apprehension-q4-fy-2024-fy24q4.parquet"
+  "0067-usbp-nationwide-apprehension-q4-fy-2024-fy24q4.parquet"
 )
-  # 0065-usbp-nationwide-apprehension-q4-fy-2024-fy24q4 is an erroneous duplicate
+  # 0067-usbp-nationwide-apprehension-q4-fy-2024-fy24q4.parquet is an erroneous duplicate
 
 paths_to_delete <- file.path(
   parts_to_stack_dir,
@@ -114,6 +117,9 @@ cat(
 con <- dbConnect(
   duckdb()
 )
+
+# use UTC for database timestamps
+dbExecute(con, "SET TimeZone = \'UTC\'")
 
 # configuration for memory reduction
 dbExecute(

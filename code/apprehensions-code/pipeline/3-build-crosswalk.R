@@ -1,3 +1,6 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
 # load packages
 library(tidyverse)
 library(arrow)
@@ -128,12 +131,6 @@ crosswalk <- distinct_columns |>
       ) ~ "apprehension_date",
       
       # birth / residence location
-      
-      
-      
-      
-      
-      
       clean_column %in% c(
         "subject_ethnicity_cd"
       ) ~ "ethnicity_cd",
@@ -182,10 +179,6 @@ crosswalk <- distinct_columns |>
         "highest_statue_charge"
       ) ~ "statute_charge",
       
-      
-      
-      
-      
       # arrest method
       clean_column %in% c(
         "arrest_method_desc"
@@ -222,6 +215,11 @@ crosswalk <- distinct_columns |>
       clean_column %in% c(
         "status_at_entry_cd"
       ) ~ "entry_status_cd",
+      
+      clean_column %in% c(
+        "dhs_status_cd",
+        "dhs_status_code_lpr"
+      ) ~ "dhs_status_code",
       
       clean_column %in% c(
         "subject_immigration_status_code_lpr"
@@ -393,10 +391,10 @@ crosswalk <- distinct_columns |>
       
       # prosecution
       clean_column %in% c(
-        "prosecution_indicator",
+        "subject_prosecution_indicator",
         "subject_prosecution_indicator",
         "referred_prosecution"
-      ) ~ "subject_prosecution_indicator",
+      ) ~ "prosecution_indicator",
       
       clean_column %in% c(
         "referred_for_prosecution_under_8_usc_1325_or_8_usc_1326"
@@ -449,7 +447,7 @@ crosswalk <- distinct_columns |>
       # disposition 
       clean_column %in% c(
         "subject_disposition_code",
-        "disposition"
+        "disposition_code"
       ) ~ "disposition",
       
       # default: keep cleaned name

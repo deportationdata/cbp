@@ -1,3 +1,6 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
 # load packages
 library(tidyverse)
 library(fs)
@@ -101,6 +104,9 @@ if (length(missing_paths) > 0) {
 con <- dbConnect(
   duckdb()
 )
+
+# use UTC for database timestamps
+dbExecute(con, "SET TimeZone = \'UTC\'")
 
 dbExecute(
   con,

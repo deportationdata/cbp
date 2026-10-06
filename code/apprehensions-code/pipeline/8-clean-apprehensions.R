@@ -1,3 +1,6 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
 # load packages
 library(tidyverse)
 library(DBI)
@@ -24,6 +27,9 @@ code_map_path <- file.path(dataset_dir, "metadata", "code-map.parquet")
 con <- dbConnect(
   duckdb()
 )
+
+# use UTC for database timestamps
+dbExecute(con, "SET TimeZone = \'UTC\'")
 
 # configuration
 dbExecute(con, "SET threads = 1")
@@ -191,8 +197,7 @@ column_order <- c(
   "transfer_to_group",
   
   # prosecution / referrals
-  "subject_prosecution_indicator",
-  "referred_prosecution",
+  "prosecution_indicator",
   "referred_for_prosecution_under_8usc1325_or_8usc1326",
   
   # charges / criminal history
@@ -260,7 +265,7 @@ final_columns <- c(
   remaining_columns
 )
 
-#### Standardize values #### 
+#### Standardize Values #### 
 ## standardize redaction codes 
 
 # helpers for safely constructing SQL
@@ -348,6 +353,8 @@ clean_string_sql <- function(column) {
     sql_string(whitespace_pattern)
   )
 }
+
+## standardize statute charge
 
 #### Inspect Date and Time Cols #### 
 
@@ -587,7 +594,7 @@ logical_columns <- c(
   "landmark_withheld_indicator",
   "lpr_indicator",
   "suspected_gang_member_indicator",
-  "subject_prosecution_indicator",
+  "prosecution_indicator",
   "unaccompanied_child_indicator"
 )
 
@@ -1097,7 +1104,10 @@ code_pairs <- list(
   ethnicity = "ethnicity_cd",
   border = character(),
   arrest_sector = character(),
-  bookout_sector = character()
+  bookout_sector = character(),
+  arrest_method = character(),
+  gender = character(),
+  disposition = character()
   )
 
 # retain existing code columns only 
@@ -1137,6 +1147,19 @@ output_expressions <- character()
 
 
 for (column in output_columns) {
+  
+  # store source clock times with an explicit UTC label
+  if (column %in% datetime_columns) {
+    output_expressions <- c(
+      output_expressions,
+      sprintf(
+        "CAST(CAST(s.%s AS VARCHAR) || '+00:00' AS TIMESTAMPTZ) AS %s",
+        sql_identifier(column),
+        sql_identifier(column)
+      )
+    )
+    next
+  }
   
   # regular columns pass through unchanged
   if (!column %in% names(code_pairs)) {
@@ -1207,6 +1230,11 @@ for (column in output_columns) {
     )
   }
   
+  # uppercase citizenship after translating and combining values
+  if (column == "citizenship") {
+    combined_sql <- sprintf("UPPER(%s)", combined_sql)
+  }
+
   output_expressions <- c(
     output_expressions,
     sprintf(
@@ -1298,7 +1326,7 @@ column_types |>
       type == "DOUBLE"
     ),
     datetime_columns = sum(
-      type == "TIMESTAMP"
+      type %in% c("TIMESTAMP", "TIMESTAMP WITH TIME ZONE")
     ),
     date_columns = sum(
       type == "DATE"

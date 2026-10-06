@@ -1,3 +1,6 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
 # packages
 library(tidyverse)
 library(pdftools)
@@ -7,6 +10,9 @@ library(pointblank)
 dataset_dir <- "data/apprehensions"
 raw_dir <- file.path(dataset_dir, "raw")
 pdf_dir <- file.path(raw_dir, "pdfs")
+
+dir.create(dataset_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(pdf_dir, recursive = TRUE, showWarnings = FALSE)
 
 # list files 
@@ -434,6 +440,15 @@ structured_table_clean |>
     actions = action_levels(warn_at = 0.0001, stop_at = 0.001)
   )
 
-arrow::write_parquet(structured_table_clean, "data/apprehensions/raw/usbp_apprehensions_nationwide_fy14.parquet")
+cols_to_drop <- c(
+  "file",
+  "line_id",
+  "page"
+)
+arrow::write_parquet(
+  structured_table_clean |>
+    select(-any_of(cols_to_drop)),
+  "data/apprehensions/raw/usbp_apprehensions_nationwide_fy14.parquet"
+)
 
 # END
