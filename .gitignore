@@ -47,3 +47,17 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Interim data files to be stacked, don't need to save on remote
+data/apprehensions/processed/parts-to-stack/*
+data/encounters/processed/parts-to-stack/*
+
+# Local analysis/validation tasks
+analysis/*
+code/apprehensions-code/analysis/*
+code/encounters-code/analysis/*
+code/inadmissibles-code/analysis/*
+code/miscellaneous/*
+
+
+
