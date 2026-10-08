@@ -24,41 +24,45 @@ Agency documentation of CBP datasets.
 
 ------------------------------------------------------------------------
 
-We provide data on Customs and Border Protection on Title 8 encounters (including apprehensions and inadmissibles) and Title 42 expulsions. We provide three datasets: Apprehensions, Inadmissibles, and Encounters.
+We provide two Customs and Border Protection datasets on USBP encounters and USBP apprehensions. Separate, inconsistent files published at different times on CBP’s website under Freedom of Information Act statistical records are presented here in a single, usable dataset.
 
-Under Title 8, apprehension refers to those under physical control or temporary detainment by the United States Border Patrol (USBP) between Ports of Entry (POE) who are not lawfully in the United States, which may or may not result in an arrest.
+Under Title 8, an apprehension refers to those under physical control or temporary detainment by the United States Border Patrol (USBP) between Ports of Entry (POE) who are not lawfully in the United States, which may or may not result in an arrest.
 
-Under Title 8, inadmissible refers to those encountered at Ports of Entry (POE) who are determined to be inadmissible under immigration law by the Office of Field Operations (OFO). This can include those seeking lawful admission, asylum, or parole.
+Generally, encounters is an umbrella term refering to anyone apprehended by USBP under Title 8 Apprehensions, encountered by the OFO under Title 8 Inadmissibles, or expelled under Title 42 Expulsions. Due to a lack of published data, in this dataset, encounters refers specifically to USBP encounters, which include only Title 8 apprehensions and Title 42 expulsions and do not contain Title 8 inadmissibles.
 
-In this dataset, encounters refers specifically to USBP encounters, which include only Title 8 apprehensions and Title 42 expulsions and do not contain Title 8 inadmissibles recorded under the OFO. Generally, encounters refers to anyone apprehended by the United States Border Patrol (USBP) under Title 8 Apprehensions, encountered by the Office of Field Operations (OFO) under Title 8 Inadmissibles, or expelled under Title 42 Expulsions. During the COVID-19 pandemic, the Centers for Disease Control and Prevention (CDC) issued an order under Title 42 that permitted expedited expulsions at and between ports of entry from March 2020 through May 11, 2023. After May 11, 2023, enforcement reverted to Title 8 Apprehensions and Inadmissibles. Title 42 Expulsions are tracked separately from immigration enforcement actions, including apprehension or inadmissibility, reported by CBP and are not based on immigration status.
-
-We collected separate files published at different times on CBP’s website under Freedom of Information Act statistical records and present them in a single, usable dataset.
+During the COVID-19 pandemic, the Centers for Disease Control and Prevention (CDC) issued an order under Title 42 that permitted expedited expulsions at and between ports of entry from March 2020 through May 11, 2023. After May 11, 2023, enforcement reverted to Title 8 Apprehensions and Inadmissibles. Title 42 Expulsions are tracked separately from immigration enforcement actions.
 
 ## Data Structure
 
-Each row in the datasets represents one recorded CBP encounter involving an individual. Some records contain fields indicating that multiple individuals were encountered together. The datasets are maintained separately because they represent different enforcement categories, CBP components, source files, and record structures. Variant column names are merged under standardized headers that are used across all three datasets.
+Each row represents one recorded CBP encounter involving an individual. Some records contain fields indicating whether multiple individuals were encountered together. The datasets are maintained separately because they represent different enforcement categories, CBP components, and source files. Variant column names are merged under standardized headers that are used across all three datasets.
 
 ## Data Processing
 
-It is important to note that files are identified by their URLs published on CBP’s website. If CBP replaces the contents of an existing URL the pipeline will not automatically detect this revision. We collected CBP data in these steps:
+Files are identified by their URLs published on CBP’s website. As of now, if CBP replaces the contents of an existing URL the pipeline will not automatically detect this revision. We collected CBP data in these steps:
 
 -   **Download apprehensions, inadmissibles, and encounters.** We identified and downloaded all relevant raw files from CBP’s original website. Any ambiguous files were manually reviewed.
 
--   **Profile header rows.** Here, we learned about the types of column names within each sheet to later build a crosswalk to match distinct column names to. The script separates sheets that fail profiling to be manually viewed only if they exist.
+-   **Profile header rows.** We examined the column names from each sheet to eventually build a crosswalk matching distinct column names to canonical counterparts.
 
--   **Build a crosswalk of canonical column names.** We created a crosswalk from the distinct columns identified in the previous step to assign each a canonical column name and allow files within each dataset to be combined. This step was crucial to successfully condense variant columns that contain the same expected entries.
+-   **Build a crosswalk of canonical column names.** We created a crosswalk from the distinct columns identified in the previous step to assign each a canonical column name. Variant column names that contained the same expected entries were condensed.
 
--   **Convert original files to cleaned format.** Then, we converted the headers in each dataset to their canonical name assigned in the crosswalk, ensuring that headers across sheets were standardized.
+-   **Convert original files to cleaned format.** We converted the headers in each dataset to their canonical name assigned in the crosswalk, ensuring that headers across all sheets were standardized.
 
 -   **Identify dataset overlaps.** We extracted the minimum and maximum encounter dates in each cleaned file, exploring whether duplicate datasets existed. Datasets with the same minimum and maximum date and equal row counts were flagged and manually examined.
 
--   **Remove duplicate datasets.** Upon examination, if files were determined to be exact duplicates, one copy was retained and the duplicate was excluded from stacking. If matching datasets contained complementary information, they were merged to retain the most complete version of each record.
+-   **Stack unique datasets.** Unique datasets were stacked to yield our first draft of apprehensions and encounters datasets. If files were determined to be erroneous duplicates, the faulty sheet was removed from parts to stack.
 
--   **Stack unique datasets.** Unique datasets were stacked to yield our final apprehensions, inadmissibles, and encounters datasets.
+-   **Build code maps.** We created lookup tables to translate coded values into readable values, as well as cleaned versions of same-name variants.
 
--   **Build code maps.** We created lookup tables to translate coded values into readable values.
+-   **Clean combined datasets.** Finally, combined datasets were cleaned to standardize redaction codes and whitespace, convert columns to appropriate data types, order fields, and match values to their assignments in the code map.
 
--   **Clean combined datasets.** Finally, combined datasets were cleaned to standardize redaction codes and whitespace, convert columns to appropriate data types, and order fields. Code maps were used to consolidate coded columns with their full-name column counterparts.
+-   **Resolve apprehension overlaps.** In the apprehensions dataset, several files were contained in files with broader date ranges. We identified more granular datasets and removed them from the final dataset to prevent duplicate records. This step was not performed in the encounters dataset, as no files had overlapping dates.
+
+-   **Audit datasets.** We ran several audits to further investigate column missingness and preservation across processing steps.
+
+-   **Cross reference with CBP dashboards.** We cross referenced monthly apprehension and encounter counts with monthly counts published on CBP dashboards.
+
+-   **Final column selection.** Finally, we selected final columns based on missingness levels obtained from our audit step. Both the final datasets with selected columns and full final datasets are available. Several columns in the full final datasets are entirely or nearly all redacted or missing.
 
 **Future work:** We are continuing to expand our datasets by submitting FOIA requests to obtain more recent datasets. We will update this codebook as processes develop.
 
@@ -69,15 +73,14 @@ We list and link each of our data sources here.
 | Name | Source | Date(s) in FY |
 |------------------------|------------------------|------------------------|
 | [CBP Apprehensions Data](https://www.cbp.gov/document/foia-record/customs-and-border-protection-border-patrol-statistics) | CBP, USBP | 2008–2026 |
-| [CBP Inadmissibles Data](https://www.cbp.gov/document/foia-record/cbp-office-field-operations-statistics) | CBP, OFO | 2012–2026 |
 | [CBP Encounters Data](https://www.cbp.gov/document/foia-record/customs-and-border-protection-border-patrol-statistics) | CBP | 2010–2025 |
+| CBP Apprehensions PDFs |  | 2014 |
 
 ## Inspect Code
 
 | Dataset | Code |
 |------------------------------------|------------------------------------|
 | Apprehensions | [\<\>](https://github.com/deportationdata/cbp/tree/main/code/apprehensions-code) |
-| Inadmissibles | [\<\>](https://github.com/deportationdata/cbp/tree/main/code/inadmissibles-code) |
 | Encounters | [\<\>](https://github.com/deportationdata/cbp/tree/main/code/encounters-code) |
 
 ## Final Dataset Fields
@@ -176,15 +179,24 @@ We list and link each of our data sources here.
 | `unaccompanied_child_indicator` | UAC_IND; UC INDICATOR; UC Indicator; UNACCOMPANIED CHILD; UNACCOMPANIED_CHILD; UC INDICATOR (Y/N) | Indicates unaccompanied-child status | Apprehensions, Encounters | Boolean |
 | `unique_person_id` | Unique Person Id - we don't provide; Unique Person Identifier | Unique person identifier | Apprehensions | String |
 
+The final script in each pipeline selects columns based on usefulness and percent missing. Apprehensions dataset retains `apprehension_datetime`, `entry_date`, `final_bookout_date`, `arrest_sector`, `arrest_method`, `age`, `gender`, `citizenship`, `marital_status`, `number_of_children_and_nationality`, `fmua_indication`, `unaccompanied_child_indicator`, `entry_status`, `credible_fear_indicator`, `cds_program`, `prosecution_indicator`, `statute_charge`, `charge_code`, `disposition`, `removal_type`, `source_file`, and `source_sheet.`
+The final Encounters dataset retains `encounter_datetime`, `most_recent_encounter_date`, `earliest_encounter_date`, `number_of_previous_encounters`, `final_bookout_datetime`, `border`, `arrest_sector`, `bookout_sector`, `arrest_state`, `arrest_at_checkpoint_indicator`, `age`, `adult_or_juvenile`, `gender`, `citizenship`, `residence_city`, `residence_country`, `marital_status`, `subject_group_classification`, `number_of_children_and_nationality`, `time_in_us`, `ces_indicator`, `mpp_indicator`, `transfer_to_group`, `drugs_seized_indicator`, `statute_charge`, `disposition`, `referred_for_prosecution_under_8usc1325_or_8usc1326`, `source_file`, and `source_sheet.`
+
 ## Warnings and Limitations
 
-Below are some limitations and things to consider when accessing this data:
+Below are some limitations to consider when accessing this data:
 
--   **Link permanence:** Files are identified by their URLs published on CBP’s website. If CBP replaces the contents of an existing URL the pipeline will not automatically detect this revision.
+-   **USBP vs. OFO Encounters**: Our encounters dataset contains only encounters recorded by USBP, including Title 8 apprehensions and Title 42 expulsions. It excludes Title 8 inadmissibles recorded by OFO. Aggregated data on all encounters can be found on [CBP’s website](https://www.cbp.gov/document/stats/nationwide-encounters). Individual-level data is available only for USBP encounters.
 
--   **Redacted values:** At times, redacted codes were present in columns whose data types were cleaned. In this case, redacted codes were converted to NA values. If this occurred in a non-character column (i.e., columns that would convert redacted values to NAs), a companion flag column was created to indicate whether the NA was previously a redacted value.
+-   **Column harmonization**: CBP lacks clear documentation about all of the headers included in our datasets. Our codebook indicates where intended meanings and methods of measurement were not apparent. Identical headers may not have had the same meaning across different datasets. Columns were merged to the best of our ability but still may contain errors.
 
--   **Redaction codes:** CBP redaction codes used in released documents refer to standard Freedom of Information Act (FOIA) statutory exemptions. Common redaction codes that can be found in the data include:
+-   **Manual function prompting:** Several scripts contain binary functions that must be manually set to `TRUE` or `FALSE` when updating data. Please visit the `README.md` for instructions on how to correctly run the scripts.
+
+-   **Lack of subject identifiers:** CBP redacted all subject identification columns, making it impossible to identify which rows contained encounters with the same individual. When using this data, keep in mind that each row in both datasets refers to an encounter rather than an individual.
+
+-   **Missing values:** Missing values were not recorded in a standard fashion across datasets. Where some included "NA" values, others left cells blank. Many columns also contain redacted values. The differences in recording methods and missing information indications should be noted when interpreting this data.
+
+-   **Redaction codes:** CBP redaction codes used in released documents refer to standard Freedom of Information Act (FOIA) statutory exemptions. Redaction codes that can be found in the data include:
 
     -   **Exemption (b)(6):** Protects information that would constitute an unwarranted invasion of personal privacy of individuals involved.
     -   **Exemption (b)(7)(C):** Protects information that would constitute an unwarranted invasion of the personal privacy of a third party/parties (in some instances by revealing an investigative interest in them).
@@ -192,23 +204,15 @@ Below are some limitations and things to consider when accessing this data:
 
     More information can be found at [hhs.gov](https://www.hhs.gov/foia/exemptions-and-exclusions/index.html).
 
--   **Lack of subject identifiers:** CBP redacted all subject identification columns, making it impossible to identify which rows contained encounters with the same individual. When using this data, keep in mind that each row in both datasets refers to an encounter rather than an individual.
+-   **Excluded files:** If entire datasets were determined to be duplicates of each other, one was excluded from the final dataset. We have one instance of this in apprehensions.
 
--   **Missing values:** Missing values were not recorded in a standard fashion across datasets. Where some included "NA" values, others left cells blank. Many columns also contain redacted values. The differences in recording methods and missing information indications should be noted when interpreting this data.
+    -   **Apprehensions:** The Quarter 4 2024 apprehensions dataset (**`usbp_nationwide_apprehension_q4_fy_2024.xlsx)`** was deleted and not merged. This file was concluded to be an erroneous duplicate of the Quarter 3 2024 apprehensions dataset (**`usbp_nationwide_apprehension_q3_fy_2024.xlsx`**).
 
--   **Excluded files:** As mentioned, if entire datasets were determined to be duplicates of each other, one was excluded from the final dataset. We have two instances of this, whose deletions we further explain here.
+-   **Overlapping dates:** Several raw apprehension datasets were found to record overlapping periods of time. In these instances, we retained broader datasets over more granular ones to prioritize consistency. `cbp/data/<dataset>/processed/<dataset>.stacked.parquet` contains all non-duplicate datasets.
 
-    -   **Apprehensions: `usbp_nationwide_apprehension_q4_fy_2024.xlsx`** was deleted and not merged. This file was concluded to be an erroneous duplicate of **`usbp_nationwide_apprehension_q3_fy_2024.xlsx`**, and thus, its data was discarded.
+-   **Link permanence:** Files are identified by their URLs published on CBP’s website. If CBP replaces the contents of an existing URL the pipeline will not automatically detect this revision. We are currently updating the process to avoid this issue.
 
-    -   **Inadmissibles: `ofo_inadmissible_case_by_case_feb_2025_0.xlsx`** was deleted and not merged. This file was found to be an exact duplicate of **`ofo_inadmissible_case_by_case_feb_2025.xlsx`** and contributed no new information.
-
--   **Overlapping dates:** Several raw Apprehension and Inadmissible datasets were found to record overlapping periods of time. In these instances, we retained broader datasets over more granular ones to prioritize consistency. `cbp/data/<dataset>/processed/<dataset>.stacked.parquet` contains both types.
-
--   **Column harmonization**: CBP lacks clear documentation about all of the headers included in our datasets. Our codebook indicates where intended meanings and methods of measurement were not apparent. Identical headers may not have had the same meaning across different datasets. Columns were merged to the best of our ability but still may contain errors.
-
--   **USBP vs. OFO Encounters**: Our Encounters dataset contains only encounters recorded by USBP, including Title 8 apprehensions and Title 42 expulsions. It excludes Title 8 inadmissibles recorded by OFO. Aggregated data on all encounters can be found on [CBP’s website](https://www.cbp.gov/document/stats/nationwide-encounters). Individual-level data is available only for USBP encounters.
-
--   **Manual function prompting:** Several scripts contain binary functions that must be manually set to `TRUE` or `FALSE` when updating data. Please visit the `README.md` for instructions on how to correctly run the scripts.
+-   **Redacted values:** At times, redacted codes were present in columns whose data types were cleaned to non-character columns. In this case, redacted codes were converted to NA values. If this occurred, a companion flag column was created to indicate whether the NA was previously a redacted value.
 
 ## Citation
 

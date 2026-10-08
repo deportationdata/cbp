@@ -1107,7 +1107,8 @@ code_pairs <- list(
   bookout_sector = character(),
   arrest_method = character(),
   gender = character(),
-  disposition = character()
+  disposition = character(),
+  cds_program = character()
   )
 
 # retain existing code columns only 
@@ -1141,8 +1142,54 @@ output_columns <- c(
   source_columns
 )
 
+#### Translate Distinct CDS Combinations ####
+
+# Translate each distinct combination once instead of splitting every row
+if ("cds_program" %in% output_columns) {
+  cds_values <- dbGetQuery(
+    con,
+    "SELECT DISTINCT cds_program AS code FROM combined_input"
+  ) |>
+    as_tibble()
+
+  cds_lookup <- lookup |>
+    filter(field == "cds_program") |>
+    transmute(code_key = str_to_upper(code), full_name) |>
+    distinct()
+
+  cds_values <- cds_values |>
+    mutate(
+      full_name = map_chr(code, function(value) {
+        if (is.na(value)) return(NA_character_)
+
+        tokens <- str_split(value, "[,;]")[[1]] |>
+          str_trim()
+        tokens <- tokens[tokens != ""]
+        if (length(tokens) == 0) return(NA_character_)
+
+        labels <- cds_lookup$full_name[
+          match(str_to_upper(tokens), cds_lookup$code_key)
+        ]
+        labels[is.na(labels)] <- tokens[is.na(labels)]
+        paste(unique(labels), collapse = ", ")
+      })
+    )
+
+  dbWriteTable(
+    con,
+    "cds_combination_lookup",
+    cds_values,
+    temporary = TRUE,
+    overwrite = TRUE
+  )
+}
+
 # build lookup joins and output expressions
-lookup_joins <- character()
+lookup_joins <- if ("cds_program" %in% output_columns) {
+  "LEFT JOIN cds_combination_lookup cds ON cds.code = s.cds_program"
+} else {
+  character()
+}
 output_expressions <- character()
 
 
@@ -1161,6 +1208,15 @@ for (column in output_columns) {
     next
   }
   
+  # CDS combinations were translated once in the small lookup table
+  if (column == "cds_program") {
+    output_expressions <- c(
+      output_expressions,
+      "cds.full_name AS cds_program"
+    )
+    next
+  }
+
   # regular columns pass through unchanged
   if (!column %in% names(code_pairs)) {
     output_expressions <- c(
@@ -1255,6 +1311,11 @@ lookup_joins_sql <- paste(
   collapse = "\n  "
 )
 
+#### Sort Rows by Apprehension Date ####
+
+# earliest to latest, including time within each date; missing dates last
+row_order_sql <- "s.apprehension_datetime ASC NULLS LAST"
+
 # write final parquet
 final_query <- sprintf(
   paste0(
@@ -1263,6 +1324,7 @@ final_query <- sprintf(
     "\n    %s",
     "\n  FROM combined_input s",
     "\n  %s",
+    "\n  ORDER BY %s",
     "\n)",
     "\nTO %s (",
     "\n  FORMAT parquet,",
@@ -1272,6 +1334,7 @@ final_query <- sprintf(
   ),
   consolidated_select,
   lookup_joins_sql,
+  row_order_sql,
   final_sql
 )
 

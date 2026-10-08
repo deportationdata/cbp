@@ -277,6 +277,40 @@ time_in_us_mapping <- tribble(
   "Not Applicable", "NA" 
 )
 
+# transfer group mappings
+transfer_group_mapping <- tribble(
+  ~code, ~full_name,
+  "ERO", "Enforcement and Removal Operations",
+  "ORR", "Office of Refugee Resettlement",
+  "POE", "Port of Entry",
+  "TOT", "Turned Over To"
+)
+
+# subject group classification mappings
+group_mapping <- tribble(
+  ~code, ~full_name,
+  "FMUA", "Family Unit Alien",
+  "FMUA AAC", "FMUA Accompanied Alien Children",
+  "Single Adults", "Single Adult",
+  "UC", "Unaccompanied Child"
+)
+
+# referred_for_prosecution_under_8usc1325_or_8usc1326 mapping
+prosecution_mapping <- tribble(
+  ~code, ~full_name,
+  "Y", "Referred"
+)
+
+cds_mapping <- tribble(
+  ~code,      ~full_name,
+  "ATEP",     "Alien Transfer Exit Program",
+  "MIRP",     "Mexican Interior Repatriation Program",
+  "OASISS",   "Operation against Smugglers Initiative on Safety and Security",
+  "IRI",      "Interior Repatriation Initiative",
+  "QUICK",    "Quick Court",
+  "STRMLINE", "Streamline"
+)
+
 # combine mappings
 code_map <- bind_rows(
   country_mapping |>
@@ -304,7 +338,19 @@ code_map <- bind_rows(
     mutate(field = "disposition"),
   
   time_in_us_mapping |>
-    mutate(field = "time_in_us")
+    mutate(field = "time_in_us"),
+  
+  transfer_group_mapping |>
+    mutate(field = "transfer_to_group"),
+  
+  group_mapping |>
+    mutate(field = "subject_group_classification"),
+  
+  prosecution_mapping |>
+    mutate(field = "referred_for_prosecution_under_8usc1325_or_8usc1326"),
+  
+  cds_mapping |>
+    mutate(field = "cds_program")
 ) |>
   select(
     field,

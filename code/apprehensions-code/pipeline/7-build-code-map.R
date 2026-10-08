@@ -219,13 +219,12 @@ marital_mapping <- tribble(
 # entry mappings
 entry_mapping <- tribble(
   ~code, ~full_name,
-  
   # codes
-  "PWAM", "PWA Mexico",
+  "PWAM", "Present Without Admission Mexico",
   "TWA",  "Temporary Work Agriculture",
   "O",    "Other",
-  "PWAC", "PWA Canada",
-  "PWAO", "PWA Other",
+  "PWAC", "Present Without Admission Canada",
+  "PWAO", "Present Without Admission Other",
   "BCC",  "Border Crossing Card",
   "PAR",  "Parolee",
   "NIM",  "Non-Immigrant",
@@ -242,20 +241,29 @@ entry_mapping <- tribble(
   "PWA",  "Present Without Admission",
   "NIC",  "Not in Custody",
   "VWP",  "Visa Waiver Program",
-  "OFC", "Oral False Claim", # NIEM slight mismatch but consistent here
-  "DFC", "Documented False Claim", # NIEM slight mismatch but consistent here
+  "OFC",  "Oral False Claim",       # NIEM slight mismatch but consistent here
+  "DFC",  "Documented False Claim", # NIEM slight mismatch but consistent here
   "R",    "Refugee",
   "324",  "Smuggler",
   "A",    "Asylum",
   "C",    "Crew",
   "I",    "Immigrant",
+  "TWOV", "Transit Without Visa",
   
-  # truncated labels
+  # alternate and truncated labels
+  "ABSCONDER",                     "Absconder",
+  "False Claim with Counterfeit",  "False Claim with Counterfeit Document",
   "False Claim with Counterfeit D", "False Claim with Counterfeit Document",
   "False Claim with Valid Documen", "False Claim with Valid Document",
+  "False Claim with Valid Docum...", "False Claim with Valid Document",
   "False Claim with Altered Docum", "False Claim with Altered Document",
   "ORAL FALSE CLAIMS TO OTHER THA", "Oral False Claim to Other Than CBP",
-  "Oral False Claim to U.S. Citiz", "Oral False Claim to U.S. Citizen"
+  "ORAL FALSE CLAIMS TO O...",      "Oral False Claim to Other Than CBP",
+  "Oral False Claim to U.S. Citiz", "Oral False Claim to U.S. Citizen",
+  "PWA Canada",                    "Present Without Admission Canada",
+  "PWA Mexico",                    "Present Without Admission Mexico",
+  "PWA Other",                     "Present Without Admission Other",
+  "US CITIZEN",                    "US Citizen"
 )
 
 # border mappings
@@ -335,10 +343,24 @@ disposition_mapping <- tribble(
   "WA/NTA", "Warrant of Arrest/Notice to Appear"
 )
 
+# CDS program mappings
+cds_mapping <- tribble(
+  ~code,      ~full_name,
+  "ATEP",     "Alien Transfer Exit Program",
+  "MIRP",     "Mexican Interior Repatriation Program",
+  "OASISS",   "Operation against Smugglers Initiative on Safety and Security",
+  "IRI",      "Interior Repatriation Initiative",
+  "QUICK",    "Quick Court",
+  "STRMLINE", "Streamline"
+)
+
 # charge code mappings
 
 # combine mappings
 code_map <- bind_rows(
+  cds_mapping |>
+    mutate(field = "cds_program"),
+
   country_mapping |>
     mutate(field = "citizenship"),
   
@@ -374,6 +396,7 @@ code_map <- bind_rows(
   
   disposition_mapping |>
     mutate(field = "disposition")
+  
 ) |>
   select(
     field,

@@ -929,8 +929,10 @@ code_pairs <- list(
   bookout_sector = character(),
   adult_or_juvenile = character(),
   disposition = character(),
-  time_in_us = character()
-  
+  time_in_us = character(),
+  transfer_to_group = character(),
+  subject_group_classification = character(),
+  referred_for_prosecution_under_8usc1325_or_8usc1326 = character()
 )
 
 # retain existing code columns only 
@@ -1078,6 +1080,11 @@ lookup_joins_sql <- paste(
   collapse = "\n  "
 )
 
+#### Sort Rows by Encounter Date ####
+
+# earliest to latest, including time within each date; missing dates last
+row_order_sql <- "s.encounter_datetime ASC NULLS LAST"
+
 # write final parquet
 final_query <- sprintf(
   paste0(
@@ -1086,6 +1093,7 @@ final_query <- sprintf(
     "\n    %s",
     "\n  FROM combined_input s",
     "\n  %s",
+    "\n  ORDER BY %s",
     "\n)",
     "\nTO %s (",
     "\n  FORMAT parquet,",
@@ -1095,6 +1103,7 @@ final_query <- sprintf(
   ),
   consolidated_select,
   lookup_joins_sql,
+  row_order_sql,
   final_sql
 )
 

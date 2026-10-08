@@ -16,7 +16,7 @@ When CBP publishes new files, run the pipeline again, beginning with the first d
 
 ## Repository Organization
 
-In the `cbp` repository, there are three main folders through which you can navigate. Throughout this document, `<dataset>` indicates the relevant dataset type among apprehensions, inadmissibles, or encounters.
+In the `cbp` repository, there are three main folders through which you can navigate. Throughout this document, `<dataset>` indicates the relevant dataset type among apprehensions or encounters.
 
 -   The `code/` folder contains all project code. This includes:
 
@@ -39,6 +39,18 @@ In the `cbp` repository, there are three main folders through which you can navi
     -   `~/validation/`: validation files and outputs used to compare counts obtained through the pipeline with CBP dashboards
 
 -   The `analysis/` folder contains outputs that are not part of the pipeline, whose code can be found in either `cbp/<dataset>-code/analysis` if the outputs are specific to certain datasets or `cbp/code/miscellaneous/`
+
+### 0. Convert PDF Files
+
+Scripts: `0-convert-pdf.R` in apprehensions
+
+This script converts PDFs used to fill in a gap in information found in 2014. As this data was not available on CBP's website, we used files obtained by Deportation Data Project co-director David Hausman, represented by the Law Office of Amber Qureshi and the National Immigration Project. This script exists only for apprehensions and does not need to be rerun after the PDF files are converted to parquet form.
+
+Outputs:
+
+-   `data/apprehensions/raw/pdfs/`: contains original PDF files
+
+-   `data/apprehensions/raw/usbp_apprehensions_nationwide_fy14.parquet`: combined parquet version of original PDF files
 
 ### 1. Download Source Files
 
@@ -117,7 +129,7 @@ Review parts with missing date columns and pairs with the same date range. The l
 
 ### 6. Stack the Parts
 
-Scripts: `6-stack-apprehensions.R`, `7-stack-inadmissibles.R`, and `6-stack-encounters.R`.
+Scripts: `6-stack-apprehensions.R`, `6-stack-encounters.R`.
 
 These scripts combine the remaining parts by column name and verify that the final row count equals the sum of the included parts.
 
@@ -126,7 +138,7 @@ Outputs in `data/<dataset>/processed/`:
 -   `<dataset>-stacked.parquet`: stacked dataset containing all parts that are not exact duplicates or erroneous, still containing overlapping parts and not yet cleaned
 -   `<dataset>-audit.parquet`: displays individual part name, path, and number of rows
 
-Before running the apprehensions or inadmissibles stack, review `parts_to_delete` near the beginning of the script. This list is maintained manually based on the overlap review and removes known faulty or duplicate parts only. The script deletes listed files from `parts-to-stack/`, so the parts must be fully rebuilt if an exclusion is to be reversed. Encounters currently has no duplicate or erroneous parts to remove.
+Before running the apprehensions stack, review `parts_to_delete` near the beginning of the script. This list is maintained manually based on the overlap review and removes known faulty or duplicate parts only. The script deletes listed files from `parts-to-stack/`, so the parts must be fully rebuilt if an exclusion is to be reversed. Encounters currently has no duplicate or erroneous parts to remove.
 
 ### 7. Build Code Column Map
 
@@ -153,11 +165,13 @@ Outputs:
 -   `data/<dataset>/processed/<dataset>-cleaned.parquet`: cleaned dataset in final format, still containing overlapping parts
 -   `data/encounters/processed/encounters-final.parquet`: final encounters dataset
 
-The apprehensions and inadmissibles scripts call this output `<dataset>-cleaned.parquet` because overlap resolution occurs in the next step. For encounters, this output is the final dataset.
+The apprehensions scripts call this output `<dataset>-cleaned.parquet` because overlap resolution occurs in the next step. For encounters, this output is the final dataset.
 
 The following objects are maintained manually in each cleaning script and should be reviewed when the crosswalk gains new fields: `column_order`, `datetime_columns`, `date_columns`, `time_columns`, `logical_columns`, `integer_columns`, `double_columns`, and the accepted logical and missing-value codes.
 
 The apprehensions and encounters cleaning scripts use the code maps generated in the previous scripts to translate coded values into full names and consolidate paired fields into a single column. Existing full-name values take priority and values without a matching translation are retained as written.
+
+The apprehensions and encounters cleaning scripts also combine date and time fields into datetime fields and label source clock times as UTC because the original time zone is unspecified. Selected fields receive redaction flags to distinguish redacted values from ordinary missing values. Finally, these datasets are sorted by apprehension and encounter datetime, with missing date rows last.
 
 Review all warnings about unrecognized values or columns absent from `column_order`. Columns not assigned another type remain character fields by default. Parts that overlap in date are retained in this step. In using this dataset, note that the same entry may be represented multiple times in overlapping datasets.
 
@@ -176,7 +190,7 @@ Review the resolution audit to confirm which dates were selected from each sourc
 
 ### 10. Audit the Final Data
 
-Script: `10-audit-<dataset>-final.R`.
+Script: `10-audit-apprehensions.R`, `9-audit-encounters.R`
 
 This script compares column population across the stacked, cleaned, and final apprehensions files.
 
@@ -186,6 +200,11 @@ Outputs:
 -   `data/apprehensions/validation/apprehensions-cols-redacted-to-null.parquet`: displays columns that contained redaction codes in the stacked data and were converted to `NULL` when converted to non-character types
 -   `data/apprehensions/validation/apprehensions-cols-excluded-by-overlap-resolution.parquet`: displays columns that were populated in the cleaned dataset but became empty after overlap resolution, including the number of populated values excluded with the removed rows
 -   `data/apprehensions/metadata/final-column-inventory.parquet`: inventory of columns retained in the final dataset, including column position and name, data type, non-missing rows in the stacked, cleaned and final stages, total rows, number of missing rows, percent of missing rows in the final dataset, logical flags to indicate whether the column is empty or is/has a redaction flag, and the number of non-missing rows removed in overlap resolution and elsewhere
+-   `data/<dataset>/metadata/raw-column-missingness-matrix.parquet`: matrix containing each raw column and their percent missing within each source file sheet
+
+<!-- -->
+
+-   `data/<dataset>/metadata/final-column-missingness-matrix.parquet`: matrix containing each final column and their percent missing withim each source file sheet
 
 Consider excluded columns before distributing final datasets.
 
@@ -201,6 +220,68 @@ Outputs in `data/<dataset>/validation/`:
 -   `<dataset>-monthly-cross-reference.parquet`: displays final dataset monthly counts, CBP dashboard monthly counts, fiscal year and month, monthly, absolute, and percent differences, a logical flag indicating exact match in monthly counts, and a `status` column
 
 The `cbp_benchmarks` table is maintained manually. Before each update, check whether CBP has published a newer benchmark and add its identifier, release date, and URL. The script keeps the most recent available benchmark for each month.
+
+### 12. Select Final Columns
+
+Scripts: `11-select-final-cols.R` in encounters, `12-select-final-cols.R` in apprehensions.
+
+These scripts select final columns based on usefulness and percent missing, outputting what we believe to be the most useful and straightforward dataset after the pipeline.
+
+Outputs in `cbp/data/<dataset>/processed`:
+
+-   `apprehensions-final.parquet`: contains the following columns
+    -   `apprehension_datetime`
+    -   `entry_date`
+    -   `final_bookout_date`
+    -   `arrest_sector`
+    -   `arrest_method`
+    -   `age`
+    -   `gender`
+    -   `citizenship`
+    -   `marital_status`
+    -   `number_of_children_and_nationality`
+    -   `fmua_indication`
+    -   `unaccompanied_child_indicator`
+    -   `entry_status`
+    -   `credible_fear_indicator`
+    -   `cds_program`
+    -   `prosecution_indicator`
+    -   `statute_charge`
+    -   `charge_code`
+    -   `disposition`
+    -   `removal_type`
+    -   `source_file`
+    -   `source_sheet`
+-   `encounters-final.parquet`: contains the following columns
+    -   `encounter_datetime`
+    -   `most_recent_encounter_date`
+    -   `earliest_encounter_date`
+    -   `number_of_previous_encounters`
+    -   `final_bookout_datetime`
+    -   `border`
+    -   `arrest_sector`
+    -   `bookout_sector`
+    -   `arrest_state`
+    -   `arrest_at_checkpoint_indicator`
+    -   `age`
+    -   `adult_or_juvenile`
+    -   `gender`
+    -   `citizenship`
+    -   `residence_city`
+    -   `residence_country`
+    -   `marital_status`
+    -   `subject_group_classification`
+    -   `number_of_children_and_nationality`
+    -   `time_in_us`
+    -   `ces_indicator`
+    -   `mpp_indicator`
+    -   `transfer_to_group`
+    -   `drugs_seized_indicator`
+    -   `statute_charge`
+    -   `disposition`
+    -   `referred_for_prosecution_under_8usc1325_or_8usc1326`
+    -   `source_file`
+    -   `source_sheet`
 
 ## Analysis Scripts
 
@@ -225,5 +306,5 @@ For an ordinary update after CBP publishes a new file:
 7.  Stack the data.
 8.  Review columns to collapse in the cleaning stage and rerun the map.
 9.  Clean the data.
-10. Run the dataset-specific overlap resolution, audit, or cross-reference steps.
+10. Run the dataset-specific overlap resolution, audit, cross-reference, and column selection steps.
 11. Review warnings and validation outputs before publishing final files.
