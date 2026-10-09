@@ -17,7 +17,7 @@ apprehensions_final_all_cols_path <- file.path(
 
 apprehensions_final_path <- file.path(
   processed_dir,
-  "apprehensions-final.parquet"
+  "apprehensions-latest.parquet"
 )
 
 # select final cols

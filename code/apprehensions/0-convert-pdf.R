@@ -8,19 +8,23 @@ library(pointblank)
 
 # set paths
 dataset_dir <- "data/apprehensions"
-raw_dir <- file.path(dataset_dir, "raw")
-pdf_dir <- file.path(raw_dir, "pdfs")
+included_sources_dir <- file.path(dataset_dir, "included-sources")
+pdf_dir <- here::here("inputs", "pdfs")
 
 dir.create(dataset_dir, recursive = TRUE, showWarnings = FALSE)
-dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
-dir.create(pdf_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(included_sources_dir, recursive = TRUE, showWarnings = FALSE)
 
 # list files 
 files <- list.files(
-    here::here("data/apprehensions/raw/pdfs/"),
-    pattern = "*.pdf",
+    pdf_dir,
+    pattern = "\\.pdf$",
+    ignore.case = TRUE,
     full.names = TRUE
   )
+
+if (length(files) == 0) {
+  stop("No PDF inputs found in ", pdf_dir, ".")
+}
 
 # Read files in pdf_data format (x,y coordinates per word token)
 pdf_data_list <- lapply(files, function(file) {
@@ -448,7 +452,7 @@ cols_to_drop <- c(
 arrow::write_parquet(
   structured_table_clean |>
     select(-any_of(cols_to_drop)),
-  "data/apprehensions/raw/usbp_apprehensions_nationwide_fy14.parquet"
+  "data/apprehensions/included-sources/usbp_apprehensions_nationwide_fy14.parquet"
 )
 
 # END

@@ -18,27 +18,21 @@ When CBP publishes new files, run the pipeline again, beginning with the first d
 
 In the `cbp` repository, there are three main folders through which you can navigate. Throughout this document, `<dataset>` indicates the relevant dataset type among apprehensions or encounters.
 
--   The `code/` folder contains all project code. This includes:
+-   The `code/` folder contains all project code, organized as `code/<dataset>`
 
-    -   Code used to create final datasets in `code/<dataset>-code/pipeline/`
+-   The `data/<dataset>/` folder contains all data extracted through the pipelines in `cbp/data/<dataset>/`. Apprehensions and encounters follow this internal organization:
 
-    -   Some preliminary analysis in `code/<dataset>-code/analysis/`
+    -   `~/included-sources/`: source files accepted into the pipeline, including PDF-derived parquet files for apprehensions
 
-    -   Additional code used for general analysis in `code/miscellaneous/`
-
--   The `data/<dataset>/` folder contains all data extracted through the pipelines in `cbp/data/<dataset>/`, which all follow the same internal organization:
-
-    -   `~/manual-review/`: files that require manual review before inclusion in the final dataset
+    -   `~/excluded-sources/`: downloaded files excluded by the automatic inclusion rules; review these before deciding whether to include them
 
     -   `~/metadata/`: inventories, crosswalks, metadata, and other information describing source files and processed parts
 
     -   `~/processed/`: any transformed raw files
 
-    -   `~/raw/`: any raw files collected from CBP to be considered for inclusion in the final dataset
-
     -   `~/validation/`: validation files and outputs used to compare counts obtained through the pipeline with CBP dashboards
 
--   The `analysis/` folder contains outputs that are not part of the pipeline, whose code can be found in either `cbp/<dataset>-code/analysis` if the outputs are specific to certain datasets or `cbp/code/miscellaneous/`
+-   The `inputs/` folder contains all of the raw PDF files provided by the Deportation Data Team to fill a gap in CBP data found in 2014. These PDFs are later converted to parquet files in the apprehensions pipeline.
 
 ### 0. Convert PDF Files
 
@@ -46,11 +40,13 @@ Scripts: `0-convert-pdf.R` in apprehensions
 
 This script converts PDFs used to fill in a gap in information found in 2014. As this data was not available on CBP's website, we used files obtained by Deportation Data Project co-director David Hausman, represented by the Law Office of Amber Qureshi and the National Immigration Project. This script exists only for apprehensions and does not need to be rerun after the PDF files are converted to parquet form.
 
-Outputs:
+Input:
 
--   `data/apprehensions/raw/pdfs/`: contains original PDF files
+-   `inputs/pdfs/`: contains original PDF files
 
--   `data/apprehensions/raw/usbp_apprehensions_nationwide_fy14.parquet`: combined parquet version of original PDF files
+Output:
+
+-   `data/apprehensions/included-sources/usbp_apprehensions_nationwide_fy14.parquet`: combined parquet version of original PDF files
 
 ### 1. Download Source Files
 
@@ -60,11 +56,12 @@ These scripts scrape the relevant CBP records page, identify downloadable links,
 
 Outputs:
 
--   `data/<dataset>/raw/`: contains files that meet certain match criteria
--   `data/<dataset>/manual-review/`: contains ambiguous files meant for manual review
+-   `data/<dataset>/included-sources/`: contains files that meet inclusion criteria (apprehensions and encounters)
+-   `data/<dataset>/excluded-sources/`: contains files excluded by the automatic inclusion rules and retained for review (apprehensions and encounters)
+-   Inadmissibles uses `raw/` and `manual-review/` respectively.
 -   `<dataset>-links.parquet`: contains links that the script interacted with and their match classifications in the corresponding `metadata/` directory, along with their href, full URL, and lowercase text
 
-Any new files that appear in `manual-review/` should be manually reviewed before proceeding to the next script. Upon examination, move any files that should be included in the final dataset to `raw/`. The inclusion and exclusion conditions should be reviewed if CBP changes its labels or naming conventions.
+Any new files that appear in `excluded-sources/` should be manually reviewed before proceeding to the next script. Upon examination, move any files that should be included in the final dataset to `included-sources/`. For inadmissibles, review `manual-review/` and move accepted files to `raw/`. The inclusion and exclusion conditions should be reviewed if CBP changes its labels or naming conventions.
 
 Because the link inventory identifies files by URL, the script will not recognize if CBP replaces an existing link with a different file. Thus, existing URLs should be confirmed if revisions are suspected.
 
@@ -163,7 +160,7 @@ These scripts standardize redaction codes, convert fields to their intended data
 Outputs:
 
 -   `data/<dataset>/processed/<dataset>-cleaned.parquet`: cleaned dataset in final format, still containing overlapping parts
--   `data/encounters/processed/encounters-final.parquet`: final encounters dataset
+-   `data/encounters/processed/encounters-final-all-cols.parquet`: final encounters dataset with all columns
 
 The apprehensions scripts call this output `<dataset>-cleaned.parquet` because overlap resolution occurs in the next step. For encounters, this output is the final dataset.
 
@@ -183,7 +180,7 @@ This step resolves overlapping parts by prioritizing broader source parts, using
 
 Outputs:
 
--   `data/apprehensions/processed/apprehensions-final.parquet`: final apprehensions dataset
+-   `data/apprehensions/processed/apprehensions-final-all-cols.parquet`: final apprehensions dataset with all columns
 -   `data/apprehensions/validation/apprehensions-overlap-resolution.parquet`: displays part file, source, and sheet, minimum and maximum dates, number of days spanned per part, number of days included in the final dataset per part, and a logical flag to indicate whether the part was retained or not
 
 Review the resolution audit to confirm which dates were selected from each source.
@@ -212,7 +209,7 @@ Consider excluded columns before distributing final datasets.
 
 Scripts: `10-cross-reference-encounters.R` and `11-cross-reference-apprehensions.R`.
 
-These scripts compare monthly counts in `<dataset>-final.parquet` with published CBP dashboard extracts.
+These scripts compare monthly counts in `<dataset>-final-all-cols.parquet` with published CBP dashboard extracts.
 
 Outputs in `data/<dataset>/validation/`:
 
@@ -229,7 +226,7 @@ These scripts select final columns based on usefulness and percent missing, outp
 
 Outputs in `cbp/data/<dataset>/processed`:
 
--   `apprehensions-final.parquet`: contains the following columns
+-   `apprehensions-latest.parquet`: contains the following columns
     -   `apprehension_datetime`
     -   `entry_date`
     -   `final_bookout_date`
@@ -252,7 +249,7 @@ Outputs in `cbp/data/<dataset>/processed`:
     -   `removal_type`
     -   `source_file`
     -   `source_sheet`
--   `encounters-final.parquet`: contains the following columns
+-   `encounters-latest.parquet`: contains the following columns
     -   `encounter_datetime`
     -   `most_recent_encounter_date`
     -   `earliest_encounter_date`
@@ -260,7 +257,6 @@ Outputs in `cbp/data/<dataset>/processed`:
     -   `final_bookout_datetime`
     -   `border`
     -   `arrest_sector`
-    -   `bookout_sector`
     -   `arrest_state`
     -   `arrest_at_checkpoint_indicator`
     -   `age`
@@ -283,21 +279,11 @@ Outputs in `cbp/data/<dataset>/processed`:
     -   `source_file`
     -   `source_sheet`
 
-## Analysis Scripts
-
-The `analysis/` directory within each code folder contains optional scripts that describe coverage after the main pipeline has been run.
-
--   The three `<dataset>-parts-timeline.R` scripts read `parts-metadata.parquet` and produce PDF timelines showing the date range of each part and whether it is contained within another part.
-
--   The three `monthly-<dataset>-counts.R` scripts read the final datasets and write monthly counts by source file to: `analysis/monthly-<dataset>-by-part.parquet`
-
-These scripts currently limit results to dates beginning January 1, 2020. Change the date in the SQL `WHERE` clause if a different period is required.
-
 ## Updating the Data
 
 For an ordinary update after CBP publishes a new file:
 
-1.  Run the download script and review `manual-review/`.
+1.  Run the download script and review `excluded-sources/` (`manual-review/` for inadmissibles).
 2.  Run the profiling script with `force_reprofile <- FALSE`.
 3.  Review new distinct columns and update the crosswalk.
 4.  Set `force_rebuild <- TRUE` if the crosswalk or an existing input changed. Otherwise create only the new parts with `force_rebuild <- FALSE`.

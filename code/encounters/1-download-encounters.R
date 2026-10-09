@@ -12,8 +12,8 @@ encounters_url <- "https://www.cbp.gov/document/foia-record/customs-and-border-p
 
 # set paths
 dataset_dir <- "data/encounters"
-raw_dir <- file.path(dataset_dir, "raw")
-manual_review_dir <- file.path(dataset_dir, "manual-review")
+included_sources_dir <- file.path(dataset_dir, "included-sources")
+excluded_sources_dir <- file.path(dataset_dir, "excluded-sources")
 metadata_dir <- file.path(dataset_dir, "metadata")
 
 # outputs 
@@ -21,8 +21,8 @@ link_inventory_path <- file.path(metadata_dir, "encounter-links.parquet")
 
 # create folders
 dir.create(dataset_dir, recursive = TRUE, showWarnings = FALSE)
-dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
-dir.create(manual_review_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(included_sources_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(excluded_sources_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
 
 # CBP requests / fetch page 
@@ -99,7 +99,7 @@ if (manual_count > 0) {
   warning(
     paste0(
       manual_count,
-      "WARNING: File(s) flagged for manual review. Check data/encounters/manual_review/"))
+      "WARNING: File(s) flagged for manual review. Check data/encounters/excluded-sources/"))
   }
 
 
@@ -122,17 +122,17 @@ download_cbp_file <- function(url, dest_dir) {
   dest
 }
 
-# download included encounter files into raw/
+# download included encounter files into included-sources/
 downloaded_encounter_files <- encounter_links |>
   filter(download_class == "include_encounters") |>
   pull(full_url) |>
-  map_chr(download_cbp_file, dest_dir = raw_dir)
+  map_chr(download_cbp_file, dest_dir = included_sources_dir)
 
-# download manual review files into manual_review/
+# download manual review files into excluded-sources/
 downloaded_manual_review_files <- encounter_links |>
   filter(download_class == "manual_review") |>
   pull(full_url) |>
-  map_chr(download_cbp_file, dest_dir = manual_review_dir)
+  map_chr(download_cbp_file, dest_dir = excluded_sources_dir)
 
 print(downloaded_encounter_files)
 print(downloaded_manual_review_files)
@@ -150,7 +150,7 @@ write_parquet(
 )
 
 cat("Available encounter files:", length(downloaded_encounter_files), "\n")
-cat("Available manual-review files:", length(downloaded_manual_review_files), "\n")
+cat("Available excluded-source files:", length(downloaded_manual_review_files), "\n")
 
 
 

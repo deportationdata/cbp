@@ -17,7 +17,7 @@ encounters_final_all_cols_path <- file.path(
 
 encounters_final_path <- file.path(
   processed_dir,
-  "encounters-final.parquet"
+  "encounters-latest.parquet"
 )
 
 # select final cols

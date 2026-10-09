@@ -10,7 +10,7 @@ library(fs)
 
 # paths
 dataset_dir <- "data/apprehensions"
-raw_dir <- file.path(dataset_dir, "raw")
+included_sources_dir <- file.path(dataset_dir, "included-sources")
 metadata_dir <- file.path(dataset_dir, "metadata")
 
 dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
@@ -21,9 +21,9 @@ raw_column_inventory_path <- file.path(metadata_dir, "raw-column-inventory.parqu
 distinct_columns_path <- file.path(metadata_dir, "distinct-columns.parquet")
 failed_sheets_path <- file.path(metadata_dir, "failed-sheets.parquet")
 
-# list Excel and Parquet files in raw/
+# list Excel and Parquet files in included-sources/
 raw_files <- dir_ls(
-  raw_dir,
+  included_sources_dir,
   regexp = "\\.(xlsx|xls|parquet)$"
 )
 
@@ -33,7 +33,7 @@ raw_files <- raw_files[
 ]
 
 if (length(raw_files) == 0) {
-  stop("No Excel or Parquet inputs found in ", raw_dir, ".")
+  stop("No Excel or Parquet inputs found in ", included_sources_dir, ".")
 }
 
 #### Manual Entry Needed: Rebuild Profiling Metadata? ####
