@@ -1,3 +1,6 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
 # load packages
 library(tidyverse)
 library(readxl)
@@ -7,7 +10,7 @@ library(fs)
 
 # paths
 dataset_dir <- "data/inadmissibles"
-raw_dir <- file.path(dataset_dir, "raw")
+included_sources_dir <- file.path(dataset_dir, "included-sources")
 metadata_dir <- file.path(dataset_dir, "metadata")
 
 dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
@@ -18,9 +21,9 @@ raw_column_inventory_path <- file.path(metadata_dir, "raw-column-inventory.parqu
 distinct_columns_path <- file.path(metadata_dir, "distinct-columns.parquet")
 failed_sheets_path <- file.path(metadata_dir, "failed-sheets.parquet")
 
-# list all xlsx/xls files in raw/
+# list all xlsx/xls files in included-sources/
 raw_files <- dir_ls(
-  raw_dir,
+  included_sources_dir,
   regexp = "\\.(xlsx|xls)$"
 )
 
@@ -30,7 +33,7 @@ raw_files <- raw_files[
 ]
 
 if (length(raw_files) == 0) {
-  stop("No Excel workbooks found in ", raw_dir, ".")
+  stop("No Excel workbooks found in ", included_sources_dir, ".")
 }
 
 #### Manual Entry Needed: Rebuild Profiling Metadata? ####
@@ -65,7 +68,7 @@ if (
 }
 
 
-# old items inventory (empty tibbles)
+# old items inventory (empty tibbles) 
 old_sheet_inventory <- tibble()
 old_column_inventory <- tibble()
 old_failed_sheets <- tibble()
@@ -235,7 +238,7 @@ if (nrow(successful_columns) == 0) {
   stop("No sheets were successfully profiled.")
 }
 
-# add new sheets/cols to inventory
+# add new sheets/cols to inventory 
 sheet_inventory_final <- bind_rows(
   old_sheet_inventory,
   sheet_inventory

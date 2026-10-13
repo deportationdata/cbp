@@ -56,12 +56,11 @@ These scripts scrape the relevant CBP records page, identify downloadable links,
 
 Outputs:
 
--   `data/<dataset>/included-sources/`: contains files that meet inclusion criteria (apprehensions and encounters)
--   `data/<dataset>/excluded-sources/`: contains files excluded by the automatic inclusion rules and retained for review (apprehensions and encounters)
--   Inadmissibles uses `raw/` and `manual-review/` respectively.
+-   `data/<dataset>/included-sources/`: contains files that meet inclusion criteria
+-   `data/<dataset>/excluded-sources/`: contains files excluded by the automatic inclusion rules and retained for review
 -   `<dataset>-links.parquet`: contains links that the script interacted with and their match classifications in the corresponding `metadata/` directory, along with their href, full URL, and lowercase text
 
-Any new files that appear in `excluded-sources/` should be manually reviewed before proceeding to the next script. Upon examination, move any files that should be included in the final dataset to `included-sources/`. For inadmissibles, review `manual-review/` and move accepted files to `raw/`. The inclusion and exclusion conditions should be reviewed if CBP changes its labels or naming conventions.
+Any new files that appear in `excluded-sources/` should be manually reviewed before proceeding to the next script. Upon examination, move any files that should be included in the final dataset to `included-sources/`. The inclusion and exclusion conditions should be reviewed if CBP changes its labels or naming conventions.
 
 Because the link inventory identifies files by URL, the script will not recognize if CBP replaces an existing link with a different file. Thus, existing URLs should be confirmed if revisions are suspected.
 
@@ -69,7 +68,7 @@ Because the link inventory identifies files by URL, the script will not recogniz
 
 Scripts: `2-profile-<dataset>.R`
 
-These scripts identify the likely header row in each worksheet and inventory the columns found in all `raw/` files.
+These scripts identify the likely header row in each worksheet and inventory the columns found in all `included-sources/` files.
 
 Outputs in `data/<dataset>/metadata/`:
 
@@ -283,7 +282,7 @@ Outputs in `cbp/data/<dataset>/processed`:
 
 For an ordinary update after CBP publishes a new file:
 
-1.  Run the download script and review `excluded-sources/` (`manual-review/` for inadmissibles).
+1.  Run the download script and review `excluded-sources/`.
 2.  Run the profiling script with `force_reprofile <- FALSE`.
 3.  Review new distinct columns and update the crosswalk.
 4.  Set `force_rebuild <- TRUE` if the crosswalk or an existing input changed. Otherwise create only the new parts with `force_rebuild <- FALSE`.
@@ -294,3 +293,5 @@ For an ordinary update after CBP publishes a new file:
 9.  Clean the data.
 10. Run the dataset-specific overlap resolution, audit, cross-reference, and column selection steps.
 11. Review warnings and validation outputs before publishing final files.
+
+Inadmissibles cleaning writes `inadmissibles-final-all-cols.parquet` and `inadmissibles-latest.parquet` in `data/inadmissibles/processed/`. Both currently contain all cleaned columns; a separate release-column selection has not yet been defined.

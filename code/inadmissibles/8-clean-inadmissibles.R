@@ -14,8 +14,10 @@ stacked_path <- file.path(
 
 final_path <- file.path(
   processed_dir,
-  "inadmissibles-final.parquet"
+  "inadmissibles-final-all-cols.parquet"
 )
+
+latest_path <- file.path(processed_dir, "inadmissibles-latest.parquet")
 
 # connect to duckDB
 con <- dbConnect(
@@ -870,6 +872,19 @@ cat(
   final_path,
   "\n"
 )
+
+# No separate release-column selection has been defined yet, so latest
+# contains the same cleaned columns as the full output.
+latest_sql <- as.character(dbQuoteString(con, latest_path))
+dbExecute(
+  con,
+  sprintf(
+    "COPY (SELECT * FROM read_parquet(%s)) TO %s (FORMAT parquet, COMPRESSION snappy, USE_TMP_FILE true)",
+    final_sql,
+    latest_sql
+  )
+)
+cat("Latest dataset saved to:", latest_path, "\n")
 
 #### Check Final Col Types #### 
 
