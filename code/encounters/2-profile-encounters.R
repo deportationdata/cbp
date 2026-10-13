@@ -40,7 +40,7 @@ if (length(raw_files) == 0) {
 
 # IMPORTANT:
   # FALSE = only profile new files, TRUE = rebuild everything
-  # If force_reprofile <- TRUE, set force_rebuild <- TRUE in 4-process-parts.R
+  # If force_reprofile <- TRUE, set force_rebuild <- TRUE in 4-create-parts.R
 
 force_reprofile <- FALSE
 
