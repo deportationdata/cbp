@@ -5,6 +5,9 @@ Sys.setenv(TZ = "UTC")
 library(tidyverse)
 library(arrow)
 
+source("code/functions/write_xlsx_by_fy.R")
+source("code/functions/save_outputs.R")
+
 # paths
 
 dataset_dir <- "data/encounters"
@@ -17,7 +20,7 @@ encounters_final_all_cols_path <- file.path(
 
 encounters_final_path <- file.path(
   processed_dir,
-  "encounters-final.parquet"
+  "encounters-latest.parquet"
 )
 
 # select final cols
@@ -87,5 +90,14 @@ write_parquet(
   encounters_final,
   encounters_final_path
 )
+
+save_outputs(encounters_final, file.path(
+  "encounters/processed/encounters-final"
+))
+
+write_xlsx_by_fy(encounters_final,
+                 "data/encounters/processed/encounters-latest.xlsx",
+                 date_col = encounter_datetime,
+                 label = "USBP Encounters")
 
 # END
