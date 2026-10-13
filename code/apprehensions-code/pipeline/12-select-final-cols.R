@@ -5,6 +5,9 @@ Sys.setenv(TZ = "UTC")
 library(tidyverse)
 library(arrow)
 
+source("code/functions/write_xlsx_by_fy.R")
+source("code/functions/save_outputs.R")
+
 # paths
 
 dataset_dir <- "data/apprehensions"
@@ -79,5 +82,14 @@ write_parquet(
   apprehensions_final,
   apprehensions_final_path
 )
+
+save_outputs(apprehensions_final, file.path(
+  "apprehensions/processed/apprehensions-final"
+))
+
+write_xlsx_by_fy(apprehensions_final,
+                 "data/apprehensions/processed/apprehensions-latest.xlsx",
+                 date_col = apprehension_datetime,
+                 label = "USBP Apprehensions")
 
 # END
