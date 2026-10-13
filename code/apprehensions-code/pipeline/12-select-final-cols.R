@@ -84,7 +84,7 @@ write_parquet(
 )
 
 save_outputs(apprehensions_final, file.path(
-  "apprehensions/processed/apprehensions-final"
+  "apprehensions/processed/apprehensions-latest"
 ))
 
 write_xlsx_by_fy(apprehensions_final,

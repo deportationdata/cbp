@@ -92,7 +92,7 @@ write_parquet(
 )
 
 save_outputs(encounters_final, file.path(
-  "encounters/processed/encounters-final"
+  "encounters/processed/encounters-latest"
 ))
 
 write_xlsx_by_fy(encounters_final,
