@@ -49,7 +49,21 @@ po/*~
 rsconnect/
 
 # Interim data files to be stacked, don't need to save on remote
-data/apprehensions/processed/parts-to-stack/*
+# data/<dataset>/processed
 data/encounters/processed/parts-to-stack/*
+data/encounters/processed/encounters-audit.parquet
+data/encounters/processed/encounters-stacked.parquet
+
+data/apprehensions/processed/parts-to-stack/*
+data/apprehensions/processed/apprehensions-audit.parquet
+data/apprehensions/processed/apprehensions-cleaned.parquet
+data/apprehensions/processed/apprehensions-stacked.parquet
+
+# data/<dataset>/validation
+data/apprehensions/validation/apprehensions-cols-empty-before-cleaning.parquet
+data/apprehensions/validation/apprehensions-cols-excluded-by-overlap-resolution.parquet
+data/apprehensions/validation/apprehensions-cols-redacted-to-null.parquet
+
+
 
 
