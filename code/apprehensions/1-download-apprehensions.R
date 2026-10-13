@@ -1,0 +1,163 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
+# load packages 
+library(tidyverse)
+library(rvest)
+library(httr2)
+library(xml2)
+library(arrow)
+
+# store URL
+apps_url <- "https://www.cbp.gov/document/foia-record/customs-and-border-protection-border-patrol-statistics"
+
+# set paths
+dataset_dir <- "data/apprehensions"
+included_sources_dir <- file.path(dataset_dir, "included-sources")
+excluded_sources_dir <- file.path(dataset_dir, "excluded-sources")
+metadata_dir <- file.path(dataset_dir, "metadata")
+
+# outputs 
+link_inventory_path <- file.path(metadata_dir, "apprehension-links.parquet")
+
+# create folders
+dir.create(dataset_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(included_sources_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(excluded_sources_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
+
+# CBP requests
+cbp_request <- function(url) {
+  request(url) |>
+    req_user_agent("Mozilla/5.0") |>
+    req_options(http_version = 1)
+}
+
+resp <- cbp_request(apps_url) |>
+  req_perform()
+
+html <- resp_body_string(resp)
+cbp_page <- read_html(html)
+
+# extract hyperlinks and build table
+links <- tibble(
+  text = cbp_page |> html_elements("a") |> html_text2(),
+  href = cbp_page |> html_elements("a") |> html_attr("href")
+) |>
+  filter(!is.na(href)) |>
+  mutate(full_url = url_absolute(href, apps_url))
+
+# classify downloadable files
+apprehension_links <- links |>
+  filter(str_detect(full_url, "\\.xlsx|\\.xls|\\.csv|\\.zip")) |>
+  mutate(
+    text_lower = str_to_lower(text),
+    # files to include 
+    is_apprehensions =
+      str_detect(
+        text_lower,
+        "apprehension|apprehenion|t8"
+      ) ,
+    # files for manual review  
+    is_too_specific =
+      str_detect(
+        text_lower,
+        paste(
+          c(
+            "texas", "haitian", "demographic", "guatemalan", "origin",
+            "usbp nationwide t8 apprehensions dates 10012019 to 09302021"
+          ),
+          collapse = "|"
+        )
+      ),
+    
+    download_class = case_when(
+      # files we definitely want 
+      (is_apprehensions) & !is_too_specific ~ "include_apprehensions",
+      # manual review, anything that failed the above condition but still
+      # includes apprehension, apprehenion, or t8
+      str_detect(text_lower, "apprehension|apprehenion|t8") ~ "manual_review",
+      # exclude the rest 
+      TRUE ~ "exclude"
+    )
+  ) |>
+  filter(download_class != "exclude") |>
+  distinct(full_url, .keep_all = TRUE)
+
+print(apprehension_links, n = Inf)
+
+# create old encounter links if DNE
+old_apprehension_links <- if (file.exists(link_inventory_path)) {
+  read_parquet(link_inventory_path, mmap = FALSE)
+} else {
+  tibble(
+    text = character(),
+    href = character(),
+    full_url = character(),
+    text_lower = character(),
+    is_apprehensions = logical(),
+    is_too_specific = logical(),
+    download_class = character()
+  )
+}
+
+# flag current links for manual review
+manual_count <- sum(apprehension_links$download_class == "manual_review")
+
+if (manual_count > 0) {
+  warning(
+    paste(
+      manual_count,
+      "WARNING: File(s) flagged for manual review. Check data/apprehensions/excluded-sources/"))
+  }
+
+
+# function to download files
+download_cbp_file <- function(url, dest_dir) {
+  dest <- file.path(dest_dir, basename(url))
+
+  # skip files already downloaded
+  if (file.exists(dest) && file.info(dest)$size > 0) {
+    message("Skipping existing file: ", basename(url))
+    return(dest)
+  }
+
+  message("Downloading: ", basename(url))
+  
+  cbp_request(url) |>
+    req_perform(path = dest)
+  
+  dest
+}
+
+# download included apprehension files into included-sources/
+downloaded_apprehension_files <- apprehension_links |>
+  filter(download_class == "include_apprehensions") |>
+  pull(full_url) |>
+  map_chr(download_cbp_file, dest_dir = included_sources_dir)
+
+# download manual review files into excluded-sources/
+downloaded_manual_review_files <- apprehension_links |>
+  filter(download_class == "manual_review") |>
+  pull(full_url) |>
+  map_chr(download_cbp_file, dest_dir = excluded_sources_dir)
+
+print(downloaded_apprehension_files)
+print(downloaded_manual_review_files)
+
+# update link inventory
+updated_apprehension_links <- bind_rows(
+  old_apprehension_links,
+  apprehension_links
+) |>
+  distinct(full_url, .keep_all = TRUE)
+
+write_parquet(
+  updated_apprehension_links,
+  link_inventory_path
+)
+
+cat("Available apprehension files:", length(downloaded_apprehension_files), "\n")
+cat("Available excluded-source files:", length(downloaded_manual_review_files), "\n")
+
+# END

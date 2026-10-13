@@ -1,0 +1,157 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
+# load packages 
+library(tidyverse)
+library(rvest)
+library(httr2)
+library(xml2)
+
+# store URL
+encounters_url <- "https://www.cbp.gov/document/foia-record/customs-and-border-protection-border-patrol-statistics"
+
+# set paths
+dataset_dir <- "data/encounters"
+included_sources_dir <- file.path(dataset_dir, "included-sources")
+excluded_sources_dir <- file.path(dataset_dir, "excluded-sources")
+metadata_dir <- file.path(dataset_dir, "metadata")
+
+# outputs 
+link_inventory_path <- file.path(metadata_dir, "encounter-links.parquet")
+
+# create folders
+dir.create(dataset_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(included_sources_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(excluded_sources_dir, recursive = TRUE, showWarnings = FALSE)
+dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
+
+# CBP requests / fetch page 
+cbp_request <- function(url) {
+  request(url) |>
+    req_user_agent("Mozilla/5.0") |>
+    req_options(http_version = 1)
+}
+
+resp <- cbp_request(encounters_url) |>
+  req_perform()
+
+html <- resp_body_string(resp)
+cbp_page <- read_html(html)
+
+# extract hyperlinks and build table
+links <- tibble(
+  text = cbp_page |> html_elements("a") |> html_text2(),
+  href = cbp_page |> html_elements("a") |> html_attr("href")
+) |>
+  filter(!is.na(href)) |>
+  mutate(full_url = url_absolute(href, encounters_url))
+
+# classify downloadable files
+encounter_links <- links |>
+  filter(str_detect(full_url, "\\.xlsx|\\.xls|\\.csv|\\.zip")) |>
+  mutate(
+    text_lower = str_to_lower(text),
+    # files to include 
+    is_encounters =
+      str_detect(
+        text_lower, "encounter") ,
+    # files for manual review  
+    is_too_specific =
+      str_detect(
+        text_lower,
+        paste(
+          c("unaccompanied", "central", "sbo"),
+          collapse = "|")),
+    
+    download_class = case_when(
+      # files we definitely want (i.e. is encounters & not too specific)
+      (is_encounters) & !is_too_specific ~ "include_encounters",
+      # manual review, failed above condition but still encounters
+      str_detect(text_lower, "encounter") ~ "manual_review",
+      # exclude the rest 
+      TRUE ~ "exclude"
+    )
+  ) |>
+  filter(download_class != "exclude") |>
+  distinct(full_url, .keep_all = TRUE)
+
+print(encounter_links, n = Inf)
+
+# create old encounter links if DNE
+old_encounter_links <- if (file.exists(link_inventory_path)) {
+  read_parquet(link_inventory_path, mmap = FALSE)
+} else {
+  tibble(
+    text = character(),
+    href = character(),
+    full_url = character(),
+    text_lower = character(),
+    is_encounters = logical(),
+    is_too_specific = logical(),
+    download_class = character()
+  )
+}
+
+# flag current links for manual review
+manual_count <- sum(encounter_links$download_class == "manual_review")
+
+if (manual_count > 0) {
+  warning(
+    paste0(
+      manual_count,
+      "WARNING: File(s) flagged for manual review. Check data/encounters/excluded-sources/"))
+  }
+
+
+# function to download files
+download_cbp_file <- function(url, dest_dir) {
+  
+  dest <- file.path(dest_dir, basename(url))
+
+  # skip files already downloaded
+  if (file.exists(dest) && file.info(dest)$size > 0) {
+    message("Skipping existing file: ", basename(url))
+    return(dest)
+  }
+
+  message("Downloading: ", basename(url))
+  
+  cbp_request(url) |>
+    req_perform(path = dest)
+  
+  dest
+}
+
+# download included encounter files into included-sources/
+downloaded_encounter_files <- encounter_links |>
+  filter(download_class == "include_encounters") |>
+  pull(full_url) |>
+  map_chr(download_cbp_file, dest_dir = included_sources_dir)
+
+# download manual review files into excluded-sources/
+downloaded_manual_review_files <- encounter_links |>
+  filter(download_class == "manual_review") |>
+  pull(full_url) |>
+  map_chr(download_cbp_file, dest_dir = excluded_sources_dir)
+
+print(downloaded_encounter_files)
+print(downloaded_manual_review_files)
+
+# update link inventory
+updated_encounter_links <- bind_rows(
+  old_encounter_links,
+  encounter_links
+) |>
+  distinct(full_url, .keep_all = TRUE)
+
+write_parquet(
+  updated_encounter_links,
+  link_inventory_path
+)
+
+cat("Available encounter files:", length(downloaded_encounter_files), "\n")
+cat("Available excluded-source files:", length(downloaded_manual_review_files), "\n")
+
+
+
+# END
