@@ -4,7 +4,7 @@
 
 We provide code for collecting and processing three CBP datasets: USBP apprehensions, OFO inadmissibles, and USBP encounters. The encounters data include Title 8 apprehensions and Title 42 expulsions and exclude Title 8 inadmissibles recorded by the Office of Field Operations.
 
-Each pipeline collects files published by CBP under the Freedom of Information Act, standardizes their differences, identifies and removes overlapping coverage, and combines the records into usable datasets. Field definitions and more information about the data can be found in the `cbp-data-codebook.qmd`.
+Each pipeline collects files published by CBP, standardizes their differences, identifies and removes overlapping coverage, and combines the records into usable datasets. Field definitions and more information about the data can be found in the `cbp-data-codebook.qmd`.
 
 **Note: The OFO inadmissibles pipeline and dataset are still in progress and will be updated upon completion.**
 
