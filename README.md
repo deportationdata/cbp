@@ -2,7 +2,7 @@
 
 ## Intro
 
-We provide code for collecting and processing three CBP datasets: USBP apprehensions, OFO inadmissibles, and USBP encounters. The encounters data include Title 8 apprehensions and Title 42 expulsions and exclude Title 8 inadmissibles recorded by the Office of Field Operations.
+We provide code for collecting and processing two CBP datasets: USBP apprehensions and USBP encounters. The encounters data include Title 8 apprehensions and Title 42 expulsions and exclude Title 8 inadmissibles recorded by the Office of Field Operations.
 
 Each pipeline collects files published by CBP, standardizes their differences, identifies and removes overlapping coverage, and combines the records into usable datasets. Field definitions and more information about the data can be found in the `cbp-data-codebook.qmd`.
 
@@ -10,35 +10,33 @@ Each pipeline collects files published by CBP, standardizes their differences, i
 
 ## Running the Pipelines
 
-To reproduce our final datasets, run each type of script in numeric order. Several scripts have functions that require manual inputs and are explained below. Later scripts generally assume that the outputs from earlier scripts already exist.
-
-When CBP publishes new files, run the pipeline again, beginning with the first download script. Review individual script instructions to understand whether later scripts can be run without having run earlier ones. Review all warnings and audit tables before proceeding.
+To reproduce our final datasets, run each type of script in numeric order. Several scripts have functions that require manual inputs and are explained below. When CBP publishes new files, run the pipeline again, beginning with the first download script. Review all warnings and audit tables before proceeding.
 
 ## Repository Organization
 
-In the `cbp` repository, there are three main folders through which you can navigate. Throughout this document, `<dataset>` indicates the relevant dataset type among apprehensions or encounters.
+In the `cbp` repository, there are three main folders through which you can navigate. Throughout this document, `<dataset>` indicates the relevant dataset type between apprehensions or encounters.
 
--   The `code/` folder contains all project code, organized as `code/<dataset>`
+-   The `code/<dataset>` folder contains all project code needed to reproduce each dataset.
 
--   The `data/<dataset>/` folder contains all data extracted through the pipelines in `cbp/data/<dataset>/`. Apprehensions and encounters follow this internal organization:
+-   The `data/<dataset>/` folder contains all data extracted through the pipeline.
 
-    -   `~/included-sources/`: source files accepted into the pipeline, including PDF-derived parquet files for apprehensions
+    -   `~/included-sources/`: source files accepted into the pipeline downloaded from CBP's website
 
-    -   `~/excluded-sources/`: downloaded files excluded by the automatic inclusion rules; review these before deciding whether to include them
+    -   `~/excluded-sources/`: downloaded files excluded by the inclusion rules; review before including
 
-    -   `~/metadata/`: inventories, crosswalks, metadata, and other information describing source files and processed parts
+    -   `~/metadata/`: inventories, crosswalks, metadata, and other information
 
     -   `~/processed/`: any transformed raw files
 
-    -   `~/validation/`: validation files and outputs used to compare counts obtained through the pipeline with CBP dashboards
+    -   `~/validation/`: validation outputs used to compare pipeline counts with CBP dashboards
 
--   The `inputs/` folder contains all of the raw PDF files provided by the Deportation Data Team to fill a gap in CBP data found in 2014. These PDFs are later converted to parquet files in the apprehensions pipeline.
+-   The `inputs/` folder contains all of the raw PDF files provided by the Deportation Data Project to fill a gap in CBP data found in 2014
 
 ### 0. Convert PDF Files
 
 Scripts: `0-convert-pdf.R` in apprehensions
 
-This script converts PDFs used to fill in a gap in information found in 2014. As this data was not available on CBP's website, we used files obtained by Deportation Data Project co-director David Hausman, represented by the Law Office of Amber Qureshi and the National Immigration Project. This script exists only for apprehensions and does not need to be rerun after the PDF files are converted to parquet form.
+This script converts PDFs used to fill in a gap in information found in 2014 on CBP's webiste. We used files obtained by Deportation Data Project co-director David Hausman, represented by the Law Office of Amber Qureshi and the National Immigration Project. This script exists only for apprehensions and does not need to be rerun after the PDF files are converted to parquet form.
 
 Input:
 
@@ -52,29 +50,26 @@ Output:
 
 Scripts: `1-download-<dataset>.R`
 
-These scripts scrape the relevant CBP records page, identify downloadable links, differentiate between certain matches and files intended for manual review, and download links that are not already recorded in the existing link inventory.
+These scripts scrape the relevant CBP records page, identify downloadable links, and download links that are not already recorded in the existing link inventory.
 
 Outputs:
 
--   `data/<dataset>/included-sources/`: contains files that meet inclusion criteria (apprehensions and encounters)
--   `data/<dataset>/excluded-sources/`: contains files excluded by the automatic inclusion rules and retained for review (apprehensions and encounters)
--   Inadmissibles uses `raw/` and `manual-review/` respectively.
--   `<dataset>-links.parquet`: contains links that the script interacted with and their match classifications in the corresponding `metadata/` directory, along with their href, full URL, and lowercase text
+-   `data/<dataset>/included-sources/`: contains files that meet inclusion criteria
+-   `data/<dataset>/excluded-sources/`: contains files excluded by the inclusion criteria and retained for review
+-   `<dataset>-links.parquet`: contains links that the script interacted with
 
-Any new files that appear in `excluded-sources/` should be manually reviewed before proceeding to the next script. Upon examination, move any files that should be included in the final dataset to `included-sources/`. For inadmissibles, review `manual-review/` and move accepted files to `raw/`. The inclusion and exclusion conditions should be reviewed if CBP changes its labels or naming conventions.
-
-Because the link inventory identifies files by URL, the script will not recognize if CBP replaces an existing link with a different file. Thus, existing URLs should be confirmed if revisions are suspected.
+Any new files that appear in `excluded-sources/` should be manually reviewed before proceeding to the next script. Because the link inventory identifies files by URL, the script will not recognize if CBP replaces an existing link with a different file. Thus, existing URLs should be confirmed if revisions are suspected.
 
 ### 2. Profile Worksheets and Headers
 
 Scripts: `2-profile-<dataset>.R`
 
-These scripts identify the likely header row in each worksheet and inventory the columns found in all `raw/` files.
+These scripts identify the likely header row in each worksheet and inventory the columns found in all `included-sources/` files.
 
 Outputs in `data/<dataset>/metadata/`:
 
--   `sheet-inventory.parquet`: displays file name, file path, and sheet name for all `raw/` file sheets
--   `column-inventory.parquet`: displays file name, file path, sheet name, header row placement, number of rows skipped to detect header row, number of columns in that sheet, raw column name, clean column name (after applying `janitor::make_clean_names()`, but before canonical standardization), and column position for every column in `raw/`
+-   `sheet-inventory.parquet`: displays file name, file path, and sheet name for all `included-sources/` file sheets
+-   `column-inventory.parquet`: displays file name, file path, sheet name, header row placement, number of rows skipped to detect header row, number of columns in that sheet, raw column name, clean column name (after applying `janitor::make_clean_names()`, but before canonical standardization), and column position for every column in `included-sources/`
 -   `distinct-columns.parquet`: identifies all unique cleaned columns from `column-inventory.parquet` and displays their clean column and raw column names, number of files each unique column appears in, and example files containing each column
 -   `failed-sheets.parquet`: created only when a sheet fails profiling. If this happens, a good place to check is the header row detection logic in the `find_header_row` function.
 
@@ -100,7 +95,7 @@ This script rereads every successfully profiled worksheet, applies its canonical
 
 Outputs:
 
--   `data/<dataset>/processed/`: contains all data that has been processed in some way (including parts to stack and final datasets), whereas `raw/` contains raw files only
+-   `data/<dataset>/processed/`: contains all data that has been processed in some way (including parts to stack and final datasets), whereas `included-sources/` contains raw files only
 -   `data/<dataset>/processed/parts-to-stack`: contains processed sheets with canonical column names to eventually be stacked to create final datasets
 
 By default `force_rebuild <- FALSE`, so only new sheets will be converted into stackable parts. Set `force_rebuild <- TRUE` if:
@@ -111,24 +106,15 @@ By default `force_rebuild <- FALSE`, so only new sheets will be converted into s
 
 When `force_rebuild <- TRUE`, the existing parts are removed and reconstructed. Return it to `FALSE` for ordinary incremental part building.
 
-### 5. Summarize Date Coverage
+### 5. Stack the Parts
 
-Script: `5-date-info.R`
+Scripts: `5-stack-apprehensions.R`, `5-stack-encounters.R`.
 
-These scripts determine the preferred available date field for each part, output its minimum and maximum date, and identify parts with the same date range to gather information used to identify duplicate datasets.
+These scripts combine the remaining parts by column name and verify that the final row count equals the sum of the included parts.
 
 Outputs in `data/<dataset>/metadata/`:
 
 -   `parts-metadata.parquet`: displays each part's numbered name, source file, source sheet, number of rows, first date column match from a list of preferred date fields, minimum and maximum dates, and names and counts of non-empty columns
--   `same-date-ranges.parquet`: outputs parts that share equal minimum and maximum date values and their number of rows
-
-Review parts with missing date columns and pairs with the same date range. The list of possible date fields in each script should be updated if a new canonical date field is introduced.
-
-### 6. Stack the Parts
-
-Scripts: `6-stack-apprehensions.R`, `6-stack-encounters.R`.
-
-These scripts combine the remaining parts by column name and verify that the final row count equals the sum of the included parts.
 
 Outputs in `data/<dataset>/processed/`:
 
@@ -137,9 +123,9 @@ Outputs in `data/<dataset>/processed/`:
 
 Before running the apprehensions stack, review `parts_to_delete` near the beginning of the script. This list is maintained manually based on the overlap review and removes known faulty or duplicate parts only. The script deletes listed files from `parts-to-stack/`, so the parts must be fully rebuilt if an exclusion is to be reversed. Encounters currently has no duplicate or erroneous parts to remove.
 
-### 7. Build Code Column Map
+### 6. Build Code Column Map
 
-Scripts: `7-build-code-map.R`
+Scripts: `6-build-code-map.R`
 
 These scripts create lookup tables (or "maps") that translate coded values into readable labels. Each mapping identifies the field, original code, and corresponding full name. Uncertain codes are retained as they are originally written.
 
@@ -151,9 +137,9 @@ Outputs:
 
 The mapping tables are maintained manually and should be reviewed when new coded columns or values appear in the stacked data.
 
-### 8. Clean the Combined Data
+### 7. Clean the Combined Data
 
-Scripts: `8-clean-<dataset>.R`
+Scripts: `7-clean-<dataset>.R`
 
 These scripts standardize redaction codes, convert fields to their intended data types, order columns, and write the cleaned data.
 
@@ -172,9 +158,9 @@ The apprehensions and encounters cleaning scripts also combine date and time fie
 
 Review all warnings about unrecognized values or columns absent from `column_order`. Columns not assigned another type remain character fields by default. Parts that overlap in date are retained in this step. In using this dataset, note that the same entry may be represented multiple times in overlapping datasets.
 
-### 9. Resolve Apprehension Overlaps
+### 8. Resolve Apprehension Overlaps
 
-Script: `9-resolve-apprehension-overlaps.R`.
+Script: `8-resolve-apprehension-overlaps.R`.
 
 This step resolves overlapping parts by prioritizing broader source parts, using more granular parts to fill gaps in dates not already represented. Rows without a usable event date are excluded with a warning.
 
@@ -185,9 +171,9 @@ Outputs:
 
 Review the resolution audit to confirm which dates were selected from each source.
 
-### 10. Audit the Final Data
+### 9. Audit the Final Data
 
-Script: `10-audit-apprehensions.R`, `9-audit-encounters.R`
+Script: `9-audit-apprehensions.R`, `8-audit-encounters.R`
 
 This script compares column population across the stacked, cleaned, and final apprehensions files.
 
@@ -201,13 +187,13 @@ Outputs:
 
 <!-- -->
 
--   `data/<dataset>/metadata/final-column-missingness-matrix.parquet`: matrix containing each final column and their percent missing withim each source file sheet
+-   `data/<dataset>/metadata/final-column-missingness-matrix.parquet`: matrix containing each final column and their percent missing within each source file sheet
 
 Consider excluded columns before distributing final datasets.
 
-### 11. Cross-Reference Datasets
+### 10. Cross-Reference Datasets
 
-Scripts: `10-cross-reference-encounters.R` and `11-cross-reference-apprehensions.R`.
+Scripts: `9-cross-reference-encounters.R` and `10-cross-reference-apprehensions.R`.
 
 These scripts compare monthly counts in `<dataset>-final-all-cols.parquet` with published CBP dashboard extracts.
 
@@ -218,9 +204,9 @@ Outputs in `data/<dataset>/validation/`:
 
 The `cbp_benchmarks` table is maintained manually. Before each update, check whether CBP has published a newer benchmark and add its identifier, release date, and URL. The script keeps the most recent available benchmark for each month.
 
-### 12. Select Final Columns
+### 11. Select Final Columns
 
-Scripts: `11-select-final-cols.R` in encounters, `12-select-final-cols.R` in apprehensions.
+Scripts: `10-select-final-cols.R` in encounters, `11-select-final-cols.R` in apprehensions.
 
 These scripts select final columns based on usefulness and percent missing, outputting what we believe to be the most useful and straightforward dataset after the pipeline.
 
@@ -283,14 +269,13 @@ Outputs in `cbp/data/<dataset>/processed`:
 
 For an ordinary update after CBP publishes a new file:
 
-1.  Run the download script and review `excluded-sources/` (`manual-review/` for inadmissibles).
+1.  Run the download script and review `excluded-sources/`.
 2.  Run the profiling script with `force_reprofile <- FALSE`.
 3.  Review new distinct columns and update the crosswalk.
 4.  Set `force_rebuild <- TRUE` if the crosswalk or an existing input changed. Otherwise create only the new parts with `force_rebuild <- FALSE`.
-5.  Rebuild the date metadata and review overlaps.
-6.  Update the manual duplicate or faulty-part exclusions.
-7.  Stack the data.
-8.  Review columns to collapse in the cleaning stage and rerun the map.
-9.  Clean the data.
-10. Run the dataset-specific overlap resolution, audit, cross-reference, and column selection steps.
-11. Review warnings and validation outputs before publishing final files.
+5.  Update the manual duplicate or faulty-part exclusions.
+6.  Run the stacking script to rebuild the date metadata, stack the data, and verify row counts.
+7.  Review columns to collapse in the cleaning stage and rerun the map.
+8.  Clean the data.
+9.  Run the dataset-specific overlap resolution, audit, cross-reference, and column selection steps.
+10. Review warnings and validation outputs before publishing final files.

@@ -106,7 +106,7 @@ if (length(missing_cbp_columns) > 0) {
 
 # encounters_final contains USBP records only (not OFO inads)
 # retain only USBP encounter types (T8 apps + T42 expulsions)
-cbp_usb_monthly <- cbp_raw |>
+cbp_usbp_monthly <- cbp_raw |>
   filter(
     Component == "U.S. Border Patrol"
   ) |>
@@ -119,11 +119,11 @@ cbp_usb_monthly <- cbp_raw |>
     )
   )
 
-if (any(is.na(cbp_usb_monthly$fiscal_month))) {
+if (any(is.na(cbp_usbp_monthly$fiscal_month))) {
   stop("The CBP benchmark contains an unrecognized month abbreviation.")
 }
 
-cbp_usb_monthly <- cbp_usb_monthly |>
+cbp_usbp_monthly <- cbp_usbp_monthly |>
   mutate(
     calendar_year = if_else(
       fiscal_month >= 10L,
@@ -144,7 +144,7 @@ cbp_usb_monthly <- cbp_usb_monthly |>
     month_start
   ) |>
   summarize(
-    cbp_usb_encounter_count = sum(
+    cbp_usbp_encounter_count = sum(
       `Encounter Count`,
       na.rm = TRUE
     ),
@@ -159,7 +159,7 @@ cbp_usb_monthly <- cbp_usb_monthly |>
   ungroup() |>
   arrange(month_start)
 
-if (nrow(cbp_usb_monthly) == 0) {
+if (nrow(cbp_usbp_monthly) == 0) {
   stop("No U.S. Border Patrol rows were found in the CBP benchmark.")
 }
 
@@ -186,7 +186,7 @@ encounters_final_sql <- as.character(
 benchmark_min_date_sql <- as.character(
   dbQuoteString(
     con,
-    as.character(min(cbp_usb_monthly$month_start))
+    as.character(min(cbp_usbp_monthly$month_start))
   )
 )
 
@@ -194,7 +194,7 @@ benchmark_max_date_sql <- as.character(
   dbQuoteString(
     con,
     as.character(
-      max(cbp_usb_monthly$month_start) %m+% months(1) - days(1)
+      max(cbp_usbp_monthly$month_start) %m+% months(1) - days(1)
     )
   )
 )
@@ -234,7 +234,7 @@ dbDisconnect(
 
 #### Cross Reference ####
 
-cross_reference <- cbp_usb_monthly |>
+cross_reference <- cbp_usbp_monthly |>
   full_join(
     encounters_monthly,
     by = "month_start"
@@ -252,17 +252,17 @@ cross_reference <- cbp_usb_monthly |>
       fiscal_month,
       month(month_start)
     ),
-    difference = encounters_final_count - cbp_usb_encounter_count,
+    difference = encounters_final_count - cbp_usbp_encounter_count,
     absolute_difference = abs(difference),
     percent_difference = if_else(
-      cbp_usb_encounter_count == 0,
+      cbp_usbp_encounter_count == 0,
       NA_real_,
-      100 * difference / cbp_usb_encounter_count
+      100 * difference / cbp_usbp_encounter_count
     ),
     exact_match = difference == 0,
     status = case_when(
       is.na(encounters_final_count) ~ "missing from encounters_final",
-      is.na(cbp_usb_encounter_count) ~ "missing from CBP benchmark",
+      is.na(cbp_usbp_encounter_count) ~ "missing from CBP benchmark",
       exact_match ~ "exact match",
       TRUE ~ "difference"
     )
@@ -273,7 +273,7 @@ cross_reference <- cbp_usb_monthly |>
     fiscal_month,
     month_start,
     encounters_final_count,
-    cbp_usb_encounter_count,
+    cbp_usbp_encounter_count,
     difference,
     absolute_difference,
     percent_difference,

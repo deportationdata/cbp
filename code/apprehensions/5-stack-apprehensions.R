@@ -5,36 +5,98 @@ Sys.setenv(TZ = "UTC")
 library(tidyverse)
 library(arrow)
 library(fs)
+library(DBI)
+library(duckdb)
 
 # paths
 dataset_dir <- "data/apprehensions"
-metadata_dir <- file.path(dataset_dir, "metadata")
 processed_dir <- file.path(dataset_dir, "processed")
+metadata_dir <- file.path(dataset_dir, "metadata")
+parts_to_stack_dir <- file.path(processed_dir, "parts-to-stack")
 
-# outputs 
-parts_to_stack_dir <- file.path(
+apprehensions_stacked_path <- file.path(
   processed_dir,
-  "parts-to-stack"
+  "apprehensions-stacked.parquet"
 )
 
+apprehensions_audit_path <- file.path(
+  processed_dir,
+  "apprehensions-audit.parquet"
+)
 
 parts_metadata_path <- file.path(
   metadata_dir,
   "parts-metadata.parquet"
 )
 
-same_date_ranges_path <- file.path(
-  metadata_dir,
-  "same-date-ranges.parquet"
+dir_create(metadata_dir)
+
+#### Remove Faulty Parts #### 
+
+# to delete from parts-to-stack
+parts_to_delete <- c(
+  "0067-usbp-nationwide-apprehension-q4-fy-2024-fy24q4.parquet"
+)
+  # 0067-usbp-nationwide-apprehension-q4-fy-2024-fy24q4.parquet is an erroneous duplicate
+
+paths_to_delete <- file.path(
+  parts_to_stack_dir,
+  parts_to_delete
 )
 
-#### Part Date Range ####
+# check which files still exist
+existing_parts <- paths_to_delete[
+  file_exists(paths_to_delete)
+]
 
-# list part files
+missing_parts <- paths_to_delete[
+  !file_exists(paths_to_delete)
+]
+
+# report files that were already deleted
+if (length(missing_parts) > 0) {
+  warning(
+    "These parts were already missing and will be skipped:\n",
+    paste(missing_parts, collapse = "\n")
+  )
+}
+
+# delete only files that still exist
+if (length(existing_parts) > 0) {
+  
+  file_delete(existing_parts)
+  
+  cat(
+    "Deleted",
+    length(existing_parts),
+    "part(s).\n"
+  )
+  
+} else {
+  
+  cat(
+    "No parts needed to be deleted.\n"
+  )
+}
+
+# list remaining parts 
 part_files <- dir_ls(
   parts_to_stack_dir,
   regexp = "\\.parquet$"
 )
+
+parts <- tibble(
+  part_path = as.character(part_files),
+  part_file = path_file(part_files)
+)
+
+cat(
+  "Total parts:",
+  nrow(parts),
+  "\n"
+)
+
+#### Part Date Range ####
 
 # possible date columns, in preferred order
 date_columns <- c(
@@ -227,73 +289,137 @@ cat(
 )
 
 
-#### ID Same Date Ranges ####
+#### Audit Parts #### 
 
-same_date_ranges <- parts_metadata |>
-  filter(
-    !is.na(min_date),
-    !is.na(max_date)
-  ) |>
-  group_by(
-    min_date,
-    max_date
-  ) |>
-  filter(
-    n() > 1
-  ) |>
-  arrange(
-    min_date,
-    max_date,
-    part_file
-  ) |>
-  summarize(
-    n_parts = n(),
-    files_and_rows = paste0(
-      part_file,
-      " [rows: ",
-      n_rows,
-      "]",
-      collapse = " | "
-    ),
-    .groups = "drop"
-  ) |>
-  arrange(
-    min_date,
-    max_date
+# get row counts from parquet metadata
+apprehensions_audit <- parts |>
+  mutate(
+    n_rows = map_dbl(
+      part_path,
+      \(x) {
+        ParquetFileReader$create(x)$num_rows
+      }
+    )
   )
 
-print(
-  same_date_ranges,
-  n = Inf
+expected_rows <- sum(
+  apprehensions_audit$n_rows
 )
 
+cat(
+  "Expected rows:",
+  expected_rows,
+  "\n"
+)
+
+#### Combine Parts #### 
+
+# connect to DuckDB
+con <- dbConnect(
+  duckdb()
+)
+
+# use UTC for database timestamps
+dbExecute(con, "SET TimeZone = \'UTC\'")
+
+# configuration for memory reduction
+dbExecute(
+  con,
+  "SET preserve_insertion_order = false"
+)
+
+dbExecute(
+  con,
+  "SET threads = 2"
+)
+
+# SQL file paths
+input_glob <- file.path(
+  parts_to_stack_dir,
+  "*.parquet"
+)
+
+# format as SQL string, return as character 
+input_sql <- as.character(
+  dbQuoteString(
+    con,
+    input_glob
+  )
+)
+
+output_sql <- as.character(
+  dbQuoteString(
+    con,
+    apprehensions_stacked_path
+  )
+)
+
+# combine parquets (%s are placeholders, inputs follow commas)
+combine_query <- sprintf(
+  "
+  COPY (
+    SELECT *
+    FROM read_parquet(
+      %s,
+      union_by_name = true
+    )
+  )
+  TO %s (
+    FORMAT parquet,
+    COMPRESSION snappy,
+    USE_TMP_FILE true
+  )
+  ",
+  input_sql,
+  output_sql
+)
+
+# run command through DuckDB
+dbExecute(
+  con,
+  combine_query
+)
+
+# disconnect 
+dbDisconnect(
+  con,
+  shutdown = TRUE
+)
+
+#### Audit Stacked File #### 
+
+# get final row count from metadata 
+actual_rows <- ParquetFileReader$create(
+  apprehensions_stacked_path
+)$num_rows
+
+if (actual_rows != expected_rows) {
+  stop(
+    "Final row count does not match expected rows from all remaining parts."
+  )
+}
+
+cat(
+  "Rows in final file:",
+  actual_rows,
+  "\n"
+)
+
+cat(
+  "Combined dataset saved to:",
+  apprehensions_stacked_path,
+  "\n"
+)
+
+# save 
 write_parquet(
-  same_date_ranges,
-  same_date_ranges_path
+  apprehensions_audit,
+  apprehensions_audit_path
 )
 
 cat(
-  "\nSame date ranges saved to:",
-  same_date_ranges_path,
+  "Audit saved to:",
+  apprehensions_audit_path,
   "\n"
 )
-
-cat(
-  "\nParts summarized:",
-  nrow(parts_metadata),
-  "\n"
-)
-
-cat(
-  "Parts without a usable date:",
-  sum(is.na(parts_metadata$min_date)),
-  "\n"
-)
-
-cat(
-  "Repeated date-range groups:",
-  nrow(same_date_ranges),
-  "\n"
-)
-
 # END
