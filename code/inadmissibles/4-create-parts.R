@@ -1,3 +1,6 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
 # load packages
 library(tidyverse)
 library(readxl)
@@ -11,16 +14,6 @@ metadata_dir <- file.path(dataset_dir, "metadata")
 processed_dir <- file.path(dataset_dir, "processed")
 parts_to_stack_dir <- file.path(processed_dir, "parts-to-stack")
 
-# outputs 
-column_inventory_path <- file.path(metadata_dir, "column-inventory.parquet")
-crosswalk_path <- file.path(metadata_dir,"crosswalk.parquet")
-
-#### Rebuild All Parts? ####
-  # FALSE = only build new parts
-  # TRUE = rebuild everything from scratch
-# Set to TRUE whenever force_reprofile <- TRUE
-force_rebuild <- FALSE
-
 dir.create(
   processed_dir,
   recursive = TRUE,
@@ -33,6 +26,18 @@ dir.create(
   showWarnings = FALSE
 )
 
+# outputs 
+raw_column_inventory_path <- file.path(metadata_dir, "raw-column-inventory.parquet")
+crosswalk_path <- file.path(metadata_dir,"crosswalk.parquet")
+
+#### Manual Entry Needed: Rebuild All Parts? ####
+
+# IMPORTANT:
+# FALSE = only build new parts, TRUE = rebuild everything
+# Set force_rebuild <- TRUE if force_reprofile <- TRUE or if crosswalk changed
+
+force_rebuild <- FALSE
+
 if (force_rebuild) {
   
   old_parts <- dir_ls(
@@ -41,21 +46,19 @@ if (force_rebuild) {
     fail = FALSE
   )
   
+  # delete all old parts to restart
   if (length(old_parts) > 0) {
     file_delete(old_parts)
   }
 }
 
 # read metadata
-column_inventory <- read_parquet(column_inventory_path)
-
+raw_column_inventory <- read_parquet(raw_column_inventory_path)
 crosswalk <- read_parquet(crosswalk_path)
-
 expected_cols <- unique(crosswalk$canonical_name)
 
-# check whether any canonical merge would collapse columns that appear together in the same file/sheet
-
-collapse_conflicts <- column_inventory |>
+# check if crosswalk (3-build-crosswalk.R) merges columns existing in same sheet
+collapse_conflicts <- raw_column_inventory |>
   select(
     file_name,
     sheet_name,
@@ -64,7 +67,8 @@ collapse_conflicts <- column_inventory |>
   left_join(
     crosswalk |>
       select(clean_column, canonical_name),
-    by = "clean_column"
+    by = "clean_column",
+    relationship = "many-to-many"
   ) |>
   group_by(
     file_name,
@@ -86,7 +90,8 @@ if (nrow(collapse_conflicts) > 0) {
   print(collapse_conflicts, n = Inf)
   
   stop(
-    "Some canonical mappings would merge columns that coexist in the same sheet."
+    "Some canonical mappings would merge columns that coexist in the same sheet.
+    View collapse_conflicts."
   )
 }
 
@@ -107,7 +112,7 @@ drop_empty_columns <- function(df) {
 # read and standardize one sheet
 read_standardized_sheet <- function(file_path, sheet_name) {
   
-  sheet_cols <- column_inventory |>
+  sheet_cols <- raw_column_inventory |>
     filter(
       file_path == !!file_path,
       sheet_name == !!sheet_name
@@ -116,6 +121,7 @@ read_standardized_sheet <- function(file_path, sheet_name) {
   
   rows_to_skip <- unique(sheet_cols$rows_to_skip)
   
+  # skip count = 1 
   if (length(rows_to_skip) != 1) {
     stop(
       "rows_to_skip issue for: ",
@@ -131,8 +137,7 @@ read_standardized_sheet <- function(file_path, sheet_name) {
       sheet = sheet_name,
       col_names = FALSE,
       col_types = "text",
-      skip = rows_to_skip,
-      .name_repair = "unique"
+      skip = rows_to_skip
     )
   ) |>
     drop_empty_columns()
@@ -215,6 +220,7 @@ read_standardized_sheet <- function(file_path, sheet_name) {
   
   names(data_df) <- matched_names$final_name
   
+  # same cols across parts
   missing_cols <- setdiff(
     expected_cols,
     names(data_df)
@@ -242,8 +248,8 @@ read_standardized_sheet <- function(file_path, sheet_name) {
     )
 }
 
-# sheets to stack
-sheets_to_stack <- column_inventory |>
+# parts to stack
+parts_to_stack <- raw_column_inventory |>
   distinct(
     file_name,
     file_path,
@@ -251,11 +257,11 @@ sheets_to_stack <- column_inventory |>
   )
 
 # process one sheet at a time
-for (i in seq_len(nrow(sheets_to_stack))) {
+for (i in seq_len(nrow(parts_to_stack))) {
   
-  file_path_i <- sheets_to_stack$file_path[i]
-  sheet_name_i <- sheets_to_stack$sheet_name[i]
-  file_name_i <- sheets_to_stack$file_name[i]
+  file_path_i <- parts_to_stack$file_path[i]
+  sheet_name_i <- parts_to_stack$sheet_name[i]
+  file_name_i <- parts_to_stack$file_name[i]
   
   part_path <- file.path(
     parts_to_stack_dir,
@@ -303,7 +309,6 @@ for (i in seq_len(nrow(sheets_to_stack))) {
   rm(one_sheet)
 }
 
-
 cat(
   "\nParts created:",
   length(dir_ls(parts_to_stack_dir, regexp = "\\.parquet$")),
@@ -312,12 +317,12 @@ cat(
 
 cat(
   "Expected parts:",
-  nrow(sheets_to_stack),
+  nrow(parts_to_stack),
   "\n"
 )
 
 if (length(dir_ls(parts_to_stack_dir, regexp = "\\.parquet$")) !=
-    nrow(sheets_to_stack)) {
+    nrow(parts_to_stack)) {
   
   warning(
     "Number of part files does not match expected number of sheets."

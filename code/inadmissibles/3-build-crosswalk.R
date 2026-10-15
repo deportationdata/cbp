@@ -1,3 +1,6 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
 # load packages
 library(tidyverse)
 library(arrow)
@@ -18,35 +21,47 @@ crosswalk <- distinct_columns |>
   mutate(
     canonical_name = case_when(
       
-      # age
-      clean_column %in% c(
-        "age_at_event_creation_time"
-      ) ~ "age",
-      
       # event datetime
       clean_column %in% c(
-        "calendar_month_mon_yy"
-      ) ~ "calendar_month_year",
+        "event_created_date_time",
+        "event_created_datetime"
+      ) ~ "event_datetime",
       
       clean_column %in% c(
         "calendar_year_number_yyyy"
       ) ~ "calendar_year",
       
       clean_column %in% c(
-        "event_created_date_time"
-      ) ~ "event_created_datetime",
+        "calendar_month_mon_yy"
+      ) ~ "calendar_month_year",
+      
+      # age
+      clean_column %in% c(
+        "age_at_event_creation_time"
+      ) ~ "age",
       
       # duplicate indicator
       clean_column %in% c(
         "duplicate_indicator",
-        "duplicate_subject_indicator",
         "duplicates"
-      ) ~ "duplicate",
+      ) ~ "duplicate_subject_indicator",
+      
+      # subject count
+      clean_column %in% c(
+        "inadmissibles_subject_count",
+        "person_count"
+      ) ~ "event_subject_count",
       
       # transportation
       clean_column %in% c(
         "mode_of_transport"
       ) ~ "mode_of_transportation",
+      
+      # state
+      # clean_column %in% c(
+        # "state_name",
+        # "usa_state_code"
+      # ) ~ "state",
       
       # disposition (not same)
       # clean_column %in% c(

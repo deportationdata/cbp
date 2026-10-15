@@ -1,9 +1,11 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
 # load packages
 library(tidyverse)
 library(arrow)
 library(fs)
 
-#### Part Date Range ####
 # paths
 dataset_dir <- "data/inadmissibles"
 metadata_dir <- file.path(dataset_dir, "metadata")
