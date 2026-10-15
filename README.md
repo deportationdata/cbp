@@ -14,7 +14,7 @@ To reproduce our final datasets, run each type of script in numeric order. Sever
 
 ## Repository Organization
 
-In the `cbp` repository, there are three main folders through which you can navigate. Throughout this document, `<dataset>` indicates the relevant dataset type between apprehensions or encounters.
+In the `cbp` repository, there are three main folders through which you can navigate. Throughout this document, `<dataset>` indicates the relevant dataset between apprehensions or encounters.
 
 -   The `code/<dataset>` folder contains all project code needed to reproduce each dataset.
 
@@ -36,7 +36,7 @@ In the `cbp` repository, there are three main folders through which you can navi
 
 Scripts: `0-convert-pdf.R` in apprehensions
 
-This script converts PDFs used to fill in a gap in information found in 2014 on CBP's webiste. We used files obtained by Deportation Data Project co-director David Hausman, represented by the Law Office of Amber Qureshi and the National Immigration Project. This script exists only for apprehensions and does not need to be rerun after the PDF files are converted to parquet form.
+This script converts PDFs used to fill in a gap in information found in 2014 on CBP's website. We used files obtained by Deportation Data Project co-director David Hausman, represented by the Law Office of Amber Qureshi and the National Immigration Project. This script exists only for apprehensions and does not need to be rerun after the PDF files are converted to parquet form.
 
 Input:
 
@@ -64,14 +64,14 @@ Any new files that appear in `excluded-sources/` should be manually reviewed bef
 
 Scripts: `2-profile-<dataset>.R`
 
-These scripts identify the likely header row in each worksheet and inventory the columns found in all `included-sources/` files.
+These scripts identify the header row in each worksheet, inventory the columns in `included-sources/` files, and find all distinct column names.
 
 Outputs in `data/<dataset>/metadata/`:
 
 -   `sheet-inventory.parquet`: displays file name, file path, and sheet name for all `included-sources/` file sheets
 -   `column-inventory.parquet`: displays file name, file path, sheet name, header row placement, number of rows skipped to detect header row, number of columns in that sheet, raw column name, clean column name (after applying `janitor::make_clean_names()`, but before canonical standardization), and column position for every column in `included-sources/`
 -   `distinct-columns.parquet`: identifies all unique cleaned columns from `column-inventory.parquet` and displays their clean column and raw column names, number of files each unique column appears in, and example files containing each column
--   `failed-sheets.parquet`: created only when a sheet fails profiling. If this happens, a good place to check is the header row detection logic in the `find_header_row` function.
+-   `failed-sheets.parquet`: created only when a sheet fails profiling
 
 By default, `force_reprofile <- FALSE`, so only files that are not already represented in the sheet inventory are profiled. Set `force_reprofile <- TRUE` when the profiling rules change, an existing raw file is replaced, or all metadata must be rebuilt. If it is set to `TRUE`, set `force_rebuild <- TRUE` in the later `4-create-parts.R` script. Review `failed-sheets.parquet` whenever it is created.
 
@@ -83,24 +83,24 @@ This script maps variant raw headers to canonical column names and writes `data/
 
 Outputs in `data/<dataset>/metadata/`:
 
--   `crosswalk.parquet`: displays clean column names, raw column names, number of files the clean column can be found in, and canonical names. This script acts as a map, assigning canonical names to each distinct clean column.
+-   `crosswalk.parquet`: displays clean column names, raw column names, number of files the clean column can be found in, and canonical names
 
-The crosswalk definitions are written directly in each script and require manual maintenance. Whenever `distinct-columns.parquet` contains a new raw column, assign it an appropriate canonical name or merge it with its canonical counterpart. By default, this script considers cleaned column names as canonical unless they are specifically renamed or merged. Review the printed missing mappings and collapsed groups to ensure that no raw field was omitted or combined incorrectly. After changing a crosswalk, rerun the script and set `force_rebuild <- TRUE` in the next step.
+The crosswalk definitions are written directly in each script and require manual maintenance. Update the crosswalk whenever `distinct-columns.parquet` contains a new raw column. By default, this script considers cleaned column names as canonical unless they are otherwise specified. After changing a crosswalk, rerun the script and set `force_rebuild <- TRUE` in the next step.
 
 ### 4. Create Standardized Parts
 
 Script: `4-create-parts.R`
 
-This script rereads every successfully profiled worksheet, applies its canonical column names, removes repeated header rows, adds `source_file` and `source_sheet`, and writes one Parquet part to `data/<dataset>/processed/parts-to-stack/` per sheet. "Parts" refers to raw file sheets that have had canonical headers applied.
+This script rereads every successfully profiled worksheet, standardizes headers, and writes one parquet part to `data/<dataset>/processed/parts-to-stack/` per sheet. A "part" refers to a raw file sheet whose headers have been standardized.
 
 Outputs:
 
--   `data/<dataset>/processed/`: contains all data that has been processed in some way (including parts to stack and final datasets), whereas `included-sources/` contains raw files only
+-   `data/<dataset>/processed/`: contains all data that has been processed in some way
 -   `data/<dataset>/processed/parts-to-stack`: contains processed sheets with canonical column names to eventually be stacked to create final datasets
 
 By default `force_rebuild <- FALSE`, so only new sheets will be converted into stackable parts. Set `force_rebuild <- TRUE` if:
 
--   `force_reprofile <- TRUE` was used in `2-profile-<dataset>.R` (and thus part building logic was changed)
+-   `force_reprofile <- TRUE` was used in `2-profile-<dataset>.R`
 -   changes were made to the crosswalk
 -   an existing raw file was replaced
 
@@ -110,7 +110,7 @@ When `force_rebuild <- TRUE`, the existing parts are removed and reconstructed. 
 
 Scripts: `5-stack-apprehensions.R`, `5-stack-encounters.R`.
 
-These scripts combine the remaining parts by column name and verify that the final row count equals the sum of the included parts.
+These scripts combine the remaining parts by column name.
 
 Outputs in `data/<dataset>/metadata/`:
 
@@ -121,13 +121,13 @@ Outputs in `data/<dataset>/processed/`:
 -   `<dataset>-stacked.parquet`: stacked dataset containing all parts that are not exact duplicates or erroneous, still containing overlapping parts and not yet cleaned
 -   `<dataset>-audit.parquet`: displays individual part name, path, and number of rows
 
-Before running the apprehensions stack, review `parts_to_delete` near the beginning of the script. This list is maintained manually based on the overlap review and removes known faulty or duplicate parts only. The script deletes listed files from `parts-to-stack/`, so the parts must be fully rebuilt if an exclusion is to be reversed. Encounters currently has no duplicate or erroneous parts to remove.
+Before running the apprehensions stack, review `parts_to_delete` near the beginning of the script. This list is maintained manually based on overlap review. The script deletes listed files from `parts-to-stack/`.
 
 ### 6. Build Code Column Map
 
 Scripts: `6-build-code-map.R`
 
-These scripts create lookup tables (or "maps") that translate coded values into readable labels. Each mapping identifies the field, original code, and corresponding full name. Uncertain codes are retained as they are originally written.
+These scripts create look-up tables that translate coded or truncated values into readable labels. Uncertain values are retained as they are originally written.
 
 Outputs:
 
@@ -148,21 +148,15 @@ Outputs:
 -   `data/<dataset>/processed/<dataset>-cleaned.parquet`: cleaned dataset in final format, still containing overlapping parts
 -   `data/encounters/processed/encounters-final-all-cols.parquet`: final encounters dataset with all columns
 
-The apprehensions scripts call this output `<dataset>-cleaned.parquet` because overlap resolution occurs in the next step. For encounters, this output is the final dataset.
+For encounters, this output is the final dataset. The apprehensions scripts call this output `<dataset>-cleaned.parquet` because the next script resolves overlapping datasets. Several objects are maintained manually in each cleaning script and should be reviewed when the crosswalk gains new fields.
 
-The following objects are maintained manually in each cleaning script and should be reviewed when the crosswalk gains new fields: `column_order`, `datetime_columns`, `date_columns`, `time_columns`, `logical_columns`, `integer_columns`, `double_columns`, and the accepted logical and missing-value codes.
-
-The apprehensions and encounters cleaning scripts use the code maps generated in the previous scripts to translate coded values into full names and consolidate paired fields into a single column. Existing full-name values take priority and values without a matching translation are retained as written.
-
-The apprehensions and encounters cleaning scripts also combine date and time fields into datetime fields and label source clock times as UTC because the original time zone is unspecified. Selected fields receive redaction flags to distinguish redacted values from ordinary missing values. Finally, these datasets are sorted by apprehension and encounter datetime, with missing date rows last.
-
-Review all warnings about unrecognized values or columns absent from `column_order`. Columns not assigned another type remain character fields by default. Parts that overlap in date are retained in this step. In using this dataset, note that the same entry may be represented multiple times in overlapping datasets.
+Review all warnings about unrecognized values or columns absent from `column_order`. Columns not assigned another data type remain character fields by default. Parts that overlap in date are retained in this step. In using this dataset, note that the same entry may be represented multiple times in overlapping datasets.
 
 ### 8. Resolve Apprehension Overlaps
 
 Script: `8-resolve-apprehension-overlaps.R`.
 
-This step resolves overlapping parts by prioritizing broader source parts, using more granular parts to fill gaps in dates not already represented. Rows without a usable event date are excluded with a warning.
+This script resolves overlapping parts by prioritizing broader source parts, using more granular parts to fill gaps in dates not already represented. Rows without a usable event date are excluded with a warning.
 
 Outputs:
 
@@ -175,7 +169,7 @@ Review the resolution audit to confirm which dates were selected from each sourc
 
 Script: `9-audit-apprehensions.R`, `8-audit-encounters.R`
 
-This script compares column population across the stacked, cleaned, and final apprehensions files.
+These scripts compare column population across the stacked, cleaned, and final apprehensions files.
 
 Outputs:
 
@@ -183,11 +177,8 @@ Outputs:
 -   `data/apprehensions/validation/apprehensions-cols-redacted-to-null.parquet`: displays columns that contained redaction codes in the stacked data and were converted to `NULL` when converted to non-character types
 -   `data/apprehensions/validation/apprehensions-cols-excluded-by-overlap-resolution.parquet`: displays columns that were populated in the cleaned dataset but became empty after overlap resolution, including the number of populated values excluded with the removed rows
 -   `data/apprehensions/metadata/final-column-inventory.parquet`: inventory of columns retained in the final dataset, including column position and name, data type, non-missing rows in the stacked, cleaned and final stages, total rows, number of missing rows, percent of missing rows in the final dataset, logical flags to indicate whether the column is empty or is/has a redaction flag, and the number of non-missing rows removed in overlap resolution and elsewhere
--   `data/<dataset>/metadata/raw-column-missingness-matrix.parquet`: matrix containing each raw column and their percent missing within each source file sheet
-
-<!-- -->
-
--   `data/<dataset>/metadata/final-column-missingness-matrix.parquet`: matrix containing each final column and their percent missing within each source file sheet
+-   `data/<dataset>/metadata/raw-column-missingness-matrix.parquet`: matrix containing each raw column and its percent missing within each source file sheet
+-   `data/<dataset>/metadata/final-column-missingness-matrix.parquet`: matrix containing each final column and its percent missing within each source file sheet
 
 Consider excluded columns before distributing final datasets.
 
@@ -202,13 +193,13 @@ Outputs in `data/<dataset>/validation/`:
 -   `nationwide-encounters-*-aor.csv`: CBP benchmark files downloaded from dashboards
 -   `<dataset>-monthly-cross-reference.parquet`: displays final dataset monthly counts, CBP dashboard monthly counts, fiscal year and month, monthly, absolute, and percent differences, a logical flag indicating exact match in monthly counts, and a `status` column
 
-The `cbp_benchmarks` table is maintained manually. Before each update, check whether CBP has published a newer benchmark and add its identifier, release date, and URL. The script keeps the most recent available benchmark for each month.
+The `cbp_benchmarks` table is maintained manually. Before each update, check whether CBP has published a newer benchmark and add its identifier, release date, and URL.
 
 ### 11. Select Final Columns
 
 Scripts: `10-select-final-cols.R` in encounters, `11-select-final-cols.R` in apprehensions.
 
-These scripts select final columns based on usefulness and percent missing, outputting what we believe to be the most useful and straightforward dataset after the pipeline.
+These scripts select final columns based on usefulness and percent missing, outputting what we believe to be the most useful dataset after the pipeline.
 
 Outputs in `cbp/data/<dataset>/processed`:
 
@@ -273,8 +264,8 @@ For an ordinary update after CBP publishes a new file:
 2.  Run the profiling script with `force_reprofile <- FALSE`.
 3.  Review new distinct columns and update the crosswalk.
 4.  Set `force_rebuild <- TRUE` if the crosswalk or an existing input changed. Otherwise create only the new parts with `force_rebuild <- FALSE`.
-5.  Update the manual duplicate or faulty-part exclusions.
-6.  Run the stacking script to rebuild the date metadata, stack the data, and verify row counts.
+5.  Update the manual part exclusions.
+6.  Run the stacking script.
 7.  Review columns to collapse in the cleaning stage and rerun the map.
 8.  Clean the data.
 9.  Run the dataset-specific overlap resolution, audit, cross-reference, and column selection steps.
