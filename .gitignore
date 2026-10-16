@@ -49,6 +49,10 @@ po/*~
 rsconnect/
 
 # Interim data files to be stacked, don't need to save on remote
+# data/<dataset>/metadata 
+data/apprehensions/metadata/*
+data/encounters/metadata/*
+
 # data/<dataset>/processed
 data/encounters/processed/parts-to-stack/*
 data/encounters/processed/encounters-audit.parquet
