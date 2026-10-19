@@ -354,7 +354,14 @@ cds_mapping <- tribble(
   "STRMLINE", "Streamline"
 )
 
-# charge code mappings
+# transfer group mappings
+transfer_group_mapping <- tribble(
+  ~code, ~full_name,
+  "ERO", "Enforcement and Removal Operations",
+  "ORR", "Office of Refugee Resettlement",
+  "POE", "Port of Entry",
+  "TOT", "Turned Over To"
+)
 
 # combine mappings
 code_map <- bind_rows(
@@ -392,10 +399,16 @@ code_map <- bind_rows(
     mutate(field = "arrest_method"),
   
   gender_mapping |>
-    mutate(field = "gender_mapping"),
+    mutate(field = "gender"),
   
   disposition_mapping |>
-    mutate(field = "disposition")
+    mutate(field = "disposition"),
+  
+  transfer_group_mapping |>
+    mutate(field = "transfer_to_group"),
+  
+  transfer_group_mapping |>
+    mutate(field = "removal_type")
   
 ) |>
   select(

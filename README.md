@@ -173,10 +173,8 @@ These scripts compare column population across the stacked, cleaned, and final a
 
 Outputs:
 
--   `data/apprehensions/validation/apprehensions-cols-empty-before-cleaning.parquet`: displays columns empty before cleaning
--   `data/apprehensions/validation/apprehensions-cols-redacted-to-null.parquet`: displays columns that contained redaction codes in the stacked data and were converted to `NULL` when converted to non-character types
--   `data/apprehensions/validation/apprehensions-cols-excluded-by-overlap-resolution.parquet`: displays columns that were populated in the cleaned dataset but became empty after overlap resolution, including the number of populated values excluded with the removed rows
--   `data/apprehensions/metadata/final-column-inventory.parquet`: inventory of columns retained in the final dataset, including column position and name, data type, non-missing rows in the stacked, cleaned and final stages, total rows, number of missing rows, percent of missing rows in the final dataset, logical flags to indicate whether the column is empty or is/has a redaction flag, and the number of non-missing rows removed in overlap resolution and elsewhere
+-   `data/<dataset>/metadata/raw-column-inventory.parquet`: inventory of raw columns, including column position and name, data type, non-missing rows in the stacked, cleaned and final stages, total rows, number of missing rows, percent of missing rows in the final dataset, logical flags to indicate whether the column is empty or is/has a redaction flag, and the number of non-missing rows removed in overlap resolution and elsewhere
+-   `data/<dataset>/metadata/final-column-inventory.parquet`: inventory of columns retained in the final dataset, including column position and name, data type, non-missing rows in the stacked, cleaned and final stages, total rows, number of missing rows, percent of missing rows in the final dataset, logical flags to indicate whether the column is empty or is/has a redaction flag, and the number of non-missing rows removed in overlap resolution and elsewhere
 -   `data/<dataset>/metadata/raw-column-missingness-matrix.parquet`: matrix containing each raw column and its percent missing within each source file sheet
 -   `data/<dataset>/metadata/final-column-missingness-matrix.parquet`: matrix containing each final column and its percent missing within each source file sheet
 

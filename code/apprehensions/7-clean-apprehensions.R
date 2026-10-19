@@ -193,7 +193,7 @@ column_order <- c(
   "removal_type",
   
   # custody transfer
-  "transfer_to",
+  "transfer_to_destination",
   "transfer_to_group",
   
   # prosecution / referrals
@@ -1108,7 +1108,9 @@ code_pairs <- list(
   arrest_method = character(),
   gender = character(),
   disposition = character(),
-  cds_program = character()
+  cds_program = character(),
+  transfer_to_group = character(),
+  removal_type = character()
   )
 
 # retain existing code columns only 

@@ -273,8 +273,7 @@ time_in_us_mapping <- tribble(
   "4-30", "4 to 30 days",
   "AE", "At Entry",
   "OVER1", "Over 1 year",
-  "WI72", "Within 72 hours",
-  "Not Applicable", "NA" 
+  "WI72", "Within 72 hours"
 )
 
 # transfer group mappings

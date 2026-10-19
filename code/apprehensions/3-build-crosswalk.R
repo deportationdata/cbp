@@ -120,7 +120,6 @@ crosswalk <- distinct_columns |>
         "app_dt_time",
         "appr_dt_time",
         "apprehension_datetime",
-        "encounter_dt_time",
         "arrest_date_time",
         "arrest_datetime"
       ) ~ "apprehension_datetime",
@@ -400,7 +399,7 @@ crosswalk <- distinct_columns |>
         "referred_for_prosecution_under_8_usc_1325_or_8_usc_1326"
       ) ~ "referred_for_prosecution_under_8usc1325_or_8usc1326",
       
-      # transfer
+      # transfer group
       clean_column %in% c(
         "transfer_to_group",
         "transferred_to_group",
@@ -408,6 +407,11 @@ crosswalk <- distinct_columns |>
         "transfer_to_ero",
         "ero_transfer"
       ) ~ "transfer_to_group",
+      
+      # transfer destination
+      clean_column %in% c(
+        "transfer_to"
+      ) ~ "transfer_to_destination",
       
       # currency/drugs
       clean_column %in% c(

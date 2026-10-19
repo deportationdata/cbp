@@ -87,9 +87,9 @@ save_outputs(apprehensions_final, file.path(
   "apprehensions/processed/apprehensions-latest"
 ))
 
-write_xlsx_by_fy(apprehensions_final,
-                 "data/apprehensions/processed/apprehensions-latest.xlsx",
-                 date_col = apprehension_datetime,
-                 label = "USBP Apprehensions")
+# write_xlsx_by_fy(apprehensions_final,
+                 # "data/apprehensions/processed/apprehensions-latest.xlsx",
+                 # date_col = apprehension_datetime,
+                 # label = "USBP Apprehensions")
 
 # END

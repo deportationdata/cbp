@@ -13,6 +13,13 @@ library(duckdb)
 dataset_dir <- "data/encounters"
 processed_dir <- file.path(dataset_dir, "processed")
 validation_dir <- file.path(dataset_dir, "validation")
+cross_reference_inputs_dir <- file.path("inputs", "cross-reference-files")
+
+dir.create(
+  cross_reference_inputs_dir,
+  recursive = TRUE,
+  showWarnings = FALSE
+)
 
 dir.create(
   validation_dir,
@@ -35,21 +42,21 @@ cross_reference_parquet_path <- file.path(
 # area-of-responsibility tribble, 2021-2026
 cbp_benchmarks <- tribble(
   ~benchmark_id, ~release_date, ~url,
-  "fy20_fy23", as.Date("2023-11-01"),
+  "fy20_fy23", as.Date("2023-11-07"),
   "https://www.cbp.gov/sites/default/files/assets/documents/2023-Nov/nationwide-encounters-fy20-fy23-aor.csv",
   
-  "fy21_fy24", as.Date("2024-10-01"),
+  "fy21_fy24", as.Date("2024-10-17"),
   "https://www.cbp.gov/sites/default/files/2024-10/nationwide-encounters-fy21-fy24-aor.csv",
   
-  "fy22_fy25", as.Date("2025-11-01"),
+  "fy22_fy25", as.Date("2025-10-15"),
   "https://www.cbp.gov/sites/default/files/2025-11/nationwide-encounters-fy22-fy25-aor.csv",
   
-  "fy23_fy26_july", as.Date("2026-08-01"),
+  "fy23_fy26_july", as.Date("2026-08-05"),
   "https://www.cbp.gov/sites/default/files/2026-08/nationwide-encounters-fy23-fy26-jul-aor.csv"
 ) |>
   mutate(
     local_path = file.path(
-      validation_dir,
+      cross_reference_inputs_dir,
       basename(url)
     )
   )
