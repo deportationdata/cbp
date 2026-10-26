@@ -80,12 +80,12 @@ Because intended difference between the USBP encounters datasets and the USBP ap
 
 ## Unique Value Exploration
 
-To consolidate these apprehensions and encounters datasets, we attempt to use the `statute_charge` field to indicate whether an encounter is a Title 8 apprehension or Title 42 expulsion. First, we explore the unique values in this field.
-*To be filled in after law student report?
+To consolidate these apprehensions and encounters datasets, we attempt to use the `statute_charge` field to indicate whether an encounter is a Title 8 apprehension or Title 42 expulsion. First, we explore the unique values in this field. \*To be filled in after law student report?
 
 ## Exploration
 
 ### USBP Apprehension Counts Over Time
+
 ```{r}
 monthly_counts <- apprehensions_edited |>
   filter(!is.na(apprehension_datetime)) |>
@@ -127,10 +127,11 @@ ggplot(monthly_counts, aes(month, n, color = title_of_authority)) +
 
 ```
 
--   I applied the same classification rule that labeled rows with 8 USC in `statute_charge` as Title 8, NA `statute_charge` as Title 42, and all else as NA to `apprehensions_latest.parquet`. 
+-   I applied the same classification rule that labeled rows with 8 USC in `statute_charge` as Title 8, NA `statute_charge` as Title 42, and all else as NA to `apprehensions_latest.parquet`.
 -   These results lead me to think that `statute_charge` may not be a reliable indication of title of authority because that logic applied here implies that Title 42 exists in apprehensions, which we know not to be true.
 
 ### USBP Encounter Apprehension Counts Over Time
+
 ```{r}
 monthly_counts <- encounters_edited |>
   filter(!is.na(encounter_datetime)) |>
@@ -183,6 +184,7 @@ encounters_edited |> filter(between(
 -   There are `154680` NA values during the Title 42 period which could be Title 42 expulsions that we would never know about. How problematic would it be to not provide that info?
 
 ### Title 8 Encounter and Apprehension Comparison
+
 ```{r}
 # Find overlapping date ranges
 min(apprehensions_edited$apprehension_datetime)
@@ -226,11 +228,13 @@ apprehensions_edited |> filter(between(
   summarize(n = n())
 
 ```
--   I counted apprehensions and Title 8 encounters within the comparable period (largest period of coverage shared by both datasets) and the Title 42 period. 
--   In the comparable period, the apprehensions dataset counts `9540874` apprehensions, while the encounters dataset counts `8276838` apprehensions. Assuming the apprehensions dataset is accurate, the logic under-counts apprehensions by `1264036`. 
+
+-   I counted apprehensions and Title 8 encounters within the comparable period (largest period of coverage shared by both datasets) and the Title 42 period.
+-   In the comparable period, the apprehensions dataset counts `9540874` apprehensions, while the encounters dataset counts `8276838` apprehensions. Assuming the apprehensions dataset is accurate, the logic under-counts apprehensions by `1264036`.
 -   In the Title 42 period, the apprehensions dataset counts `2608509` apprehensions, while the encounters dataset counts only `2197266` apprehensions. Assuming the apprehensions dataset is accurate during the Title 42 period, the logic under-counts apprehensions by `411243`.
 
-### Title 42 CBP Dashboard Count Comparison  
+### Title 42 CBP Dashboard Count Comparison
+
 ```{r}
 start_date <- as.Date("2020-03-20")
 end_date <- as.Date("2023-05-11")
@@ -277,9 +281,11 @@ comparison <- official_t42 |>
 
 print(comparison, n = Inf)
 ```
--   Percent differences seem negligible at first but generally grow by month throughout the Title 42 period. 
+
+-   Percent differences seem negligible at first but generally grow by month throughout the Title 42 period.
 
 ### Title 42 CBP Dashboard Count Comparison V2
+
 ```{r}
 start_date <- as.Date("2020-03-20")
 end_date <- as.Date("2023-05-11")
@@ -326,4 +332,3 @@ comparison <- official_t42 |>
 
 print(comparison, n = Inf)
 ```
-
