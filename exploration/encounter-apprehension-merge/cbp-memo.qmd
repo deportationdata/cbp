@@ -1,0 +1,329 @@
+---
+title: "CBP Memo"
+format: "pdf"
+editor: visual
+---
+
+```{r Setup}
+library(tidyverse)
+library(lubridate)
+library(arrow)
+
+project_dir <- "/Users/simone/Desktop/DDP/cbp"
+
+encounters_processed_dir <- file.path(
+  project_dir, "data/encounters/processed"
+)
+apprehensions_processed_dir <- file.path(
+  project_dir, "data/apprehensions/processed"
+)
+cross_reference_dir <- file.path(
+  project_dir, "inputs/cross-reference-files"
+)
+
+apprehensions_latest_path <- file.path(
+  apprehensions_processed_dir, "apprehensions-latest.parquet"
+)
+encounters_latest_path <- file.path(
+  encounters_processed_dir, "encounters-latest.parquet"
+)
+cross_reference_file_path <- file.path(
+  cross_reference_dir, "nationwide-encounters-fy20-fy23-aor.csv"
+)
+
+apprehensions_latest <- read_parquet(
+  apprehensions_latest_path, 
+  col_select = c(apprehension_datetime, statute_charge))
+
+encounters_latest <- read_parquet(
+  encounters_latest_path,
+  col_select = c(encounter_datetime, statute_charge))
+
+cross_reference_file <- read_csv(cross_reference_file_path)
+
+
+encounters_edited <- encounters_latest |>
+  mutate(
+    title_of_authority = case_when(
+      str_detect(statute_charge, "8 USC") ~ "Title 8",
+      is.na(statute_charge) ~ "Title 42"
+    )
+  )
+
+encounters_edited_v2 <- encounters_latest |>
+  mutate(
+    title_of_authority = case_when(
+      !is.na(statute_charge) ~ "Title 8",
+      is.na(statute_charge) ~ "Title 42"
+    )
+  )
+
+apprehensions_edited <- apprehensions_latest |>
+  mutate(
+    title_of_authority = case_when(
+      str_detect(statute_charge, "8 USC") ~ "Title 8",
+      is.na(statute_charge) ~ "Title 42"
+    )
+  )
+```
+
+## Intro
+
+United States Border Patrol (USBP) releases apprehension and encounter data in separate sheets. While general encounters include all types of interactions at the border, Title 8 inadmissibles are recorded under the Office of Field Operations (OFO) rather than the USBP. Therefore, the USBP encounters datasets include only Title 8 apprehensions and Title 42 expulsions. On the other hand, USBP apprehensions data covers Title 8 apprehensions only.
+
+Because intended difference between the USBP encounters datasets and the USBP apprehensions datasets is the pandemic-era Title 42 expulsions in the encounters dataset, we aim to consolidate encounters and apprehensions into one, comprehensive dataset that can be filtered depending on `title_of_authority`.
+
+-   Original logic:
+    -   If `statute_charge` contains 8 USC -\> Title 8
+    -   If `statute_charge` is `NA` or missing -\> Title 42
+    -   Otherwise -\> NA
+
+## Unique Value Exploration
+
+To consolidate these apprehensions and encounters datasets, we attempt to use the `statute_charge` field to indicate whether an encounter is a Title 8 apprehension or Title 42 expulsion. First, we explore the unique values in this field.
+*To be filled in after law student report?
+
+## Exploration
+
+### USBP Apprehension Counts Over Time
+```{r}
+monthly_counts <- apprehensions_edited |>
+  filter(!is.na(apprehension_datetime)) |>
+  mutate(month = floor_date(as.Date(apprehension_datetime), "month")) |>
+  count(month, title_of_authority)
+
+bracket_y <- max(monthly_counts$n) * 1.1
+
+ggplot(monthly_counts, aes(month, n, color = title_of_authority)) +
+  geom_line(linewidth = 0.7) +
+  annotate(
+    "segment",
+    x = as.Date("2020-03-20"), xend = as.Date("2023-05-11"),
+    y = bracket_y, yend = bracket_y
+  ) +
+  annotate(
+    "point",
+    x = as.Date(c("2020-03-20", "2023-05-11")),
+    y = bracket_y,
+    shape = "|", size = 5
+  ) +
+  annotate(
+    "text",
+    x = as.Date("2021-10-14"), y = bracket_y * 1.05,
+    label = "Title 42", size = 3.5
+  ) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  scale_y_continuous(labels = scales::label_comma()) +
+  scale_color_manual(
+    values = c("Title 8" = "#0072B2", "Title 42" = "#D55E00")
+  ) +
+  labs(
+    x = NULL, y = "Monthly apprehensions", color = "Assigned authority",
+    title = "USBP apprehensions"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "bottom") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 0.5))
+
+```
+
+-   I applied the same classification rule that labeled rows with 8 USC in `statute_charge` as Title 8, NA `statute_charge` as Title 42, and all else as NA to `apprehensions_latest.parquet`. 
+-   These results lead me to think that `statute_charge` may not be a reliable indication of title of authority because that logic applied here implies that Title 42 exists in apprehensions, which we know not to be true.
+
+### USBP Encounter Apprehension Counts Over Time
+```{r}
+monthly_counts <- encounters_edited |>
+  filter(!is.na(encounter_datetime)) |>
+  mutate(month = floor_date(as.Date(encounter_datetime), "month")) |>
+  count(month, title_of_authority)
+
+bracket_y <- max(monthly_counts$n) * 1.1
+
+ggplot(monthly_counts, aes(month, n, color = title_of_authority)) +
+  geom_line(linewidth = 0.7) +
+  annotate(
+    "segment",
+    x = as.Date("2020-03-20"), xend = as.Date("2023-05-11"),
+    y = bracket_y, yend = bracket_y
+  ) +
+  annotate(
+    "point",
+    x = as.Date(c("2020-03-20", "2023-05-11")),
+    y = bracket_y,
+    shape = "|", size = 5
+  ) +
+  annotate(
+    "text",
+    x = as.Date("2021-10-14"), y = bracket_y * 1.05,
+    label = "Title 42", size = 3.5
+  ) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  scale_y_continuous(labels = scales::label_comma()) +
+  scale_color_manual(
+    values = c("Title 8" = "#0072B2", "Title 42" = "#D55E00")
+  ) +
+  labs(
+    x = NULL, y = "Monthly encounters", color = "Assigned authority",
+    title = "USBP encounters"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "bottom") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 0.5))
+
+
+# Encounter NA's based on new logic in Title 42 period 
+encounters_edited |> filter(between(
+  as.Date(encounter_datetime), 
+  as.Date("2020-03-20"), 
+  as.Date("2023-05-11"))) |>
+  summarise(sum(is.na(title_of_authority)))
+```
+
+-   The spike during the Title 42 period is promsising.
+-   There are `154680` NA values during the Title 42 period which could be Title 42 expulsions that we would never know about. How problematic would it be to not provide that info?
+
+### Title 8 Encounter and Apprehension Comparison
+```{r}
+# Find overlapping date ranges
+min(apprehensions_edited$apprehension_datetime)
+max(apprehensions_edited$apprehension_datetime)
+min(encounters_edited$encounter_datetime)
+max(encounters_edited$encounter_datetime)
+
+# Title 8 encounter count in comparable range
+encounters_edited |> filter(between(
+  as.Date(encounter_datetime),
+  as.Date("2009-10-01"), 
+  as.Date("2025-09-30"))) |>
+  summarise(sum(title_of_authority == "Title 8", na.rm = TRUE))
+
+# Apprehension count in comparable range
+apprehensions_edited |> filter(between(
+  as.Date(apprehension_datetime),
+  as.Date("2009-10-01"), 
+  as.Date("2025-09-30"))) |>
+  summarize(n = n())
+
+# Title 42 encounter count in Title 42 period 
+encounters_edited |> filter(between(
+  as.Date(encounter_datetime), 
+  as.Date("2020-03-20"), 
+  as.Date("2023-05-11")))|>
+  summarise(sum((title_of_authority == "Title 42"), na.rm = TRUE))
+
+# Title 8 encounter count in Title 42 period 
+encounters_edited |> filter(between(
+  as.Date(encounter_datetime), 
+  as.Date("2020-03-20"), 
+  as.Date("2023-05-11"))) |>
+  summarise(sum(title_of_authority == "Title 8", na.rm = TRUE))
+
+# Apprehension count in Title 42 period 
+apprehensions_edited |> filter(between(
+  as.Date(apprehension_datetime),
+  as.Date("2020-03-20"), 
+  as.Date("2023-05-11"))) |>
+  summarize(n = n())
+
+```
+-   I counted apprehensions and Title 8 encounters within the comparable period (largest period of coverage shared by both datasets) and the Title 42 period. 
+-   In the comparable period, the apprehensions dataset counts `9540874` apprehensions, while the encounters dataset counts `8276838` apprehensions. Assuming the apprehensions dataset is accurate, the logic under-counts apprehensions by `1264036`. 
+-   In the Title 42 period, the apprehensions dataset counts `2608509` apprehensions, while the encounters dataset counts only `2197266` apprehensions. Assuming the apprehensions dataset is accurate during the Title 42 period, the logic under-counts apprehensions by `411243`.
+
+### Title 42 CBP Dashboard Count Comparison  
+```{r}
+start_date <- as.Date("2020-03-20")
+end_date <- as.Date("2023-05-11")
+
+official_t42 <- cross_reference_file |>
+  filter(
+    Component == "U.S. Border Patrol",
+    `Title of Authority` == "Title 42"
+  ) |>
+  mutate(
+    month_number = match(
+      str_to_upper(`Month (abbv)`),
+      str_to_upper(month.abb)
+    ),
+    calendar_year = as.integer(`Fiscal Year`) -
+      if_else(month_number >= 10L, 1L, 0L),
+    month = make_date(calendar_year, month_number, 1)
+  ) |>
+  filter(between(
+    month,
+    floor_date(start_date, "month"),
+    floor_date(end_date, "month")
+  )) |>
+  group_by(month) |>
+  summarise(
+    official_title42 = sum(`Encounter Count`, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+encounters_t42 <- encounters_edited |>
+  filter(between(
+    as.Date(encounter_datetime), start_date, end_date),
+    title_of_authority == "Title 42"
+  ) |>
+  mutate(month = floor_date(as.Date(encounter_datetime), "month")) |>
+  count(month, name = "assigned_title42")
+
+comparison <- official_t42 |>
+  left_join(encounters_t42, by = "month") |>
+  mutate(
+    difference = assigned_title42 - official_title42,
+    pct_difference = 100 * difference / na_if(official_title42, 0)
+  )
+
+print(comparison, n = Inf)
+```
+-   Percent differences seem negligible at first but generally grow by month throughout the Title 42 period. 
+
+### Title 42 CBP Dashboard Count Comparison V2
+```{r}
+start_date <- as.Date("2020-03-20")
+end_date <- as.Date("2023-05-11")
+
+official_t42 <- cross_reference_file |>
+  filter(
+    Component == "U.S. Border Patrol",
+    `Title of Authority` == "Title 42"
+  ) |>
+  mutate(
+    month_number = match(
+      str_to_upper(`Month (abbv)`),
+      str_to_upper(month.abb)
+    ),
+    calendar_year = as.integer(`Fiscal Year`) -
+      if_else(month_number >= 10L, 1L, 0L),
+    month = make_date(calendar_year, month_number, 1)
+  ) |>
+  filter(between(
+    month,
+    floor_date(start_date, "month"),
+    floor_date(end_date, "month")
+  )) |>
+  group_by(month) |>
+  summarise(
+    official_title42 = sum(`Encounter Count`, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+encounters_t42 <- encounters_edited_v2 |>
+  filter(between(
+    as.Date(encounter_datetime), start_date, end_date),
+    title_of_authority == "Title 42"
+  ) |>
+  mutate(month = floor_date(as.Date(encounter_datetime), "month")) |>
+  count(month, name = "assigned_title42")
+
+comparison <- official_t42 |>
+  left_join(encounters_t42, by = "month") |>
+  mutate(
+    difference = assigned_title42 - official_title42,
+    pct_difference = 100 * difference / na_if(official_title42, 0)
+  )
+
+print(comparison, n = Inf)
+```
+
