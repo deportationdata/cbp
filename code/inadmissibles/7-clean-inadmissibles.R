@@ -1,3 +1,6 @@
+# use UTC for source clock times, source time zone is unspecified
+Sys.setenv(TZ = "UTC")
+
 # load packages
 library(tidyverse)
 library(DBI)
@@ -7,45 +10,43 @@ library(duckdb)
 dataset_dir <- "data/inadmissibles"
 processed_dir <- file.path(dataset_dir, "processed")
 
-stacked_path <- file.path(
+inadmissibles_stacked_path <- file.path(
   processed_dir,
   "inadmissibles-stacked.parquet"
 )
 
-final_path <- file.path(
+inadmissibles_cleaned_path <- file.path(
   processed_dir,
-  "inadmissibles-final-all-cols.parquet"
+  "inadmissibles-cleaned.parquet"
 )
 
-latest_path <- file.path(processed_dir, "inadmissibles-latest.parquet")
+code_map_path <- file.path(dataset_dir, "metadata", "code-map.parquet")
 
 # connect to duckDB
 con <- dbConnect(
   duckdb()
 )
 
-dbExecute(
-  con,
-  "SET threads = 2"
-)
+# use UTC for database timestamps
+dbExecute(con, "SET TimeZone = \'UTC\'")
 
-dbExecute(
-  con,
-  "SET preserve_insertion_order = false"
-)
+# configuration
+dbExecute(con, "SET threads = 1")
+dbExecute(con, "SET preserve_insertion_order = false")
+dbExecute(con, "SET max_temp_directory_size = '10GiB'")
 
-# quote file paths for SQL
+# SQL file paths
 stacked_sql <- as.character(
   dbQuoteString(
     con,
-    stacked_path
+    inadmissibles_stacked_path
   )
 )
 
 final_sql <- as.character(
   dbQuoteString(
     con,
-    final_path
+    inadmissibles_cleaned_path
   )
 )
 
@@ -62,22 +63,6 @@ stacked_schema <- dbGetQuery(
   as_tibble()
 
 stacked_columns <- stacked_schema$column_name
-
-# preview first 5 rows
-stacked_preview <- dbGetQuery(
-  con,
-  paste0(
-    "SELECT * ",
-    "FROM read_parquet(",
-    stacked_sql,
-    ") ",
-    "LIMIT 5"
-  )
-)
-
-glimpse(
-  stacked_preview
-)
 
 # get row count 
 stacked_rows <- dbGetQuery(
@@ -104,79 +89,75 @@ cat(
 column_order <- c(
   
   # event timing
-  "event_created_datetime",
+  "event_datetime",
   "calendar_month_year",
   "calendar_year",
   "calendar_month_name",
-  "custody_date_time_out_latest",
-  
-  # record identifiers
-  "sigma_event_id",
-  "sigma_subject_person_id",
-  "alien_file_number",
+  "final_bookout_datetime",
   
   # counts
   "event_subject_count",
   "inadmissibles_subject_count",
   "person_count",
   
+  # record identifiers
+  "event_id",
+  "unique_person_id",
+  "subject_afile_number",
+  
   # location
   "field_office_name",
-  "city_name",
-  "state_name",
+  "city",
+  "state",
   "usa_state_code",
-  "country_name",
-  "first_street_name",
+  "country",
+  "street_name",
   "postal_zip_code",
   "north_south_indicator",
   
   # transportation
   "mode_of_transportation",
-  "mot",
   
   # demographic information
   "age",
   "gender",
-  "marital_status_name",
-  "birth_country_name",
-  "citizenship_country_name",
+  "marital_status",
+  "birth_country",
+  "citizenship",
   
   # family / child information
   "fmua_indicator",
-  "fmua_indicator_derived",
-  "uac_indicator",
-  "uac_indicator_derived",
   "fmua_uac_indicator",
-  "fmua_uac_am_single_derived",
-  "unaccompanied_minor_indicator_unac_inadmissible_admissible",
   
   # immigration / entry information
   "entry_status",
-  "destination_address_in_u_s",
-  "cred_fear_indicator",
-  "cred_fear_indicator_derived",
+  "us_destination_address",
+  "credible_fear_indicator",
   
   # event / disposition information
   "event_reason",
   "disposition",
   "disposition_name",
-  "duplicate",
+  "duplicate_subject_indicator",
   
   # custody transfer
-  "i216_custody_transfer_to_agency",
+  "transfer_to_group",
   
   # prosecution / charges
   "presented_to_ausa",
-  "charge",
+  "statute_charge",
   
   # gang information
-  "suspected_gang_affiliation_name",
-  "gang_affiliation_type_name",
+  "suspected_gang_affiliation",
   "gang_affiliation_comments",
   
   # record administration
   "created_by_hash_id",
-  "approving_supervisor_hash_id"
+  "approving_supervisor_hash_id",
+  
+  # source information
+  "source_file",
+  "source_sheet"
 )
 
 # missing cols?
@@ -219,7 +200,8 @@ final_columns <- c(
   remaining_columns
 )
 
-#### Standardize Redaction Codes #### 
+#### Standardize Values #### 
+## standardize redaction codes 
 
 # helpers for safely constructing SQL
 sql_identifier <- function(x) {
@@ -240,55 +222,71 @@ sql_string <- function(x) {
   )
 }
 
-redaction_pattern <- "\\(b\\)\\s*\\(7\\)\\s*\\(\\s*E\\s*\\)"
+# SQL redaction / whitespace patterns
+
+redaction_b6_pattern <- "\\(\\s*b\\s*\\)\\s*\\(\\s*6\\s*\\)"
+redaction_b7c_pattern <- "\\(\\s*b\\s*\\)\\s*\\(\\s*7\\s*\\)\\s*\\(\\s*C\\s*\\)"
+redaction_b7e_pattern <- "\\(\\s*b\\s*\\)\\s*\\(\\s*7\\s*\\)\\s*\\(\\s*E\\s*\\)"
+
+# boundary between one complete code and the next (b)
+redaction_separator_pattern <- "\\)\\s*[,;]*\\s*\\(b\\)"
 
 whitespace_pattern <- "\\s+"
 
-redaction_pattern_sql <- sql_string(
-  redaction_pattern
-)
+# standardize redaction codes, separators, and whitespace
 
-whitespace_pattern_sql <- sql_string(
-  whitespace_pattern
-)
-
-# standardize redaction code and whitespace
 clean_string_sql <- function(column) {
   
-  column_sql <- sql_identifier(
-    column
+  value_sql <- sprintf(
+    "CAST(%s AS VARCHAR)",
+    sql_identifier(column)
   )
   
+  # standardize each distinct code
+  patterns <- c(
+    redaction_b6_pattern,
+    redaction_b7c_pattern,
+    redaction_b7e_pattern
+  )
+  
+  replacements <- c(
+    "(b)(6)",
+    "(b)(7)(C)",
+    "(b)(7)(E)"
+  )
+  
+  for (i in seq_along(patterns)) {
+    value_sql <- sprintf(
+      "regexp_replace(%s, %s, %s, 'gi')",
+      value_sql,
+      sql_string(patterns[i]),
+      sql_string(replacements[i])
+    )
+  }
+  
+  # separate adjacent codes with a comma and space
+  value_sql <- sprintf(
+    "regexp_replace(%s, %s, %s, 'g')",
+    value_sql,
+    sql_string(redaction_separator_pattern),
+    sql_string("), (b)")
+  )
+  
+  # collapse whitespace, trim, and convert empty strings to NULL
   sprintf(
-    paste0(
-      "NULLIF(",
-      "TRIM(",
-      "regexp_replace(",
-      "regexp_replace(",
-      "CAST(%s AS VARCHAR), ",
-      "%s, ",
-      "'(b)(7)(E)', ",
-      "'gi'",
-      "), ",
-      "%s, ",
-      "' ', ",
-      "'g'",
-      ")",
-      "), ",
-      "''",
-      ")"
-    ),
-    column_sql,
-    redaction_pattern_sql,
-    whitespace_pattern_sql
+    "NULLIF(TRIM(regexp_replace(%s, %s, ' ', 'g')), '')",
+    value_sql,
+    sql_string(whitespace_pattern)
   )
 }
 
-#### Handle Date and Time Cols #### 
+## standardize statute charge
+
+#### Inspect Date and Time Cols #### 
 
 datetime_columns <- c(
   "event_created_datetime",
-  "custody_date_time_out_latest"
+  "final_bookout_datetime"
 )
 
 date_columns <- c(
@@ -435,12 +433,14 @@ date_unrecognized <- map_dfr(
           "WHERE %s IS NOT NULL ",
           "AND UPPER(%s) NOT IN ('NA', 'N/A', 'NULL') ",
           "AND TRY_CAST(%s AS DATE) IS NULL ",
+          "AND TRY_STRPTIME(%s, '%%m/%%d/%%Y') IS NULL ",
           "AND TRY_CAST(%s AS DOUBLE) IS NULL ",
           "GROUP BY %s"
         ),
         sql_string(column),
         value_sql,
         stacked_sql,
+        value_sql,
         value_sql,
         value_sql,
         value_sql,
@@ -496,12 +496,9 @@ time_unrecognized
 #### Handle Logical Cols #### 
 
 logical_columns <- c(
-  "cred_fear_indicator",
-  "cred_fear_indicator_derived",
+  "credible_fear_indicator",
   "fmua_indicator",
-  "fmua_indicator_derived",
-  "uac_indicator",
-  "uac_indicator_derived"
+  "duplicate_subject_indicator"
 )
 
 logical_columns <- intersect(
@@ -514,6 +511,7 @@ true_values <- c(
   "YES",
   "TRUE",
   "T",
+  "X",
   "1"
 )
 
@@ -544,6 +542,20 @@ valid_logical_sql <- paste(
   collapse = ", "
 )
 
+true_values_sql <- paste(
+  sql_string(
+    true_values
+  ),
+  collapse = ", "
+)
+
+false_values_sql <- paste(
+  sql_string(
+    false_values
+  ),
+  collapse = ", "
+)
+
 # check before converting
 if (length(logical_columns) > 0) {
   
@@ -551,9 +563,7 @@ if (length(logical_columns) > 0) {
     logical_columns,
     \(column) {
       
-      value_sql <- clean_string_sql(
-        column
-      )
+      value_sql <- clean_string_sql(column)
       
       sprintf(
         paste0(
@@ -600,13 +610,11 @@ if (length(logical_columns) > 0) {
 
 logical_unrecognized
 
-#### Handle Numeric Cols #### 
+#### Inspect Numeric Cols #### 
 
 integer_columns <- c(
   "age",
-  "event_subject_count",
-  "inadmissibles_subject_count",
-  "person_count"
+  "event_subject_count"
 )
 
 double_columns <- c(
@@ -643,39 +651,92 @@ numeric_unrecognized <- bind_rows(
 
 numeric_unrecognized
 
-#### Convert Rest to Chr #### 
+code_map <- dbGetQuery(
+  con,
+  sprintf(
+    "SELECT field, code, full_name FROM read_parquet(%s)",
+    sql_string(code_map_path)
+  )
+) |>
+  as_tibble()
 
-protected_columns <- c(
-  datetime_columns,
-  date_columns,
-  time_columns,
-  logical_columns,
-  integer_columns,
-  double_columns
+if (
+  anyNA(code_map) ||
+  any(str_squish(unlist(code_map, use.names = FALSE)) == "")
+) {
+  stop("The code map contains missing or blank entries.")
+}
+
+lookup <- bind_rows(
+  code_map,
+  code_map |>
+    transmute(
+      field,
+      code = full_name,
+      full_name
+    )
+) |>
+  mutate(
+    code = str_squish(code),
+    full_name = str_squish(full_name)
+  ) |>
+  distinct()
+
+dbWriteTable(
+  con,
+  "code_lookup_raw",
+  lookup,
+  temporary = TRUE,
+  overwrite = TRUE
 )
 
-character_columns <- setdiff(
-  stacked_columns,
-  protected_columns
+dbExecute(
+  con,
+  "CREATE OR REPLACE TEMP VIEW code_lookup AS
+   SELECT DISTINCT
+     field,
+     UPPER(code) AS code_key,
+     full_name
+   FROM code_lookup_raw"
 )
 
-#### Final Dataset #### 
-
-true_values_sql <- paste(
-  sql_string(
-    true_values
-  ),
-  collapse = ", "
+mapping_conflicts <- dbGetQuery(
+  con,
+  "SELECT field, code_key, COUNT(*) AS n
+   FROM code_lookup
+   GROUP BY field, code_key
+   HAVING COUNT(*) > 1"
 )
 
-false_values_sql <- paste(
-  sql_string(
-    false_values
-  ),
-  collapse = ", "
-)
+if (nrow(mapping_conflicts) > 0) {
+  print(mapping_conflicts)
+  stop("Resolve conflicting code mappings before continuing.")
+}
 
-# construct correct conversion for each column
+# Compile the small lookup into scalar expressions so translation can stream
+# without joining or buffering the full input dataset.
+lookup_values <- dbGetQuery(con, "SELECT * FROM code_lookup")
+
+translate_value_sql <- function(field_name, value_sql) {
+  entries <- lookup_values[lookup_values$field == field_name, , drop = FALSE]
+  if (nrow(entries) == 0) return(value_sql)
+
+  branches <- sprintf(
+    "WHEN %s THEN %s",
+    sql_string(entries$code_key),
+    sql_string(entries$full_name)
+  )
+  sprintf(
+    "CASE UPPER(%s) %s ELSE %s END",
+    value_sql,
+    paste(branches, collapse = " "),
+    value_sql
+  )
+}
+
+#### Column Conversion #### 
+
+# convert each column
 final_expression <- function(column) {
   
   column_sql <- sql_identifier(
@@ -685,9 +746,12 @@ final_expression <- function(column) {
   value_sql <- clean_string_sql(
     column
   )
+
+  if (column == "duplicate_subject_indicator") {
+    value_sql <- translate_value_sql(column, value_sql)
+  }
   
   # datetime
-  
   if (column %in% datetime_columns) {
     
     return(
@@ -717,7 +781,6 @@ final_expression <- function(column) {
   }
   
   # date
-  
   if (column %in% date_columns) {
     
     return(
@@ -726,6 +789,8 @@ final_expression <- function(column) {
           "CASE ",
           "WHEN TRY_CAST(%1$s AS DATE) IS NOT NULL ",
           "THEN TRY_CAST(%1$s AS DATE) ",
+          "WHEN TRY_STRPTIME(%1$s, '%%m/%%d/%%Y') IS NOT NULL ",
+          "THEN CAST(TRY_STRPTIME(%1$s, '%%m/%%d/%%Y') AS DATE) ",
           "WHEN TRY_CAST(%1$s AS DOUBLE) IS NOT NULL ",
           "THEN DATE '1899-12-30' + ",
           "CAST(",
@@ -744,7 +809,6 @@ final_expression <- function(column) {
   }
   
   # time
-  
   if (column %in% time_columns) {
     
     return(
@@ -779,7 +843,6 @@ final_expression <- function(column) {
   }
   
   # logical
-  
   if (column %in% logical_columns) {
     
     return(
@@ -802,7 +865,6 @@ final_expression <- function(column) {
   }
   
   # integer
-  
   if (column %in% integer_columns) {
     
     return(
@@ -815,7 +877,6 @@ final_expression <- function(column) {
   }
   
   # double
-  
   if (column %in% double_columns) {
     
     return(
@@ -839,9 +900,150 @@ final_select <- map_chr(
   final_columns,
   final_expression
 ) |>
-  paste(
-    collapse = ",\n    "
+  paste(collapse = ",\n    ")
+
+
+#### Consolidate Code Columns #### 
+
+# use existing cleaning query 
+dbExecute(
+  con,
+  sprintf(
+    "CREATE OR REPLACE TEMP VIEW cleaned_input AS
+     SELECT %s
+     FROM read_parquet(%s)",
+    final_select,
+    stacked_sql
   )
+)
+
+cleaned_columns <- dbGetQuery(
+  con,
+  "DESCRIBE SELECT * FROM cleaned_input"
+)$column_name
+
+#### Code map pairs #### 
+code_pairs <- list(
+  birth_country = character(),
+  citizenship = character(),
+  country = character(),
+  state = character(),
+  calendar_year = character(),
+  fmua_uac_indicator = character(),
+  gender = character(),
+  transfer_to_group = character()
+)
+
+# retain existing code columns only 
+code_pairs <- map(
+  code_pairs,
+  ~ intersect(.x, cleaned_columns)
+)
+
+# remove mapped code cols from output
+output_columns <- setdiff(
+  cleaned_columns,
+  unlist(code_pairs, use.names = FALSE)
+)
+
+# destination only if code col exists
+needed_full_columns <- names(code_pairs)[lengths(code_pairs) > 0]
+
+output_columns <- union(
+  output_columns,
+  needed_full_columns
+)
+
+# source info
+source_columns <- intersect(
+  c("source_file", "source_sheet"),
+  output_columns
+)
+
+output_columns <- c(
+  setdiff(output_columns, source_columns),
+  source_columns
+)
+
+output_expressions <- character()
+
+for (column in output_columns) {
+  
+  # store source clock times with an explicit UTC label
+  if (column %in% datetime_columns) {
+    output_expressions <- c(
+      output_expressions,
+      sprintf(
+        "CAST(CAST(s.%s AS VARCHAR) || '+00:00' AS TIMESTAMPTZ) AS %s",
+        sql_identifier(column),
+        sql_identifier(column)
+      )
+    )
+    next
+  }
+  
+  # regular columns pass through unchanged
+  if (!column %in% names(code_pairs)) {
+    output_expressions <- c(
+      output_expressions,
+      paste0("s.", sql_identifier(column))
+    )
+    
+    next
+  }
+  
+  # full name cols first
+  candidates <- c(
+    intersect(column, cleaned_columns),
+    code_pairs[[column]]
+  )
+  
+  translated_values <- character()
+  
+  for (candidate in candidates) {
+    
+    value_sql <- sprintf(
+      "NULLIF(TRIM(CAST(s.%s AS VARCHAR)), '')",
+      sql_identifier(candidate)
+    )
+    
+    # use translation when found, otherwise leave as is
+    translated_values <- c(
+      translated_values,
+      translate_value_sql(column, value_sql)
+    )
+  }
+  
+  # prioritize cleaned full name
+  combined_sql <- if (length(translated_values) == 1) {
+    translated_values[[1]]
+  } else {
+    paste0(
+      "COALESCE(",
+      paste(translated_values, collapse = ", "),
+      ")"
+    )
+  }
+  
+  # uppercase citizenship after translating and combining values
+  if (column == "citizenship") {
+    combined_sql <- sprintf("UPPER(%s)", combined_sql)
+  }
+  
+  output_expressions <- c(
+    output_expressions,
+    sprintf(
+      "%s AS %s",
+      combined_sql,
+      sql_identifier(column)
+    )
+  )
+}
+
+consolidated_select <- paste(
+  output_expressions,
+  collapse = ",\n    "
+)
 
 # write final parquet
 final_query <- sprintf(
@@ -849,7 +1051,7 @@ final_query <- sprintf(
     "COPY (",
     "\n  SELECT",
     "\n    %s",
-    "\n  FROM read_parquet(%s)",
+    "\n  FROM cleaned_input s",
     "\n)",
     "\nTO %s (",
     "\n  FORMAT parquet,",
@@ -857,8 +1059,7 @@ final_query <- sprintf(
     "\n  USE_TMP_FILE true",
     "\n)"
   ),
-  final_select,
-  stacked_sql,
+  consolidated_select,
   final_sql
 )
 
@@ -868,25 +1069,12 @@ dbExecute(
 )
 
 cat(
-  "\nFinal dataset saved to:",
-  final_path,
+  "\nCleaned dataset saved to:",
+  inadmissibles_cleaned_path,
   "\n"
 )
 
-# No separate release-column selection has been defined yet, so latest
-# contains the same cleaned columns as the full output.
-latest_sql <- as.character(dbQuoteString(con, latest_path))
-dbExecute(
-  con,
-  sprintf(
-    "COPY (SELECT * FROM read_parquet(%s)) TO %s (FORMAT parquet, COMPRESSION snappy, USE_TMP_FILE true)",
-    final_sql,
-    latest_sql
-  )
-)
-cat("Latest dataset saved to:", latest_path, "\n")
-
-#### Check Final Col Types #### 
+#### Final Col Types #### 
 
 final_schema <- dbGetQuery(
   con,
@@ -926,7 +1114,7 @@ column_types |>
       type == "DOUBLE"
     ),
     datetime_columns = sum(
-      type == "TIMESTAMP"
+      type %in% c("TIMESTAMP", "TIMESTAMP WITH TIME ZONE")
     ),
     date_columns = sum(
       type == "DATE"
@@ -937,7 +1125,7 @@ column_types |>
   ) |>
   print()
 
-# disconnect 
+# disconnect
 dbDisconnect(
   con,
   shutdown = TRUE

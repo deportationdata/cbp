@@ -40,22 +40,110 @@ crosswalk <- distinct_columns |>
         "age_at_event_creation_time"
       ) ~ "age",
       
+      # location 
+      clean_column %in% c(
+        "birth_country_name"
+      ) ~ "birth_country",
+      
+      clean_column %in% c(
+        "citizenship_country_name"
+      ) ~ "citizenship",
+      
+      clean_column %in% c(
+        "city_name"
+      ) ~ "city",
+      
+      clean_column %in% c(
+        "first_street_name"
+      ) ~ "street_name",
+      
+      clean_column %in% c(
+        "country_name"
+      ) ~ "country",
+      
+      clean_column %in% c(
+        "state_name"
+      ) ~ "state",
+      
+      clean_column %in% c(
+        "destination_address_in_u_s"
+      ) ~ "us_destination_address",
+      
+      clean_column %in% c(
+        "field_office_name"
+      ) ~ "field_office",
+      
+      # file / hash numbers 
+      clean_column %in% c(
+        "alien_file_number"
+      ) ~ "subject_afile_number",
+      
+      # charge
+      clean_column %in% c(
+        "charge"
+      ) ~ "statute_charge",
+      
+      # gang info
+      clean_column %in% c(
+        "suspected_gang_affiliation_name"
+      ) ~ "suspected_gang_affiliation",
+      
+      # credible fear
+      clean_column %in% c(
+        "cred_fear_indicator_derived"
+      ) ~ "credible_fear_indicator",
+      
+      # credible fear
+      clean_column %in% c(
+        "custody_date_time_out_latest"
+      ) ~ "final_bookout_datetime",
+      
       # duplicate indicator
       clean_column %in% c(
         "duplicate_indicator",
         "duplicates"
       ) ~ "duplicate_subject_indicator",
       
-      # subject count
+      # subject info
       clean_column %in% c(
         "inadmissibles_subject_count",
         "person_count"
       ) ~ "event_subject_count",
       
+      clean_column %in% c(
+        "sigma_subject_person_id"
+      ) ~ "unique_person_id",
+      
+      clean_column %in% c(
+        "sigma_event_id"
+      ) ~ "event_id",
+      
       # transportation
       clean_column %in% c(
         "mode_of_transport"
       ) ~ "mode_of_transportation",
+      
+      # transfer to 
+      clean_column %in% c(
+        "i216_custody_transfer_to_agency"
+      ) ~ "transfer_to_group",
+      
+      # family
+      clean_column %in% c(
+        "fmua_uac_indicator_derived",
+        "fmua_uac_am_single_derived",
+        "uac_indicator_derived",
+        "unaccompanied_minor_indicator_unac_inadmissible_admissible"
+      ) ~ "fmua_uac_indicator",
+      
+      clean_column %in% c(
+        "fmua_indicator_derived"
+      ) ~ "fmua_indicator",
+      
+      clean_column %in% c(
+        "marital_status_name",
+        "mot"
+      ) ~ "marital_status",
       
       # state
       # clean_column %in% c(
