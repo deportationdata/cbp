@@ -89,7 +89,6 @@ Because intended difference between the USBP encounters datasets and the USBP ap
 
 To consolidate these apprehensions and encounters datasets, we attempt to use the `statute_charge` field to indicate whether an encounter is a Title 8 apprehension or Title 42 expulsion. First, we explore the unique values in this field. \*To be filled in after law student report?
 
-
 ```{r}
 
 dat <- apprehensions_latest |>
@@ -99,7 +98,6 @@ dat <- apprehensions_latest |>
             pct_missing = (missing_statute_charge / n) * 100)
 
 ```
-
 
 ```{r}
 
@@ -158,7 +156,7 @@ ggplot(monthly_counts, aes(month, n, color = title_of_authority)) +
 
 -   I applied the same classification rule that labeled rows with any value in `statute_charge` as Title 8, NA `statute_charge` as Title 42, and all else as NA to `apprehensions_latest.parquet`.
 -   These results lead me to think that `statute_charge` may not be a reliable indication of title of authority because that logic applied here implies that Title 42 exists in apprehensions, which we know not to be true.
-- Note `statute_charge` is largely or entirely missing in some source datasets for apprehensions.
+-   Note `statute_charge` is largely or entirely missing in some source datasets for apprehensions.
 
 ### USBP Encounter Apprehension Counts Over Time
 
@@ -221,8 +219,8 @@ ggplot(monthly_counts, aes(month, n, color = title_of_authority)) +
 # min(encounters_edited$encounter_datetime)
 # max(encounters_edited$encounter_datetime)
 
-title_42_start_date <- as.Date("2020-03-20")
-title_42_end_date <- as.Date("2023-05-11")
+t42_start_date <- as.Date("2020-03-20")
+t42_end_date <- as.Date("2023-05-11")
 
 # Title 8 encounter count in comparable range
 title8_enc_in_range <- encounters_edited |> filter(between(
@@ -241,22 +239,22 @@ app_in_range <-  apprehensions_edited |> filter(between(
 # Title 42 encounter count in Title 42 period 
 title_42_during_title_42_period <- encounters_edited |> filter(between(
   as.Date(encounter_datetime), 
-  as.Date(title_42_start_date), 
-  as.Date(title_42_end_date)))|>
+  as.Date(t42_start_date), 
+  as.Date(t42_end_date)))|>
   summarise(sum((title_of_authority == "Title 42"), na.rm = TRUE))
 
 # Title 8 encounter count in Title 42 period 
 title_8_during_title_42_period <- encounters_edited |> filter(between(
   as.Date(encounter_datetime), 
-  as.Date(title_42_start_date), 
-  as.Date(title_42_end_date))) |>
+  as.Date(t42_start_date), 
+  as.Date(t42_end_date))) |>
   summarise(sum(title_of_authority == "Title 8", na.rm = TRUE))
 
 # Apprehension count in Title 42 period 
 app_during_title_42_period <- apprehensions_edited |> filter(between(
   as.Date(apprehension_datetime),
-  as.Date(title_42_start_date), 
-  as.Date(title_42_end_date))) |>
+  as.Date(t42_start_date), 
+  as.Date(t42_end_date))) |>
   summarize(n = n())
 
 ```
@@ -285,18 +283,18 @@ official_t42 <- cross_reference_file |>
   ) |>
   filter(between(
     month,
-    floor_date(title_42_start_date, "month"),
-    floor_date(title_42_end_date, "month")
+    floor_date(t42_start_date, "month"),
+    floor_date(t42_end_date, "month")
   )) |>
   group_by(month) |>
   summarise(
-    official_title42 = sum(`Encounter Count`, na.rm = TRUE),
+    official_t42 = sum(`Encounter Count`, na.rm = TRUE),
     .groups = "drop"
   )
 
 encounters_t42 <- encounters_edited |>
   filter(between(
-    as.Date(encounter_datetime), title_42_start_date, title_42_end_date),
+    as.Date(encounter_datetime), t42_start_date, t42_end_date),
     title_of_authority == "Title 42"
   ) |>
   mutate(month = floor_date(as.Date(encounter_datetime), "month")) |>
@@ -305,8 +303,8 @@ encounters_t42 <- encounters_edited |>
 comparison <- official_t42 |>
   left_join(encounters_t42, by = "month") |>
   mutate(
-    difference = assigned_title42 - official_title42,
-    pct_difference = 100 * (difference / na_if(official_title42, 0))
+    difference = assigned_title42 - official_t42,
+    pct_difference = 100 * (difference / na_if(official_t42, 0))
   )
 
 print(comparison, n = Inf)
@@ -326,7 +324,7 @@ print(comparison, n = Inf)
 
 p1 <- comparison |>
   select(-c(difference, pct_difference)) |>
-  pivot_longer(cols = c(official_title42, assigned_title42)) |>
+  pivot_longer(cols = c(official_t42, assigned_title42)) |>
   ggplot(aes(x = month, y = value, color = name)) +
   geom_line()
 
@@ -348,5 +346,138 @@ p3 + theme_minimal_transparent()
 
 ### Next steps for analysis
 
-- Does raw difference of encounters - apprehensions data align with CBP dashboard counts of Title 42 expulsions?
-- Can records be matched across datasets? Shared fields: `r union(names(apprehensions_latest), names(encounters_latest))`
+-   Does raw difference of encounters - apprehensions data align with CBP dashboard counts of Title 42 expulsions?
+-   Can records be matched across datasets? Shared fields: `r union(names(apprehensions_latest), names(encounters_latest))`
+
+```{r}
+t42_start_date <- as.Date("2020-03-20")
+t42_end_date <- as.Date("2023-05-11")
+
+# count encounter rows
+monthly_encounters <- encounters_latest |>
+  mutate(date = as.Date(encounter_datetime)) |>
+  filter(between(date, t42_start_date, t42_end_date)) |>
+  mutate(month = floor_date(date, "month")) |>
+  count(month, name = "encounters")
+
+# count apprehension rows 
+monthly_apprehensions <- apprehensions_latest |>
+  mutate(date = as.Date(apprehension_datetime)) |>
+  filter(between(date, t42_start_date, t42_end_date)) |>
+  mutate(month = floor_date(date, "month")) |>
+  count(month, name = "apprehensions")
+
+# CBP T42 counts
+official_t42 <- cross_reference_file |>
+  filter(
+    Component == "U.S. Border Patrol",
+    `Title of Authority` == "Title 42"
+  ) |>
+  mutate(
+    month_number = match(
+      str_to_upper(`Month (abbv)`),
+      str_to_upper(month.abb)
+    ),
+    calendar_year = as.integer(`Fiscal Year`) -
+      if_else(month_number >= 10L, 1L, 0L),
+    month = make_date(calendar_year, month_number, 1)
+  ) |>
+  filter(
+    between(
+      month,
+      floor_date(t42_start_date, "month"),
+      floor_date(t42_end_date, "month")
+    )
+  ) |>
+  group_by(month) |>
+  summarise(
+    official_t42 = sum(`Encounter Count`),
+    .groups = "drop"
+  )
+
+# monthly comparison
+comparison <- tibble(
+  month = seq(
+    floor_date(t42_start_date, "month"),
+    floor_date(t42_end_date, "month"),
+    by = "month"
+  )
+) |>
+  left_join(monthly_encounters, by = "month") |>
+  left_join(monthly_apprehensions, by = "month") |>
+  left_join(official_t42, by = "month") |>
+  arrange(month) |>
+  mutate(
+    implied_t42 = encounters - apprehensions, 
+    difference = implied_t42 - official_t42, 
+    pct_difference = if_else(
+      official_t42 > 0,
+      100 * difference / official_t42,
+      NA_real_
+    ),
+    cumulative_implied = cumsum(implied_t42),
+    cumulative_official = cumsum(official_t42),
+    cumulative_difference = cumulative_implied - cumulative_official
+  )
+
+comparison
+
+# total comparison 
+totals <- comparison |>
+  summarise(
+    encounters = sum(encounters),
+    apprehensions = sum(apprehensions),
+    implied_t42 = sum(implied_t42),
+    official_t42 = sum(official_t42)
+  ) |>
+  mutate(
+    difference = implied_t42 - official_t42,
+    pct_difference = 100 * difference / official_t42
+  )
+
+totals 
+
+# monthly plot data
+plot_data <- comparison |>
+  select(month, implied_t42, official_t42) |>
+  pivot_longer(
+    cols = -month,
+    names_to = "series",
+    values_to = "events"
+  )
+
+ggplot(plot_data, aes(x = month, y = events, color = series)) +
+  geom_line(
+    data = filter(plot_data, series == "official_t42"),
+    linewidth = 2.5,
+    alpha = 0.35,
+    na.rm = TRUE
+  ) +
+  geom_line(
+    data = filter(plot_data, series == "implied_t42"),
+    linewidth = 0.5,
+    alpha = 1,
+    na.rm = TRUE
+  ) +
+  scale_color_manual(
+    values = c(
+      implied_t42 = "#0072B2",
+      official_t42 = "#D55E00"
+    ),
+    breaks = c("implied_t42", "official_t42"),
+    labels = c(
+      "Implied T42 Counts",
+      "CBP T42 Counts"
+    )
+  ) +
+  scale_y_continuous(labels = scales::label_comma()) +
+  labs(
+    x = NULL,
+    y = "Events",
+    color = NULL,
+    title = "Monthly USBP Title 42 Comparison"
+  ) +
+  theme_minimal_transparent()
+  
+```
+
