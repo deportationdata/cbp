@@ -1,3 +1,6 @@
+# .DS_store
+.DS_Store
+
 # History files
 .Rhistory
 .Rapp.history
@@ -67,6 +70,9 @@ data/apprehensions/processed/apprehensions-stacked.parquet
 data/apprehensions/validation/apprehensions-cols-empty-before-cleaning.parquet
 data/apprehensions/validation/apprehensions-cols-excluded-by-overlap-resolution.parquet
 data/apprehensions/validation/apprehensions-cols-redacted-to-null.parquet
+
+# Exploration QMD files 
+cbp-memo_files/
 
 
 
