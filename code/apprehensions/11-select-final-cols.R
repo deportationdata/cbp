@@ -5,7 +5,7 @@ Sys.setenv(TZ = "UTC")
 library(tidyverse)
 library(arrow)
 
-source("code/functions/write_xlsx_by_fy.R")
+# source("code/functions/write_xlsx_by_fy.R")
 source("code/functions/save_outputs.R")
 
 # paths
@@ -15,12 +15,12 @@ processed_dir <- file.path(dataset_dir, "processed")
 
 apprehensions_final_all_cols_path <- file.path(
   processed_dir,
-  "apprehensions-final-all-cols.parquet"
+  "usbp-apprehensions-final-all-cols.parquet"
 )
 
 apprehensions_final_path <- file.path(
   processed_dir,
-  "apprehensions-latest.parquet"
+  "usbp-apprehensions-latest.parquet"
 )
 
 # select final cols
@@ -69,26 +69,17 @@ apprehensions_final <- read_parquet(
   mmap = FALSE
 )
 
-# label datetime columns as UTC before writing
-apprehensions_final <- apprehensions_final |>
-  mutate(
-    across(
-      where(is.POSIXct),
-      ~ lubridate::with_tz(.x, "UTC")
-    )
-  )
-
 write_parquet(
   apprehensions_final,
   apprehensions_final_path
 )
 
 save_outputs(apprehensions_final, file.path(
-  "apprehensions/processed/apprehensions-latest"
+  "apprehensions/processed/usbp-apprehensions-latest"
 ))
 
 # write_xlsx_by_fy(apprehensions_final,
-                 # "data/apprehensions/processed/apprehensions-latest.xlsx",
+                 # "data/apprehensions/processed/usbp-apprehensions-latest.xlsx",
                  # date_col = apprehension_datetime,
                  # label = "USBP Apprehensions")
 

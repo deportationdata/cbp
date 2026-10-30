@@ -12,12 +12,12 @@ processed_dir <- file.path(dataset_dir, "processed")
 
 apprehensions_stacked_path <- file.path(
   processed_dir,
-  "apprehensions-stacked.parquet"
+  "usbp-apprehensions-stacked.parquet"
 )
 
 apprehensions_cleaned_path <- file.path(
   processed_dir,
-  "apprehensions-cleaned.parquet"
+  "usbp-apprehensions-cleaned.parquet"
 )
 
 code_map_path <- file.path(dataset_dir, "metadata", "code-map.parquet")

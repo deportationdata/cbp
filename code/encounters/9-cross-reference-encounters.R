@@ -29,12 +29,12 @@ dir.create(
 
 encounters_final_path <- file.path(
   processed_dir,
-  "encounters-final-all-cols.parquet"
+  "usbp-encounters-final-all-cols.parquet"
 )
 
 cross_reference_parquet_path <- file.path(
   validation_dir,
-  "encounters-monthly-cross-reference.parquet"
+  "usbp-encounters-monthly-cross-reference.parquet"
 )
 
 #### CBP DASHBOARD: manually check pending updates ####

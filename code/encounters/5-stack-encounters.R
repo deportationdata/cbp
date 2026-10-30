@@ -16,12 +16,12 @@ parts_to_stack_dir <- file.path(processed_dir, "parts-to-stack")
 
 encounters_stacked_path <- file.path(
   processed_dir,
-  "encounters-stacked.parquet"
+  "usbp-encounters-stacked.parquet"
 )
 
 encounters_audit_path <- file.path(
   processed_dir,
-  "encounters-audit.parquet"
+  "usbp-encounters-audit.parquet"
 )
 
 parts_metadata_path <- file.path(

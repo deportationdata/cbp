@@ -58,7 +58,7 @@ Outputs:
 
 -   `data/<dataset>/included-sources/`: contains files that meet inclusion criteria
 -   `data/<dataset>/excluded-sources/`: contains files excluded by the inclusion criteria and retained for review
--   `<dataset>-links.parquet`: contains links that the script interacted with
+-   `usbp-<dataset>-links.parquet`: contains links that the script interacted with
 
 Any new files that appear in `excluded-sources/` should be manually reviewed before proceeding to the next script. Because the link inventory identifies files by URL, the script will not recognize if CBP replaces an existing link with a different file. Thus, existing URLs should be confirmed if revisions are suspected.
 
@@ -120,8 +120,8 @@ Outputs in `data/<dataset>/metadata/`:
 
 Outputs in `data/<dataset>/processed/`:
 
--   `<dataset>-stacked.parquet`: stacked dataset containing all parts that are not exact duplicates or erroneous, still containing overlapping parts and not yet cleaned
--   `<dataset>-audit.parquet`: displays individual part name, path, and number of rows
+-   `usbp-<dataset>-stacked.parquet`: stacked dataset containing all parts that are not exact duplicates or erroneous, still containing overlapping parts and not yet cleaned
+-   `usbp-<dataset>-audit.parquet`: displays individual part name, path, and number of rows
 
 Before running the apprehensions stack, review `parts_to_delete` near the beginning of the script. This list is maintained manually based on overlap review. The script deletes listed files from `parts-to-stack/`.
 
@@ -147,10 +147,10 @@ These scripts standardize redaction codes, convert fields to their intended data
 
 Outputs:
 
--   `data/<dataset>/processed/<dataset>-cleaned.parquet`: cleaned dataset in final format, still containing overlapping parts
--   `data/encounters/processed/encounters-final-all-cols.parquet`: final encounters dataset with all columns
+-   `data/<dataset>/processed/usbp-<dataset>-cleaned.parquet`: cleaned dataset in final format, still containing overlapping parts
+-   `data/encounters/processed/usbp-encounters-final-all-cols.parquet`: final encounters dataset with all columns
 
-For encounters, this output is the final dataset. The apprehensions scripts call this output `<dataset>-cleaned.parquet` because the next script resolves overlapping datasets. Several objects are maintained manually in each cleaning script and should be reviewed when the crosswalk gains new fields.
+For encounters, this output is the final dataset. The apprehensions scripts call this output `usbp-<dataset>-cleaned.parquet` because the next script resolves overlapping datasets. Several objects are maintained manually in each cleaning script and should be reviewed when the crosswalk gains new fields.
 
 Review all warnings about unrecognized values or columns absent from `column_order`. Columns not assigned another data type remain character fields by default. Parts that overlap in date are retained in this step. In using this dataset, note that the same entry may be represented multiple times in overlapping datasets.
 
@@ -162,8 +162,8 @@ This script resolves overlapping parts by prioritizing broader source parts, usi
 
 Outputs:
 
--   `data/apprehensions/processed/apprehensions-final-all-cols.parquet`: final apprehensions dataset with all columns
--   `data/apprehensions/validation/apprehensions-overlap-resolution.parquet`: displays part file, source, and sheet, minimum and maximum dates, number of days spanned per part, number of days included in the final dataset per part, and a logical flag to indicate whether the part was retained or not
+-   `data/apprehensions/processed/usbp-apprehensions-final-all-cols.parquet`: final apprehensions dataset with all columns
+-   `data/apprehensions/validation/usbp-apprehensions-overlap-resolution.parquet`: displays part file, source, and sheet, minimum and maximum dates, number of days spanned per part, number of days included in the final dataset per part, and a logical flag to indicate whether the part was retained or not
 
 Review the resolution audit to confirm which dates were selected from each source.
 
@@ -186,12 +186,12 @@ Consider excluded columns before distributing final datasets.
 
 Scripts: `9-cross-reference-encounters.R` and `10-cross-reference-apprehensions.R`.
 
-These scripts compare monthly counts in `<dataset>-final-all-cols.parquet` with published CBP dashboard extracts.
+These scripts compare monthly counts in `usbp-<dataset>-final-all-cols.parquet` with published CBP dashboard extracts.
 
 Outputs in `data/<dataset>/validation/`:
 
 -   `nationwide-encounters-*-aor.csv`: CBP benchmark files downloaded from dashboards
--   `<dataset>-monthly-cross-reference.parquet`: displays final dataset monthly counts, CBP dashboard monthly counts, fiscal year and month, monthly, absolute, and percent differences, a logical flag indicating exact match in monthly counts, and a `status` column
+-   `usbp-<dataset>-monthly-cross-reference.parquet`: displays final dataset monthly counts, CBP dashboard monthly counts, fiscal year and month, monthly, absolute, and percent differences, a logical flag indicating exact match in monthly counts, and a `status` column
 
 The `cbp_benchmarks` table is maintained manually. Before each update, check whether CBP has published a newer benchmark and add its identifier, release date, and URL.
 
@@ -203,7 +203,7 @@ These scripts select final columns based on usefulness and percent missing, outp
 
 Outputs in `cbp/data/<dataset>/processed`:
 
--   `apprehensions-latest.parquet`: contains the following columns
+-   `usbp-apprehensions-latest.parquet`: contains the following columns
     -   `apprehension_datetime`
     -   `entry_date`
     -   `final_bookout_date`
@@ -226,7 +226,7 @@ Outputs in `cbp/data/<dataset>/processed`:
     -   `removal_type`
     -   `source_file`
     -   `source_sheet`
--   `encounters-latest.parquet`: contains the following columns
+-   `usbp-encounters-latest.parquet`: contains the following columns
     -   `encounter_datetime`
     -   `most_recent_encounter_date`
     -   `earliest_encounter_date`

@@ -18,7 +18,7 @@ excluded_sources_dir <- file.path(dataset_dir, "excluded-sources")
 metadata_dir <- file.path(dataset_dir, "metadata")
 
 # outputs 
-link_inventory_path <- file.path(metadata_dir, "apprehension-links.parquet")
+link_inventory_path <- file.path(metadata_dir, "usbp-apprehension-links.parquet")
 
 # create folders
 dir.create(dataset_dir, recursive = TRUE, showWarnings = FALSE)

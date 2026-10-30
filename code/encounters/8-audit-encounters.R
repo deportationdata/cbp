@@ -28,12 +28,12 @@ parts_metadata_path <- file.path(
 
 encounters_stacked_path <- file.path(
   processed_dir,
-  "encounters-stacked.parquet"
+  "usbp-encounters-stacked.parquet"
 )
 
 encounters_final_path <- file.path(
   processed_dir,
-  "encounters-final-all-cols.parquet"
+  "usbp-encounters-final-all-cols.parquet"
 )
 
 # outputs

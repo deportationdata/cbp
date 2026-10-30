@@ -12,12 +12,12 @@ processed_dir <- file.path(dataset_dir, "processed")
 
 encounters_stacked_path <- file.path(
   processed_dir,
-  "encounters-stacked.parquet"
+  "usbp-encounters-stacked.parquet"
 )
 
 encounters_final_path <- file.path(
   processed_dir,
-  "encounters-final-all-cols.parquet"
+  "usbp-encounters-final-all-cols.parquet"
 )
 
 code_map_path <- file.path(dataset_dir, "metadata", "code-map.parquet")

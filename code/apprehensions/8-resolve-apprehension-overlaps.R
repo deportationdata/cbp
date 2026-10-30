@@ -16,12 +16,12 @@ validation_dir <- file.path(dataset_dir, "validation")
 
 apprehensions_cleaned_path <- file.path(
   processed_dir,
-  "apprehensions-cleaned.parquet"
+  "usbp-apprehensions-cleaned.parquet"
 )
 
 apprehensions_final_all_cols_path <- file.path(
   processed_dir,
-  "apprehensions-final-all-cols.parquet"
+  "usbp-apprehensions-final-all-cols.parquet"
 )
 
 parts_metadata_path <- file.path(
@@ -31,7 +31,7 @@ parts_metadata_path <- file.path(
 
 resolution_audit_path <- file.path(
   validation_dir,
-  "apprehensions-overlap-resolution.parquet"
+  "usbp-apprehensions-overlap-resolution.parquet"
 )
 
 dir_create(validation_dir)
