@@ -36,7 +36,7 @@ apprehensions_cleaned_path <- file.path(
   "usbp-apprehensions-cleaned.parquet"
 )
 
-apprehensions_final_all_cols_path <- file.path(
+apprehensions_all_cols_path <- file.path(
   processed_dir,
   "usbp-apprehensions-final-all-cols.parquet"
 )
@@ -63,7 +63,7 @@ dir_create(metadata_dir)
 input_paths <- c(
   apprehensions_stacked_path,
   apprehensions_cleaned_path,
-  apprehensions_final_all_cols_path,
+  apprehensions_all_cols_path,
   raw_column_inventory_path,
   parts_metadata_path
 )
@@ -117,7 +117,7 @@ cleaned_sql <- as.character(
 final_sql <- as.character(
   dbQuoteString(
     con,
-    apprehensions_final_all_cols_path
+    apprehensions_all_cols_path
   )
 )
 

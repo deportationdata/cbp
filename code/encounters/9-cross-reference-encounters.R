@@ -27,7 +27,7 @@ dir.create(
   showWarnings = FALSE
 )
 
-encounters_final_path <- file.path(
+encounters_all_cols_path <- file.path(
   processed_dir,
   "usbp-encounters-final-all-cols.parquet"
 )
@@ -186,7 +186,7 @@ dbExecute(
 encounters_final_sql <- as.character(
   dbQuoteString(
     con,
-    encounters_final_path
+    encounters_all_cols_path
   )
 )
 
@@ -213,7 +213,7 @@ encounters_monthly_query <- sprintf(
   paste0(
     "SELECT ",
     "DATE_TRUNC('month', %1$s)::DATE AS month_start, ",
-    "COUNT(*) AS encounters_final_count ",
+    "COUNT(*) AS encounters_count ",
     "FROM read_parquet(%2$s) ",
     "WHERE %1$s BETWEEN %3$s::DATE AND %4$s::DATE ",
     "GROUP BY 1 ",
@@ -259,7 +259,7 @@ cross_reference <- cbp_usbp_monthly |>
       fiscal_month,
       month(month_start)
     ),
-    difference = encounters_final_count - cbp_usbp_encounter_count,
+    difference = encounters_count - cbp_usbp_encounter_count,
     absolute_difference = abs(difference),
     percent_difference = if_else(
       cbp_usbp_encounter_count == 0,
@@ -268,7 +268,7 @@ cross_reference <- cbp_usbp_monthly |>
     ),
     exact_match = difference == 0,
     status = case_when(
-      is.na(encounters_final_count) ~ "missing from encounters_final",
+      is.na(encounters_count) ~ "missing from encounters_final",
       is.na(cbp_usbp_encounter_count) ~ "missing from CBP benchmark",
       exact_match ~ "exact match",
       TRUE ~ "difference"
@@ -279,7 +279,7 @@ cross_reference <- cbp_usbp_monthly |>
     fiscal_year,
     fiscal_month,
     month_start,
-    encounters_final_count,
+    encounters_count,
     cbp_usbp_encounter_count,
     difference,
     absolute_difference,

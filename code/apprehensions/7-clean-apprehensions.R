@@ -1067,25 +1067,25 @@ dbExecute(
   "CREATE OR REPLACE TEMP VIEW combined_input AS
    SELECT
      * EXCLUDE (
-         arrest_date,
-         arrest_time,
-         apprehension_date,
-         apprehension_time,
-         most_recent_prior_entry_date,
-         most_recent_prior_entry_time
-       )
-       REPLACE (
-         COALESCE(
-           apprehension_datetime,
-           apprehension_date + COALESCE(apprehension_time, TIME '00:00:00'),
-           arrest_date + COALESCE(arrest_time, TIME '00:00:00')
-         ) AS apprehension_datetime,
-         COALESCE(
-           most_recent_prior_entry_datetime,
-           most_recent_prior_entry_date +
-             COALESCE(most_recent_prior_entry_time, TIME '00:00:00')
-         ) AS most_recent_prior_entry_datetime
-       )
+       arrest_date,
+       arrest_time,
+       apprehension_date,
+       apprehension_time,
+       most_recent_prior_entry_date,
+       most_recent_prior_entry_time,
+       apprehension_datetime,
+       most_recent_prior_entry_datetime
+     ),
+     COALESCE(
+       apprehension_datetime,
+       apprehension_date + COALESCE(apprehension_time, TIME '00:00:00'),
+       arrest_date + COALESCE(arrest_time, TIME '00:00:00')
+     ) AS apprehension_datetime,
+     COALESCE(
+       most_recent_prior_entry_datetime,
+       most_recent_prior_entry_date +
+         COALESCE(most_recent_prior_entry_time, TIME '00:00:00')
+     ) AS most_recent_prior_entry_datetime
    FROM cleaned_input"
 )
 

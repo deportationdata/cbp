@@ -31,7 +31,7 @@ encounters_stacked_path <- file.path(
   "usbp-encounters-stacked.parquet"
 )
 
-encounters_final_path <- file.path(
+encounters_all_cols_path <- file.path(
   processed_dir,
   "usbp-encounters-final-all-cols.parquet"
 )
@@ -57,7 +57,7 @@ dir_create(metadata_dir)
 # check inputs
 input_paths <- c(
   encounters_stacked_path,
-  encounters_final_path,
+  encounters_all_cols_path,
   raw_column_inventory_path,
   parts_metadata_path
 )
@@ -104,7 +104,7 @@ stacked_sql <- as.character(
 final_sql <- as.character(
   dbQuoteString(
     con,
-    encounters_final_path
+    encounters_all_cols_path
   )
 )
 

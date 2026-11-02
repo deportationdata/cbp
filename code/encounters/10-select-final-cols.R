@@ -6,26 +6,20 @@ library(tidyverse)
 library(arrow)
 
 # source("code/functions/write_xlsx_by_fy.R")
-source("code/functions/save_outputs.R")
 
 # paths
 
 dataset_dir <- "data/encounters"
 processed_dir <- file.path(dataset_dir, "processed")
 
-encounters_latest_all_cols_path <- file.path(
+encounters_all_cols_path <- file.path(
   processed_dir,
   "usbp-encounters-final-all-cols.parquet"
 )
 
-encounters_latest_path <- file.path(
+encounters_selected_path <- file.path(
   processed_dir,
-  "usbp-encounters-latest.parquet"
-)
-
-apprehensions_final_path <- file.path(
-  "data/apprehensions/processed",
-  "usbp-apprehensions-latest.parquet"
+  "usbp-encounters-selected-cols.parquet"
 )
 
 # select final cols
@@ -75,58 +69,19 @@ final_columns <- c(
   "source_sheet"
 )
 
-encounters_latest <- read_parquet(
-  encounters_latest_all_cols_path,
+encounters_selected <- read_parquet(
+  encounters_all_cols_path,
   col_select = all_of(final_columns),
   mmap = FALSE
 )
 
-# encounter start and end dates
-encounters_start <- min(
-  as.Date(encounters_latest$encounter_datetime),
-  na.rm = TRUE
-)
-
-encounters_end <- max(
-  as.Date(encounters_latest$encounter_datetime),
-  na.rm = TRUE
-)
-
-# select apprehension dates outside of encounter coverage
-apprehensions_added <- read_parquet(
-  apprehensions_final_path,
-  mmap = FALSE
-) |>
-  filter(
-    as.Date(apprehension_datetime) < encounters_start |
-    as.Date(apprehension_datetime) > encounters_end
-  ) |>
-  rename(
-    encounter_datetime = apprehension_datetime
-  )
-
-encounters_latest <- encounters_latest |>
-  mutate(record_type = "Encounter")
-
-apprehensions_added <- apprehensions_added |>
-  mutate(record_type = "Apprehension")
-
-encounters_latest <- bind_rows(
-  encounters_latest,
-  apprehensions_added
-)
-
 write_parquet(
-  encounters_latest,
-  encounters_latest_path
+  encounters_selected,
+  encounters_selected_path
 )
 
-save_outputs(encounters_latest, file.path(
-  "encounters/processed/usbp-encounters-latest"
-))
-
-# write_xlsx_by_fy(encounters_latest,
-                 # "data/encounters/processed/usbp-encounters-latest.xlsx",
+# write_xlsx_by_fy(encounters_selected,
+                 # "data/encounters/processed/usbp-encounters-selected-cols.xlsx",
                  # date_col = encounter_datetime,
                  # label = "USBP Encounters")
 

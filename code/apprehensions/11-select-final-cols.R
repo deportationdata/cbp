@@ -6,21 +6,20 @@ library(tidyverse)
 library(arrow)
 
 # source("code/functions/write_xlsx_by_fy.R")
-source("code/functions/save_outputs.R")
 
 # paths
 
 dataset_dir <- "data/apprehensions"
 processed_dir <- file.path(dataset_dir, "processed")
 
-apprehensions_final_all_cols_path <- file.path(
+apprehensions_all_cols_path <- file.path(
   processed_dir,
   "usbp-apprehensions-final-all-cols.parquet"
 )
 
-apprehensions_final_path <- file.path(
+apprehensions_selected_path <- file.path(
   processed_dir,
-  "usbp-apprehensions-latest.parquet"
+  "usbp-apprehensions-selected-cols.parquet"
 )
 
 # select final cols
@@ -63,23 +62,19 @@ final_columns <- c(
   "source_sheet"
 )
 
-apprehensions_final <- read_parquet(
-  apprehensions_final_all_cols_path,
+apprehensions_selected <- read_parquet(
+  apprehensions_all_cols_path,
   col_select = all_of(final_columns),
   mmap = FALSE
 )
 
 write_parquet(
-  apprehensions_final,
-  apprehensions_final_path
+  apprehensions_selected,
+  apprehensions_selected_path
 )
 
-save_outputs(apprehensions_final, file.path(
-  "apprehensions/processed/usbp-apprehensions-latest"
-))
-
-# write_xlsx_by_fy(apprehensions_final,
-                 # "data/apprehensions/processed/usbp-apprehensions-latest.xlsx",
+# write_xlsx_by_fy(apprehensions_selected,
+                 # "data/apprehensions/processed/usbp-apprehensions-selected-cols.xlsx",
                  # date_col = apprehension_datetime,
                  # label = "USBP Apprehensions")
 

@@ -27,7 +27,7 @@ dir.create(
   showWarnings = FALSE
 )
 
-apprehensions_final_all_cols_path <- file.path(
+apprehensions_all_cols_path <- file.path(
   processed_dir,
   "usbp-apprehensions-final-all-cols.parquet"
 )
@@ -113,9 +113,9 @@ if (length(missing_cbp_columns) > 0) {
   )
 }
 
-# apprehensions_final_all_cols contains USBP Title 8 apprehension records only
+# apprehensions_all_cols contains USBP Title 8 apprehension records only
 # retain only USBP Title 8 apprehensions (not T42 expulsions)
-cbp_usb_monthly <- cbp_raw |>
+cbp_usbp_monthly <- cbp_raw |>
   filter(
     Component == "U.S. Border Patrol",
     `Title of Authority` == "Title 8",
@@ -130,11 +130,11 @@ cbp_usb_monthly <- cbp_raw |>
     )
   )
 
-if (any(is.na(cbp_usb_monthly$fiscal_month))) {
+if (any(is.na(cbp_usbp_monthly$fiscal_month))) {
   stop("The CBP benchmark contains an unrecognized month abbreviation.")
 }
 
-cbp_usb_monthly <- cbp_usb_monthly |>
+cbp_usbp_monthly <- cbp_usbp_monthly |>
   mutate(
     calendar_year = if_else(
       fiscal_month >= 10L,
@@ -170,7 +170,7 @@ cbp_usb_monthly <- cbp_usb_monthly |>
   ungroup() |>
   arrange(month_start)
 
-if (nrow(cbp_usb_monthly) == 0) {
+if (nrow(cbp_usbp_monthly) == 0) {
   stop("No U.S. Border Patrol apprehension rows were found in the CBP benchmark.")
 }
 
@@ -187,17 +187,17 @@ dbExecute(
 )
 
 # apprehensions final monthly counts
-apprehensions_final_all_cols_sql <- as.character(
+apprehensions_all_cols_sql <- as.character(
   dbQuoteString(
     con,
-    apprehensions_final_all_cols_path
+    apprehensions_all_cols_path
   )
 )
 
 benchmark_min_date_sql <- as.character(
   dbQuoteString(
     con,
-    as.character(min(cbp_usb_monthly$month_start))
+    as.character(min(cbp_usbp_monthly$month_start))
   )
 )
 
@@ -205,7 +205,7 @@ benchmark_max_date_sql <- as.character(
   dbQuoteString(
     con,
     as.character(
-      max(cbp_usb_monthly$month_start) %m+% months(1) - days(1)
+      max(cbp_usbp_monthly$month_start) %m+% months(1) - days(1)
     )
   )
 )
@@ -217,14 +217,14 @@ apprehensions_monthly_query <- sprintf(
   paste0(
     "SELECT ",
     "DATE_TRUNC('month', %1$s)::DATE AS month_start, ",
-    "COUNT(*) AS apprehensions_final_count ",
+    "COUNT(*) AS apprehensions_count ",
     "FROM read_parquet(%2$s) ",
     "WHERE %1$s BETWEEN %3$s::DATE AND %4$s::DATE ",
     "GROUP BY 1 ",
     "ORDER BY 1"
   ),
   event_date_sql,
-  apprehensions_final_all_cols_sql,
+  apprehensions_all_cols_sql,
   benchmark_min_date_sql,
   benchmark_max_date_sql
 )
@@ -245,7 +245,7 @@ dbDisconnect(
 
 #### Cross Reference ####
 
-cross_reference <- cbp_usb_monthly |>
+cross_reference <- cbp_usbp_monthly |>
   full_join(
     apprehensions_monthly,
     by = "month_start"
@@ -263,7 +263,7 @@ cross_reference <- cbp_usb_monthly |>
       fiscal_month,
       month(month_start)
     ),
-    difference = apprehensions_final_count - cbp_usbp_apprehension_count,
+    difference = apprehensions_count - cbp_usbp_apprehension_count,
     absolute_difference = abs(difference),
     percent_difference = if_else(
       cbp_usbp_apprehension_count == 0,
@@ -272,7 +272,7 @@ cross_reference <- cbp_usb_monthly |>
     ),
     exact_match = difference == 0,
     status = case_when(
-      is.na(apprehensions_final_count) ~ "missing from apprehensions_final_all_cols",
+      is.na(apprehensions_count) ~ "missing from apprehensions_all_cols",
       is.na(cbp_usbp_apprehension_count) ~ "missing from CBP benchmark",
       exact_match ~ "exact match",
       TRUE ~ "difference"
@@ -283,7 +283,7 @@ cross_reference <- cbp_usb_monthly |>
     fiscal_year,
     fiscal_month,
     month_start,
-    apprehensions_final_count,
+    apprehensions_count,
     cbp_usbp_apprehension_count,
     difference,
     absolute_difference,
@@ -306,7 +306,7 @@ comparison_summary <- cross_reference |>
     differing_months = sum(status == "difference"),
     missing_months = sum(
       status %in% c(
-        "missing from apprehensions_final_all_cols",
+        "missing from apprehensions_all_cols",
         "missing from CBP benchmark"
       )
     ),

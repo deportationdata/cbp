@@ -15,7 +15,7 @@ encounters_stacked_path <- file.path(
   "usbp-encounters-stacked.parquet"
 )
 
-encounters_final_path <- file.path(
+encounters_all_cols_path <- file.path(
   processed_dir,
   "usbp-encounters-final-all-cols.parquet"
 )
@@ -47,7 +47,7 @@ stacked_sql <- as.character(
 final_sql <- as.character(
   dbQuoteString(
     con,
-    encounters_final_path
+    encounters_all_cols_path
   )
 )
 
@@ -834,16 +834,13 @@ dbExecute(
   con,
   "CREATE OR REPLACE TEMP VIEW combined_input AS
    SELECT
-     * EXCLUDE (apprehension_date, apprehension_time)
-       REPLACE (
-         COALESCE(
-           encounter_datetime,
-           apprehension_date + COALESCE(apprehension_time, TIME '00:00:00')
-         ) AS encounter_datetime
-       )
+     * EXCLUDE (apprehension_date, apprehension_time, encounter_datetime),
+     COALESCE(
+       encounter_datetime,
+       apprehension_date + COALESCE(apprehension_time, TIME '00:00:00')
+     ) AS encounter_datetime
    FROM cleaned_input"
 )
-
 
 cleaned_columns <- dbGetQuery(
   con,
@@ -1114,7 +1111,7 @@ dbExecute(
 
 cat(
   "\nCleaned dataset saved to:",
-  encounters_final_path,
+  encounters_all_cols_path,
   "\n"
 )
 

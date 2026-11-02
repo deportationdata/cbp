@@ -19,7 +19,7 @@ apprehensions_cleaned_path <- file.path(
   "usbp-apprehensions-cleaned.parquet"
 )
 
-apprehensions_final_all_cols_path <- file.path(
+apprehensions_all_cols_path <- file.path(
   processed_dir,
   "usbp-apprehensions-final-all-cols.parquet"
 )
@@ -81,7 +81,7 @@ cleaned_sql <- as.character(
 final_sql <- as.character(
   dbQuoteString(
     con,
-    apprehensions_final_all_cols_path
+    apprehensions_all_cols_path
   )
 )
 
@@ -341,8 +341,8 @@ original_rows <- dbGetQuery(
   pull(n)
 
 # remove output from a previous run
-if (file_exists(apprehensions_final_all_cols_path)) {
-  file_delete(apprehensions_final_all_cols_path)
+if (file_exists(apprehensions_all_cols_path)) {
+  file_delete(apprehensions_all_cols_path)
 }
 
 resolution_query <- paste0(
@@ -414,7 +414,7 @@ cat(
   "\nCleaned dataset:",
   apprehensions_cleaned_path,
   "\nFinal dataset:",
-  apprehensions_final_all_cols_path,
+  apprehensions_all_cols_path,
   "\nResolution audit:",
   resolution_audit_path,
   "\n"
