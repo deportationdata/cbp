@@ -196,6 +196,15 @@ read_standardized_sheet <- function(file_path, sheet_name) {
       filter(!rows_to_remove)
   }
   
+  # remove completely blank rows
+  part_df <- part_df |>
+    filter(
+      if_any(
+        everything(),
+        ~ !is.na(.x) & str_squish(as.character(.x)) != ""
+      )
+    )
+  
   rename_lookup <- crosswalk |>
     select(
       clean_column,
