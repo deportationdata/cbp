@@ -17,9 +17,9 @@ apprehensions_all_cols_path <- file.path(
   "usbp-apprehensions-final-all-cols.parquet"
 )
 
-apprehensions_selected_path <- file.path(
+apprehensions_latest_path <- file.path(
   processed_dir,
-  "usbp-apprehensions-selected-cols.parquet"
+  "usbp-apprehensions-latest.parquet"
 )
 
 # select final cols
@@ -70,11 +70,11 @@ apprehensions_selected <- read_parquet(
 
 write_parquet(
   apprehensions_selected,
-  apprehensions_selected_path
+  apprehensions_latest_path
 )
 
 # write_xlsx_by_fy(apprehensions_selected,
-                 # "data/apprehensions/processed/usbp-apprehensions-selected-cols.xlsx",
+                 # "data/apprehensions/processed/usbp-apprehensions-latest.xlsx",
                  # date_col = apprehension_datetime,
                  # label = "USBP Apprehensions")
 

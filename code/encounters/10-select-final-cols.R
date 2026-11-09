@@ -17,9 +17,9 @@ encounters_all_cols_path <- file.path(
   "usbp-encounters-final-all-cols.parquet"
 )
 
-encounters_selected_path <- file.path(
+encounters_fy2010_2025_path <- file.path(
   processed_dir,
-  "usbp-encounters-selected-cols.parquet"
+  "usbp-encounters-fy2010-2025.parquet"
 )
 
 # select final cols
@@ -77,11 +77,11 @@ encounters_selected <- read_parquet(
 
 write_parquet(
   encounters_selected,
-  encounters_selected_path
+  encounters_fy2010_2025_path
 )
 
 # write_xlsx_by_fy(encounters_selected,
-                 # "data/encounters/processed/usbp-encounters-selected-cols.xlsx",
+                 # "data/encounters/processed/usbp-encounters-fy2010-2025.xlsx",
                  # date_col = encounter_datetime,
                  # label = "USBP Encounters")
 

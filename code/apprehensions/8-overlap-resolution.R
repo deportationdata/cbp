@@ -229,7 +229,7 @@ dbWriteTable(
 )
 
 #### Select sources ####
-# ID dates in each part 
+# count observed dates
 dbExecute(
   con,
   "
@@ -243,61 +243,36 @@ dbExecute(
   "
 )
 
-# preference: 1. included_part, 2. fallback_part, 3. all other parts 
+# assign coverage based on part date range and assigned priorities 
 dbExecute(
   con,
   "
-  CREATE TEMP TABLE selected_part_dates AS
+  CREATE TEMP TABLE selected_part_intervals AS
 
-  WITH ranked_dates AS (
+  WITH boundaries AS (
+    SELECT min_date AS start_date FROM ranked_parts
+    UNION
+    SELECT max_date + 1 AS start_date FROM ranked_parts
+  ),
+
+  intervals AS (
     SELECT
-      d.source_file,
-      d.source_sheet,
-      d.event_date,
-      p.part_file,
-      p.priority,
-
-      ROW_NUMBER() OVER (
-        PARTITION BY d.event_date
-        ORDER BY
-          p.priority ASC,
-          p.date_span_days DESC,
-          p.part_file ASC
-      ) AS rn
-
-    FROM source_dates AS d
-
-    INNER JOIN ranked_parts AS p
-      ON d.source_file IS NOT DISTINCT FROM p.source_file
-      AND d.source_sheet IS NOT DISTINCT FROM p.source_sheet
+      start_date,
+      LEAD(start_date) OVER (ORDER BY start_date) AS end_date
+    FROM boundaries
   )
 
-  SELECT
-    source_file,
-    source_sheet,
-    event_date,
-    part_file,
-    priority
-
-  FROM ranked_dates
-  WHERE rn = 1
+  SELECT p.source_file, p.source_sheet, i.start_date, i.end_date
+  FROM intervals AS i
+  INNER JOIN ranked_parts AS p
+    ON i.start_date BETWEEN p.min_date AND p.max_date
+  WHERE i.end_date IS NOT NULL
+  QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY i.start_date
+    ORDER BY p.priority ASC, p.date_span_days DESC, p.part_file ASC
+  ) = 1
   "
 )
-
-# check that each date is assigned only once
-duplicate_dates <- dbGetQuery(
-  con,
-  "
-  SELECT event_date, COUNT(*) AS n
-  FROM selected_part_dates
-  GROUP BY event_date
-  HAVING COUNT(*) > 1
-  "
-)
-
-if (nrow(duplicate_dates) > 0) {
-  stop("Some dates were assigned to multiple parts.")
-}
 
 #### Resolve overlaps ####
 
@@ -329,16 +304,16 @@ if (file_exists(apprehensions_all_cols_path)) {
   file_delete(apprehensions_all_cols_path)
 }
 
-# keep all rows belonging to chosen source for each date
+# Keep rows from the source assigned to each interval.
 resolution_query <- paste0(
   "COPY (",
   "\n SELECT data.* EXCLUDE (_event_date)",
   "\n FROM apprehensions_dated AS data",
-  # keep row only if found in both tables
-  "\n INNER JOIN selected_part_dates AS selected",
+  "\n INNER JOIN selected_part_intervals AS selected",
   "\n   ON data.source_file IS NOT DISTINCT FROM selected.source_file",
   "\n   AND data.source_sheet IS NOT DISTINCT FROM selected.source_sheet",
-  "\n   AND data._event_date = selected.event_date",
+  "\n   AND data._event_date >= selected.start_date",
+  "\n   AND data._event_date < selected.end_date",
   "\n)",
   "\nTO ",
   final_sql,
@@ -376,7 +351,7 @@ resolution_audit <- dbGetQuery(
     p.priority,
 
     COUNT(d.event_date) AS available_dates,
-    COUNT(s.event_date) AS selected_dates
+    COUNT(s.start_date) AS selected_dates
 
   FROM ranked_parts AS p
 
@@ -384,10 +359,11 @@ resolution_audit <- dbGetQuery(
     ON p.source_file IS NOT DISTINCT FROM d.source_file
     AND p.source_sheet IS NOT DISTINCT FROM d.source_sheet
 
-  LEFT JOIN selected_part_dates AS s
+  LEFT JOIN selected_part_intervals AS s
     ON d.source_file IS NOT DISTINCT FROM s.source_file
     AND d.source_sheet IS NOT DISTINCT FROM s.source_sheet
-    AND d.event_date = s.event_date
+    AND d.event_date >= s.start_date
+    AND d.event_date < s.end_date
 
   GROUP BY
     p.part_file,

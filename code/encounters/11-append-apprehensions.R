@@ -17,18 +17,18 @@ encounters_latest_path <- file.path(
   "usbp-encounters-latest.parquet"
 )
 
-encounters_selected_path <- file.path(
+encounters_fy2010_2025_path <- file.path(
   "data/encounters/processed",
-  "usbp-encounters-selected-cols.parquet"
+  "usbp-encounters-fy2010-2025.parquet"
 )
 
-apprehensions_selected_path <- file.path(
+apprehensions_latest_path <- file.path(
   "data/apprehensions/processed",
-  "usbp-apprehensions-selected-cols.parquet"
+  "usbp-apprehensions-latest.parquet"
 )
 
 encounters_latest <- read_parquet(
-  encounters_selected_path,
+  encounters_fy2010_2025_path,
   mmap = FALSE
 )
 
@@ -45,7 +45,7 @@ encounters_end <- max(
 
 # select apprehension dates outside of encounter coverage
 apprehensions_added <- read_parquet(
-  apprehensions_selected_path,
+  apprehensions_latest_path,
   mmap = FALSE
 ) |>
   filter(
