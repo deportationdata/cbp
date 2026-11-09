@@ -13,7 +13,6 @@ library(duckdb)
 dataset_dir <- "data/apprehensions"
 processed_dir <- file.path(dataset_dir, "processed")
 metadata_dir <- file.path(dataset_dir, "metadata")
-validation_dir <- file.path(dataset_dir, "validation")
 
 apprehensions_cleaned_path <- file.path(
   processed_dir,
@@ -31,11 +30,9 @@ parts_metadata_path <- file.path(
 )
 
 resolution_audit_path <- file.path(
-  validation_dir,
+  metadata_dir,
   "usbp-apprehensions-overlap-resolution.parquet"
 )
-
-dir_create(validation_dir)
 
 # check inputs
 if (!file_exists(apprehensions_cleaned_path)) {

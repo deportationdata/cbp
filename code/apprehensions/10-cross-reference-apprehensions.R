@@ -13,16 +13,10 @@ library(duckdb)
 dataset_dir <- "data/apprehensions"
 processed_dir <- file.path(dataset_dir, "processed")
 validation_dir <- file.path(dataset_dir, "validation")
-cross_reference_inputs_dir <- file.path("inputs", "cross-reference-files")
+cross_reference_inputs_dir <- file.path(validation_dir, "cross-reference-files")
 
 dir.create(
   cross_reference_inputs_dir,
-  recursive = TRUE,
-  showWarnings = FALSE
-)
-
-dir.create(
-  validation_dir,
   recursive = TRUE,
   showWarnings = FALSE
 )

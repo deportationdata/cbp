@@ -19,11 +19,6 @@ apprehensions_stacked_path <- file.path(
   "usbp-apprehensions-stacked.parquet"
 )
 
-apprehensions_audit_path <- file.path(
-  processed_dir,
-  "usbp-apprehensions-audit.parquet"
-)
-
 parts_metadata_path <- file.path(
   metadata_dir,
   "parts-metadata.parquet"
@@ -411,15 +406,4 @@ cat(
   "\n"
 )
 
-# save 
-write_parquet(
-  apprehensions_audit,
-  apprehensions_audit_path
-)
-
-cat(
-  "Audit saved to:",
-  apprehensions_audit_path,
-  "\n"
-)
 # END

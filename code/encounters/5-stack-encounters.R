@@ -19,11 +19,6 @@ encounters_stacked_path <- file.path(
   "usbp-encounters-stacked.parquet"
 )
 
-encounters_audit_path <- file.path(
-  processed_dir,
-  "usbp-encounters-audit.parquet"
-)
-
 parts_metadata_path <- file.path(
   metadata_dir,
   "parts-metadata.parquet"
@@ -366,15 +361,4 @@ cat(
   "\n"
 )
 
-# save
-write_parquet(
-  encounters_audit,
-  encounters_audit_path
-)
-
-cat(
-  "Audit saved to:",
-  encounters_audit_path,
-  "\n"
-)
 # END
