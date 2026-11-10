@@ -28,25 +28,20 @@ dir_create(metadata_dir)
 
 #### Remove Faulty Parts #### 
 
-# to delete from parts-to-stack
+# FY2024 Q4 part is erroneous duplicate
 parts_to_delete <- c(
-  "0067-usbp-nationwide-apprehension-q4-fy-2024-fy24q4.parquet"
+  "usbp-nationwide-apprehension-q4-fy-2024-fy24q4.parquet"
 )
-  # 0067-usbp-nationwide-apprehension-q4-fy-2024-fy24q4.parquet is an erroneous duplicate
 
-paths_to_delete <- file.path(
+part_paths <- dir_ls(
   parts_to_stack_dir,
-  parts_to_delete
+  type = "file",
+  regexp = "\\.parquet$"
 )
+part_names <- str_remove(path_file(part_paths), "^[0-9]+-")
 
-# check which files still exist
-existing_parts <- paths_to_delete[
-  file_exists(paths_to_delete)
-]
-
-missing_parts <- paths_to_delete[
-  !file_exists(paths_to_delete)
-]
+existing_parts <- part_paths[part_names %in% parts_to_delete]
+missing_parts <- setdiff(parts_to_delete, part_names)
 
 # report files that were already deleted
 if (length(missing_parts) > 0) {

@@ -47,29 +47,29 @@ if (!file_exists(parts_metadata_path)) {
 #### Manual overlap decisions ####
 include_parts <- c(
   # FY2014
-  "0025-usbp-percent-20apprehensions-percent-20fy2014-q1q2-forrelease-q1.parquet",
-  "0026-usbp-percent-20apprehensions-percent-20fy2014-q1q2-forrelease-q2.parquet",
+  "usbp-percent-20apprehensions-percent-20fy2014-q1q2-forrelease-q1.parquet",
+  "usbp-percent-20apprehensions-percent-20fy2014-q1q2-forrelease-q2.parquet",
   # FY2024
-  "0066-usbp-nationwide-apprehension-q3-fy-2024-fy24q3.parquet",
+  "usbp-nationwide-apprehension-q3-fy-2024-fy24q3.parquet",
   # FY2025
-  "0071-usbp-nationwide-apprehensions-fy2025-dec-1-2025-through-march-31-2025-fy25-dec-1-202-to-mar-31-2025.parquet",
-  "0068-usbp-nationwide-apprehensions-april-2025-fy25april.parquet",
-  "0082-usbp-nationwide-apprehensions-may-2025-may-fy25.parquet",
-  "0081-usbp-nationwide-apprehensions-june-2025-ap-ps.parquet",
-  "0080-usbp-nationwide-apprehensions-july-2025-ap-ps.parquet",
+  "usbp-nationwide-apprehensions-fy2025-dec-1-2025-through-march-31-2025-fy25-dec-1-202-to-mar-31-2025.parquet",
+  "usbp-nationwide-apprehensions-april-2025-fy25april.parquet",
+  "usbp-nationwide-apprehensions-may-2025-may-fy25.parquet",
+  "usbp-nationwide-apprehensions-june-2025-ap-ps.parquet",
+  "usbp-nationwide-apprehensions-july-2025-ap-ps.parquet",
   # FY2026
-  "0079-usbp-nationwide-apprehensions-january-1-2026-through-march-31-2026-redacted-usbp-apprehensions.parquet"
+  "usbp-nationwide-apprehensions-january-1-2026-through-march-31-2026-redacted-usbp-apprehensions.parquet"
 )
 
 fallback_parts <- c(
   # FY2014
-  "0060-usbp-apprehensions-nationwide-fy14-pdf-extract.parquet",
+  "usbp-apprehensions-nationwide-fy14-pdf-extract.parquet",
   # FY2024
-  "0078-usbp-nationwide-apprehensions-fy-2024-oct-2023-to-may-31-2024-apr-may.parquet",
+  "usbp-nationwide-apprehensions-fy-2024-oct-2023-to-may-31-2024-apr-may.parquet",
   # FY2025
-  "0069-usbp-nationwide-apprehensions-august-2025-aug-2025.parquet",
+  "usbp-nationwide-apprehensions-august-2025-aug-2025.parquet",
   # FY2026
-  "0056-usbp-apprehension-data-february-march-2026-deportable-apprehensions.parquet"
+  "usbp-apprehension-data-february-march-2026-deportable-apprehensions.parquet"
 )
 
 con <- dbConnect(duckdb())
@@ -166,12 +166,13 @@ if (anyNA(parts_metadata$min_date) ||
   stop("Some parts are missing date-span metadata.")
 }
 
-# remove paths/extensions, standardize dash characters
+# remove paths, extensions, and the inventory position prefix
 normalize_part <- function(x) {
   x |>
     basename() |>
     str_remove(regex("\\.parquet$", ignore_case = TRUE)) |>
     str_replace_all("[\u2212\u2013\u2014]", "-") |>
+    str_remove("^[0-9]+-") |>
     str_to_lower()
 }
 
@@ -186,15 +187,28 @@ parts_metadata <- parts_metadata |>
 
 # confirm all specified parts were found
 manual_parts <- c(include_parts, fallback_parts)
+manual_keys <- normalize_part(manual_parts)
 
 missing_parts <- setdiff(
-  normalize_part(manual_parts),
+  manual_keys,
   parts_metadata$part_key
 )
 
 if (length(missing_parts) > 0) {
   print(missing_parts)
   stop("Some manually specified part names were not found.")
+}
+
+ambiguous_parts <- parts_metadata |>
+  filter(part_key %in% manual_keys) |>
+  group_by(part_key) |>
+  filter(n() > 1) |>
+  ungroup() |>
+  select(part_file, source_file, source_sheet)
+
+if (nrow(ambiguous_parts) > 0) {
+  print(ambiguous_parts, n = Inf)
+  stop("Some manually specified part names matched multiple sources.")
 }
 
 # rank priority 
