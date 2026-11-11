@@ -27,8 +27,7 @@ parts_metadata_path <- file.path(
 dir_create(metadata_dir)
 
 #### Remove Faulty Parts #### 
-# N/A for encounters as of 8/10 5:36PM EST. 
-
+# none for encounters as of 8/10/26
 
 # list remaining parts
 part_files <- dir_ls(
