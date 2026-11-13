@@ -57,10 +57,8 @@ data/apprehensions/metadata/*
 data/encounters/metadata/*
 
 # Intermediate processed data
-data/encounters/processed/parts-to-stack/
 data/encounters/processed/usbp-encounters-stacked.parquet
 
-data/apprehensions/processed/parts-to-stack/
 data/apprehensions/processed/usbp-apprehensions-cleaned.parquet
 data/apprehensions/processed/usbp-apprehensions-stacked.parquet
 
