@@ -168,7 +168,7 @@ crosswalk <- distinct_columns |>
         "charge_code_s",
         "charge_code_statue_charge",
         "charge_code_statue_code"
-      ) ~ "statute_charge",
+      ) ~ "charge_code",
       
       clean_column %in% c(
         "statue_charge",

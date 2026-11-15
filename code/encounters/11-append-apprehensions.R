@@ -75,7 +75,6 @@ latest_columns <- c(
   "most_recent_encounter_date",
   "number_of_previous_encounters",
   "entry_date",
-  "entry_status",
   "time_in_us",
   
   # demographics / family
@@ -87,19 +86,15 @@ latest_columns <- c(
   "residence_city",
   "marital_status",
   "subject_group_classification",
-  "unaccompanied_child_indicator",
   "number_of_children_and_nationality",
   
   # screening / processing
-  "credible_fear_indicator",
   "ces_indicator",
   "mpp_indicator",
-  "cds_program",
   "transfer_to_group",
   
   # charges / prosecution
   "statute_charge",
-  "prosecution_indicator",
   "referred_for_prosecution_under_8usc1325_or_8usc1326",
   "drugs_seized_indicator",
   
