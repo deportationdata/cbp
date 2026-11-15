@@ -118,7 +118,7 @@ These scripts combine the remaining parts by column name.
 Outputs in `data/<dataset>/`:
 
 -   `metadata/parts-metadata.parquet`: summarizes part source files and sheets, row counts, date fields and ranges, and non-empty columns
--   `processed/usbp-<dataset>-stacked.parquet`: combines the retained parts before cleaning and overlap resolution
+-   `processed/intermediate/usbp-<dataset>-stacked.parquet`: combines the retained parts before cleaning and overlap resolution
 
 Before running the apprehensions stack, review `parts_to_delete` near the beginning of the script. This list is maintained manually based on overlap review. The script deletes listed files from `parts-to-stack/`.
 
@@ -140,7 +140,7 @@ Scripts: `7-clean-<dataset>.R`
 
 These scripts standardize redaction codes, convert fields to their intended data types, order columns, and write the cleaned data.
 
-Outputs in `data/<dataset>/processed/`:
+Outputs in `data/<dataset>/processed/intermediate/`:
 
 -   `usbp-apprehensions-cleaned.parquet`: cleaned apprehensions dataset in final format, still containing overlapping parts
 -   `usbp-encounters-final-all-cols.parquet`: cleaned encounters dataset with all columns
@@ -157,7 +157,7 @@ This script resolves overlapping apprehension datasets by using a manual list of
 
 Outputs in `data/apprehensions/`:
 
--   `processed/usbp-apprehensions-final-all-cols.parquet`: cleaned apprehensions dataset with all columns and resolved overlaps
+-   `processed/intermediate/usbp-apprehensions-final-all-cols.parquet`: cleaned apprehensions dataset with all columns and resolved overlaps
 -   `metadata/usbp-apprehensions-overlap-resolution.parquet`: summarizes source part date ranges, contribution to the final dataset, and whether they were retained
 
 ### 9. Audit the Final Data

@@ -54,13 +54,12 @@ rsconnect/
 # Generated metadata
 data/apprehensions/metadata/*
 !data/apprehensions/metadata/usbp-apprehensions-overlap-resolution.parquet
+
 data/encounters/metadata/*
 
 # Intermediate processed data
-data/encounters/processed/usbp-encounters-stacked.parquet
-
-data/apprehensions/processed/usbp-apprehensions-cleaned.parquet
-data/apprehensions/processed/usbp-apprehensions-stacked.parquet
+data/encounters/processed/intermediate/*
+data/apprehensions/processed/intermediate/*
 
 # Exploration QMD files 
 cbp-memo_files/

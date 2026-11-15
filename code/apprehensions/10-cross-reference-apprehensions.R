@@ -12,6 +12,7 @@ library(duckdb)
 # paths
 dataset_dir <- "data/apprehensions"
 processed_dir <- file.path(dataset_dir, "processed")
+intermediate_dir <- file.path(processed_dir, "intermediate")
 validation_dir <- file.path(dataset_dir, "validation")
 cross_reference_inputs_dir <- file.path(validation_dir, "cross-reference-files")
 
@@ -22,7 +23,7 @@ dir.create(
 )
 
 apprehensions_all_cols_path <- file.path(
-  processed_dir,
+  intermediate_dir,
   "usbp-apprehensions-final-all-cols.parquet"
 )
 

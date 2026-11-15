@@ -11,11 +11,12 @@ library(duckdb)
 # paths
 dataset_dir <- "data/apprehensions"
 processed_dir <- file.path(dataset_dir, "processed")
+intermediate_dir <- file.path(processed_dir, "intermediate")
 metadata_dir <- file.path(dataset_dir, "metadata")
 parts_to_stack_dir <- file.path(processed_dir, "parts-to-stack")
 
 apprehensions_stacked_path <- file.path(
-  processed_dir,
+  intermediate_dir,
   "usbp-apprehensions-stacked.parquet"
 )
 
@@ -25,6 +26,7 @@ parts_metadata_path <- file.path(
 )
 
 dir_create(metadata_dir)
+dir_create(intermediate_dir)
 
 #### Remove Faulty Parts #### 
 

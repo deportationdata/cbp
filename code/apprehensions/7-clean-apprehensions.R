@@ -9,14 +9,15 @@ library(duckdb)
 # paths
 dataset_dir <- "data/apprehensions"
 processed_dir <- file.path(dataset_dir, "processed")
+intermediate_dir <- file.path(processed_dir, "intermediate")
 
 apprehensions_stacked_path <- file.path(
-  processed_dir,
+  intermediate_dir,
   "usbp-apprehensions-stacked.parquet"
 )
 
 apprehensions_cleaned_path <- file.path(
-  processed_dir,
+  intermediate_dir,
   "usbp-apprehensions-cleaned.parquet"
 )
 
