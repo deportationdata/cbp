@@ -62,10 +62,64 @@ encounters_latest <- encounters_latest |>
 apprehensions_added <- apprehensions_added |>
   mutate(record_type = "Apprehension")
 
+latest_columns <- c(
+  # encounter / arrest info
+  "encounter_datetime",
+  "border",
+  "arrest_sector",
+  "arrest_method",
+  "arrest_at_checkpoint_indicator",
+  
+  # encounter / entry history
+  "earliest_encounter_date",
+  "most_recent_encounter_date",
+  "number_of_previous_encounters",
+  "entry_date",
+  "entry_status",
+  "time_in_us",
+  
+  # demographics / family
+  "age",
+  "adult_or_juvenile",
+  "gender",
+  "citizenship",
+  "residence_country",
+  "residence_city",
+  "marital_status",
+  "subject_group_classification",
+  "unaccompanied_child_indicator",
+  "number_of_children_and_nationality",
+  
+  # screening / processing
+  "credible_fear_indicator",
+  "ces_indicator",
+  "mpp_indicator",
+  "cds_program",
+  "transfer_to_group",
+  
+  # charges / prosecution
+  "statute_charge",
+  "prosecution_indicator",
+  "referred_for_prosecution_under_8usc1325_or_8usc1326",
+  "drugs_seized_indicator",
+  
+  # disposition / bookout
+  "disposition",
+  "removal_type",
+  "final_bookout_datetime",
+  "final_bookout_date",
+  
+  # source metadata
+  "record_type",
+  "source_file",
+  "source_sheet"
+  )
+
 encounters_latest <- bind_rows(
   encounters_latest,
   apprehensions_added
 ) |>
+  select(latest_columns) |>
   arrange(encounter_datetime)
 
 save_outputs(encounters_latest, file.path(
