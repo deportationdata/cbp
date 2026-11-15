@@ -114,7 +114,7 @@ encounters_latest <- bind_rows(
   encounters_latest,
   apprehensions_added
 ) |>
-  select(latest_columns) |>
+  select(all_of(latest_columns)) |>
   arrange(encounter_datetime)
 
 save_outputs(encounters_latest, file.path(
