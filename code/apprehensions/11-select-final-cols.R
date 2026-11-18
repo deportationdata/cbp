@@ -42,6 +42,7 @@ final_columns <- c(
   "marital_status",
   
   # family / child information
+  "adult_or_juvenile",
   "number_of_children_and_nationality",
   "fmua_indication",
   "unaccompanied_child_indicator",

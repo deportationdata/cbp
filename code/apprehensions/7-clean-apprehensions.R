@@ -190,7 +190,6 @@ column_order <- c(
   
   # disposition / removal
   "disposition",
-  "disposition_code",
   "removal_type",
   
   # custody transfer

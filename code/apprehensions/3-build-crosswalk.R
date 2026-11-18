@@ -225,11 +225,6 @@ crosswalk <- distinct_columns |>
       ) ~ "immigration_status_code_lpr",
       
       clean_column %in% c(
-        "subject_disposition_code_lpr",
-        "disposition_code_lpr"
-      ) ~ "disposition_code",
-      
-      clean_column %in% c(
         "lpr"
       ) ~ "lpr_indicator",
       
@@ -451,10 +446,11 @@ crosswalk <- distinct_columns |>
       # disposition 
       clean_column %in% c(
         "subject_disposition_code",
+        "subject_disposition_code_lpr",
+        "disposition_code_lpr",
         "disposition_code"
       ) ~ "disposition",
       
-      # default: keep cleaned name
       TRUE ~ clean_column
     ),
     

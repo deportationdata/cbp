@@ -36,7 +36,7 @@ crosswalk_path <- file.path(metadata_dir,"crosswalk.parquet")
   # FALSE = only build new parts, TRUE = rebuild everything
   # Set force_rebuild <- TRUE if force_reprofile <- TRUE or if crosswalk changed
 
-force_rebuild <- FALSE
+force_rebuild <- TRUE
 
 if (force_rebuild) {
   
