@@ -153,7 +153,7 @@ crosswalk <- distinct_columns |>
       # location 
       clean_column %in% c(
         "apprehension_sector"
-      ) ~ "arrest_sector",
+      ) ~ "sector",
       
       clean_column %in% c(
         "sector_of_booked_out",
@@ -188,8 +188,9 @@ crosswalk <- distinct_columns |>
       ) ~ "most_recent_encounter_date",
       
       clean_column %in% c(
-        "final_bookout_date"
-      ) ~ "final_bookout_datetime",
+        "final_bookout_date",
+        "final_bookout_datetime"
+      ) ~ "final_bookout_date",
       
       # previous encounters
       clean_column %in% c(

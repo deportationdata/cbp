@@ -11,38 +11,50 @@ library(DBI)
 library(duckdb)
 
 # paths
-dataset_dir <- "data/encounters"
-processed_dir <- file.path(dataset_dir, "processed")
-metadata_dir <- file.path(dataset_dir, "metadata")
+encounters_dataset_dir <- "data/encounters"
+encounters_metadata_dir <- file.path(encounters_dataset_dir, "metadata")
+encounters_processed_dir <- file.path(encounters_dataset_dir, "processed")
+
+apprehensions_dataset_dir <- "data/apprehensions"
+apprehensions_metadata_dir <- file.path(apprehensions_dataset_dir, "metadata")
 
 # inputs
-parts_metadata_path <- file.path(
-  metadata_dir,
+encounters_parts_metadata_path <- file.path(
+  encounters_metadata_dir,
   "parts-metadata.parquet"
 )
 
+apprehensions_parts_metadata_path <- file.path(
+  apprehensions_metadata_dir,
+  "parts-metadata.parquet"
+)
+
+
+
 encounters_latest_path <- file.path(
-  processed_dir,
+  encounters_processed_dir,
   "usbp-encounters-latest.parquet"
 )
 
 # outputs
 latest_column_inventory_path <- file.path(
-  metadata_dir,
+  encounters_metadata_dir,
   "latest-column-inventory.parquet"
 )
 
 latest_missingness_matrix_path <- file.path(
-  metadata_dir,
+  encounters_metadata_dir,
   "latest-column-missingness-matrix.parquet"
 )
 
-dir_create(metadata_dir)
+dir_create(encounters_metadata_dir)
+dir_create(apprehensions_metadata_dir)
 
 # check inputs
 input_paths <- c(
   encounters_latest_path,
-  parts_metadata_path
+  encounters_parts_metadata_path,
+  apprehensions_parts_metadata_path
 )
 
 missing_paths <- input_paths[
@@ -213,9 +225,19 @@ write_parquet(
 
 #### Source column matrices ####
 
-parts_metadata <- read_parquet(
-  parts_metadata_path,
+encounters_parts_metadata <- read_parquet(
+  encounters_parts_metadata_path,
   mmap = FALSE
+)
+
+apprehensions_parts_metadata <- read_parquet(
+  apprehensions_parts_metadata_path,
+  mmap = FALSE
+)
+
+parts_metadata <- bind_rows(
+  encounters_parts_metadata,
+  apprehensions_parts_metadata
 )
 
 # observed date ranges, preserve NA if no dates are available
@@ -275,12 +297,11 @@ final_source_matrix <- dbGetQuery(
   )
 ) |>
   as_tibble()
-
-final_column_missingness_matrix <- source_periods |>
-  full_join(
-    final_source_matrix,
-    by = c("source_file", "source_sheet")
-  ) |>
+  
+final_column_missingness_matrix <- final_source_matrix |>
+  left_join(
+    source_periods, by = c("source_file", "source_sheet")
+    ) |>
   mutate(
     n_rows = coalesce(as.numeric(n_rows), 0),
     status = if_else(
@@ -293,7 +314,7 @@ final_column_missingness_matrix <- source_periods |>
       ~ if_else(is.na(.x), NA_character_, sprintf("%.2f%%", .x))
     )
   ) |>
-  relocate(n_rows, status, .after = source_end_date) |>
+  relocate(source_start_date, source_end_date, n_rows, status, .after = source_sheet) |>
   arrange(source_start_date, source_file, source_sheet)
 
 write_parquet(

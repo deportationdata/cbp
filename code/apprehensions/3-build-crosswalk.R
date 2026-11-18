@@ -298,7 +298,7 @@ crosswalk <- distinct_columns |>
         "arrest_sector",
         "sector",
         "sector_district"
-      ) ~ "arrest_sector",
+      ) ~ "sector",
       
       clean_column %in% c(
         "sector_of_booked_out",

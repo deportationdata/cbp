@@ -32,7 +32,7 @@ final_columns <- c(
   "final_bookout_date",
   
   # arrest information
-  "arrest_sector",
+  "sector",
   "arrest_method",
   
   # demographic information

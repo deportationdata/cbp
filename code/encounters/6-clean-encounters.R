@@ -21,9 +21,6 @@ encounters_all_cols_path <- file.path(
   "usbp-encounters-final-all-cols.parquet"
 )
 
-code_map_path <- file.path(dataset_dir, "metadata", "code-map.parquet")
-
-
 # connect to duckDB
 con <- dbConnect(
   duckdb()
@@ -45,6 +42,8 @@ stacked_sql <- as.character(
   )
 )
 
+stacked_source <- paste0("read_parquet(", stacked_sql, ")")
+
 final_sql <- as.character(
   dbQuoteString(
     con,
@@ -57,23 +56,40 @@ stacked_schema <- dbGetQuery(
   con,
   paste0(
     "DESCRIBE SELECT * ",
-    "FROM read_parquet(",
-    stacked_sql,
-    ")"
+    "FROM ",
+    stacked_source
   )
 ) |>
   as_tibble()
 
 stacked_columns <- stacked_schema$column_name
 
+# accept stacks built with the previous bookout column name
+if ("final_bookout_datetime" %in% stacked_columns) {
+  if ("final_bookout_date" %in% stacked_columns) {
+    stacked_source <- paste0(
+      "(SELECT * EXCLUDE (final_bookout_datetime) REPLACE (",
+      "COALESCE(NULLIF(TRIM(CAST(final_bookout_date AS VARCHAR)), ''), ",
+      "CAST(final_bookout_datetime AS VARCHAR)) AS final_bookout_date) ",
+      "FROM ", stacked_source, ")"
+    )
+    stacked_columns <- setdiff(stacked_columns, "final_bookout_datetime")
+  } else {
+    stacked_source <- paste0(
+      "(SELECT * RENAME (final_bookout_datetime AS final_bookout_date) ",
+      "FROM ", stacked_source, ")"
+    )
+    stacked_columns[stacked_columns == "final_bookout_datetime"] <- "final_bookout_date"
+  }
+}
+
 # get row count 
 stacked_rows <- dbGetQuery(
   con,
   paste0(
     "SELECT COUNT(*) AS n_rows ",
-    "FROM read_parquet(",
-    stacked_sql,
-    ")"
+    "FROM ",
+    stacked_source
   )
 ) |>
   pull(n_rows)
@@ -99,11 +115,11 @@ column_order <- c(
   "number_of_previous_encounters",
   
   # case / custody timing
-  "final_bookout_datetime",
+  "final_bookout_date",
   
   # location / arrest information
   "border",
-  "arrest_sector",
+  "sector",
   "bookout_sector",
   "arrest_state",
   "latitude",
@@ -286,13 +302,13 @@ clean_string_sql <- function(column) {
 #### Inspect Date and Time Cols #### 
 
 datetime_columns <- c(
-  "encounter_datetime",
-  "final_bookout_datetime"
+  "encounter_datetime"
 )
 
 date_columns <- c(
   "apprehension_date",
   "earliest_encounter_date",
+  "final_bookout_date",
   "most_recent_encounter_date"
 )
 
@@ -337,7 +353,7 @@ audit_cast <- function(
           "%s AS column, ",
           "%s AS raw_value, ",
           "COUNT(*) AS n ",
-          "FROM read_parquet(%s) ",
+          "FROM %s ",
           "WHERE %s IS NOT NULL ",
           "AND UPPER(%s) NOT IN ('NA', 'N/A', 'NULL') ",
           "AND TRY_CAST(%s AS %s) IS NULL ",
@@ -345,7 +361,7 @@ audit_cast <- function(
         ),
         sql_string(column),
         value_sql,
-        stacked_sql,
+        stacked_source,
         value_sql,
         value_sql,
         value_sql,
@@ -385,7 +401,7 @@ datetime_unrecognized <- map_dfr(
           "%s AS column, ",
           "%s AS raw_value, ",
           "COUNT(*) AS n ",
-          "FROM read_parquet(%s) ",
+          "FROM %s ",
           "WHERE %s IS NOT NULL ",
           "AND UPPER(%s) NOT IN ('NA', 'N/A', 'NULL') ",
           "AND TRY_CAST(%s AS TIMESTAMP) IS NULL ",
@@ -394,7 +410,7 @@ datetime_unrecognized <- map_dfr(
         ),
         sql_string(column),
         value_sql,
-        stacked_sql,
+        stacked_source,
         value_sql,
         value_sql,
         value_sql,
@@ -424,7 +440,7 @@ date_unrecognized <- map_dfr(
           "%s AS column, ",
           "%s AS raw_value, ",
           "COUNT(*) AS n ",
-          "FROM read_parquet(%s) ",
+          "FROM %s ",
           "WHERE %s IS NOT NULL ",
           "AND UPPER(%s) NOT IN ('NA', 'N/A', 'NULL') ",
           "AND TRY_CAST(%s AS DATE) IS NULL ",
@@ -434,7 +450,7 @@ date_unrecognized <- map_dfr(
         ),
         sql_string(column),
         value_sql,
-        stacked_sql,
+        stacked_source,
         value_sql,
         value_sql,
         value_sql,
@@ -531,14 +547,14 @@ if (length(logical_columns) > 0) {
           "%s AS column, ",
           "%s AS raw_value, ",
           "COUNT(*) AS n ",
-          "FROM read_parquet(%s) ",
+          "FROM %s ",
           "WHERE %s IS NOT NULL ",
           "AND UPPER(%s) NOT IN (%s) ",
           "GROUP BY %s"
         ),
         sql_string(column),
         value_sql,
-        stacked_sql,
+        stacked_source,
         value_sql,
         value_sql,
         valid_logical_sql,
@@ -823,9 +839,9 @@ dbExecute(
   sprintf(
     "CREATE OR REPLACE TEMP VIEW cleaned_input AS
      SELECT %s
-     FROM read_parquet(%s)",
+     FROM %s",
     final_select,
-    stacked_sql
+    stacked_source
   )
 )
 
@@ -850,23 +866,8 @@ cleaned_columns <- dbGetQuery(
 
 #### Consolidate Code Columns #### 
 
-# access code map in SQL
-code_map <- dbGetQuery(
-  con,
-  sprintf(
-    "SELECT field, code, full_name FROM read_parquet(%s)",
-    sql_string(code_map_path)
-  )
-) |>
-  as_tibble()
-
-# check for blank entries in map
-if (
-  anyNA(code_map) ||
-  any(str_squish(unlist(code_map, use.names = FALSE)) == "")
-) {
-  stop("The code map contains missing or blank entries.")
-}
+# load the shared code map
+source(file.path("code", "maps", "code-map.R"), local = TRUE)
 
 # keep full names as they are 
 lookup <- bind_rows(
@@ -923,7 +924,7 @@ code_pairs <- list(
   residence_country = "residence_country_cd",
   marital_status = "marital_status_cd",
   border = character(),
-  arrest_sector = character(),
+  sector = character(),
   bookout_sector = character(),
   adult_or_juvenile = character(),
   disposition = character(),

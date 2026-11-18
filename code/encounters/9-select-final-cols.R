@@ -31,11 +31,11 @@ final_columns <- c(
   "most_recent_encounter_date",
   "earliest_encounter_date",
   "number_of_previous_encounters",
-  "final_bookout_datetime",
+  "final_bookout_date",
   
   # arrest information
   "border",
-  "arrest_sector",
+  "sector",
   "arrest_state",
   "arrest_at_checkpoint_indicator",
   

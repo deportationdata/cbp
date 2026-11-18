@@ -1,19 +1,3 @@
-# use UTC for source clock times, source time zone is unspecified
-Sys.setenv(TZ = "UTC")
-
-# load packages
-library(tidyverse)
-library(arrow)
-
-# paths
-dataset_dir <- "data/apprehensions"
-metadata_dir <- file.path(dataset_dir, "metadata")
-code_map_path <- file.path(metadata_dir,"code-map.parquet")
-dir.create(metadata_dir, recursive = TRUE, showWarnings = FALSE)
-
-
-#### Write Map ####
-
 # country mappings
 country_mapping <- tribble(
   ~code, ~full_name,
@@ -54,6 +38,7 @@ country_mapping <- tribble(
   "CHILE", "Chile",
   "CHINA", "China",
   "CHINA, PEOPLES REPUBLIC OF", "China",
+  "COCOS", "COCOS",
   "COLOM", "Colombia",
   "COMOR", "Comoros",
   "COSTA", "Costa Rica",
@@ -184,7 +169,7 @@ country_mapping <- tribble(
   "YEMEN", "Yemen",
   "ZAMBI", "Zambia",
   "ZIMBA", "Zimbabwe",
-  
+
   # miscellaneous / unsure = left as is
   "CONGO", "CONGO",
   "FSTMA", "FSTMA",
@@ -211,7 +196,7 @@ marital_mapping <- tribble(
   "U",         "Unknown",
   "D",         "Divorced",
   "W",         "Widowed",
-  
+
   # unsure = left as is
   "X",   "X"
 )
@@ -249,7 +234,7 @@ entry_mapping <- tribble(
   "C",    "Crew",
   "I",    "Immigrant",
   "TWOV", "Transit Without Visa",
-  
+
   # alternate and truncated labels
   "ABSCONDER",                     "Absconder",
   "False Claim with Counterfeit",  "False Claim with Counterfeit Document",
@@ -363,6 +348,33 @@ transfer_group_mapping <- tribble(
   "TOT", "Turned Over To"
 )
 
+juvenile_mapping <- tribble(
+  ~code, ~full_name,
+  "Child",  "Juvenile"
+)
+
+time_in_us_mapping <- tribble(
+  ~code, ~full_name,
+  "1-1", "1 month to 1 year",
+  "4-30", "4 to 30 days",
+  "AE", "At Entry",
+  "OVER1", "Over 1 year",
+  "WI72", "Within 72 hours"
+)
+
+group_mapping <- tribble(
+  ~code, ~full_name,
+  "FMUA", "Family Unit Alien",
+  "FMUA AAC", "FMUA Accompanied Alien Children",
+  "Single Adults", "Single Adult",
+  "UC", "Unaccompanied Child"
+)
+
+prosecution_mapping <- tribble(
+  ~code, ~full_name,
+  "Y", "Referred"
+)
+
 # combine mappings
 code_map <- bind_rows(
   cds_mapping |>
@@ -370,46 +382,57 @@ code_map <- bind_rows(
 
   country_mapping |>
     mutate(field = "citizenship"),
-  
+
   country_mapping |>
     mutate(field = "birth_country"),
-  
+
   country_mapping |>
     mutate(field = "residence_country"),
-  
+
   marital_mapping |>
     mutate(field = "marital_status"),
-  
+
   entry_mapping |>
     mutate(field = "entry_status"),
-  
+
   ethnicity_mapping |>
     mutate(field = "ethnicity"),
-  
+
   border_mapping |>
     mutate(field = "border"),
-  
+
   sector_mapping |>
-    mutate(field = "arrest_sector"),
-  
+    mutate(field = "sector"),
+
   sector_mapping |>
     mutate(field = "bookout_sector"),
-  
+
   method_mapping |>
     mutate(field = "arrest_method"),
-  
+
   gender_mapping |>
     mutate(field = "gender"),
-  
+
   disposition_mapping |>
     mutate(field = "disposition"),
-  
+
   transfer_group_mapping |>
     mutate(field = "transfer_to_group"),
-  
+
   transfer_group_mapping |>
-    mutate(field = "removal_type")
-  
+    mutate(field = "removal_type"),
+
+  juvenile_mapping |>
+    mutate(field = "adult_or_juvenile"),
+
+  time_in_us_mapping |>
+    mutate(field = "time_in_us"),
+
+  group_mapping |>
+    mutate(field = "subject_group_classification"),
+
+  prosecution_mapping |>
+    mutate(field = "referred_for_prosecution_under_8usc1325_or_8usc1326")
 ) |>
   select(
     field,
@@ -417,7 +440,7 @@ code_map <- bind_rows(
     full_name
   )
 
-#### Audits #### 
+#### Audits ####
 
 # check for missing or blank entries
 invalid_mappings <- code_map |>
@@ -433,7 +456,7 @@ if (nrow(invalid_mappings) > 0) {
   stop("Fix missing or blank mapping entries.")
 }
 
-# check duplicate keys 
+# check duplicate keys
 duplicate_mappings <- code_map |>
   mutate(
     code_key = str_to_upper(str_squish(code))
@@ -447,22 +470,10 @@ duplicate_mappings <- code_map |>
 
 if (nrow(duplicate_mappings) > 0) {
   print(duplicate_mappings, n = Inf)
-  stop("Resolve duplicate mapping keys before saving.")
+  stop("Resolve duplicate mapping keys before cleaning.")
 }
 
-# save
 code_map <- code_map |>
   arrange(field, code)
-
-write_parquet(
-  code_map,
-  code_map_path
-)
-
-cat(
-  "\nMapping rows:", nrow(code_map),
-  "\nSaved to:", code_map_path,
-  "\n"
-)
 
 # END

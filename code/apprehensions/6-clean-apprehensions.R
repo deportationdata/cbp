@@ -21,9 +21,6 @@ apprehensions_cleaned_path <- file.path(
   "usbp-apprehensions-cleaned.parquet"
 )
 
-code_map_path <- file.path(dataset_dir, "metadata", "code-map.parquet")
-
- 
 # connect to duckDB
 con <- dbConnect(
   duckdb()
@@ -127,7 +124,7 @@ column_order <- c(
   
   # location / arrest information
   "border",
-  "arrest_sector",
+  "sector",
   "bookout_sector",
   "arrest_state",
   "state",
@@ -337,8 +334,8 @@ clean_string_sql <- function(column) {
     sql_string("), (b)")
   )
   
-  ## remove /E from `arrest_sector`
-  if (column == "arrest_sector") {
+  ## remove /E from `sector`
+  if (column == "sector") {
     value_sql <- sprintf(
       "regexp_replace(%s, %s, '')",
       value_sql,
@@ -980,23 +977,8 @@ final_select <- map(
 
 #### Consolidate Code Columns #### 
 
-# access code map in SQL
-code_map <- dbGetQuery(
-  con,
-  sprintf(
-    "SELECT field, code, full_name FROM read_parquet(%s)",
-    sql_string(code_map_path)
-  )
-) |>
-  as_tibble()
-
-# check for blank entries in map
-if (
-  anyNA(code_map) ||
-  any(str_squish(unlist(code_map, use.names = FALSE)) == "")
-) {
-  stop("The code map contains missing or blank entries.")
-}
+# load the shared code map
+source(file.path("code", "maps", "code-map.R"), local = TRUE)
 
 # keep full names as they are 
 lookup <- bind_rows(
@@ -1103,7 +1085,7 @@ code_pairs <- list(
   entry_status = "entry_status_cd",
   ethnicity = "ethnicity_cd",
   border = character(),
-  arrest_sector = character(),
+  sector = character(),
   bookout_sector = character(),
   arrest_method = character(),
   gender = character(),

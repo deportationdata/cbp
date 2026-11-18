@@ -66,15 +66,7 @@ latest_columns <- c(
   # encounter / arrest info
   "encounter_datetime",
   "border",
-  "arrest_sector",
-  "arrest_method",
-  "arrest_at_checkpoint_indicator",
-  
-  # encounter / entry history
-  "earliest_encounter_date",
-  "most_recent_encounter_date",
-  "number_of_previous_encounters",
-  "entry_date",
+  "sector",
   "time_in_us",
   
   # demographics / family
@@ -82,26 +74,12 @@ latest_columns <- c(
   "adult_or_juvenile",
   "gender",
   "citizenship",
-  "residence_country",
-  "residence_city",
   "marital_status",
-  "subject_group_classification",
   "number_of_children_and_nationality",
   
-  # screening / processing
-  "ces_indicator",
-  "mpp_indicator",
-  "transfer_to_group",
-  
-  # charges / prosecution
+  # charges / disposition / bookout
   "statute_charge",
-  "referred_for_prosecution_under_8usc1325_or_8usc1326",
-  "drugs_seized_indicator",
-  
-  # disposition / bookout
   "disposition",
-  "removal_type",
-  "final_bookout_datetime",
   "final_bookout_date",
   
   # source metadata
@@ -114,6 +92,13 @@ encounters_latest <- bind_rows(
   encounters_latest,
   apprehensions_added
 ) |>
+  mutate(
+    adult_or_juvenile = case_when(
+      is.na(adult_or_juvenile) & !is.na(age) & age < 18 ~ "Juvenile",
+      is.na(adult_or_juvenile) & !is.na(age) & age >= 18 ~ "Adult",
+      TRUE ~ adult_or_juvenile
+    )
+  ) |>
   select(all_of(latest_columns)) |>
   arrange(encounter_datetime)
 
