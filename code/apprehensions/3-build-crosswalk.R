@@ -112,7 +112,10 @@ crosswalk <- distinct_columns |>
       clean_column %in% c(
         "demographic",
         "subject_demographic",
-        "subject_demographic_sdi"
+        "subject_demographic_sdi",
+        "family_unit_type",
+        "family_unit_type_demographic",
+        "fmu_type"
       ) ~ "subject_group_classification",
       
       # apprehension/arrest datetime
@@ -239,11 +242,6 @@ crosswalk <- distinct_columns |>
         "fmua_indicator",
         "fmua_ind"
       ) ~ "fmua_indication",
-      
-      clean_column %in% c(
-        "family_unit_type",
-        "family_unit_type_demographic"
-      ) ~ "fmu_type",
       
       clean_column %in% c(
         "uc_indicator",

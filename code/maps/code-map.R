@@ -302,12 +302,14 @@ gender_mapping <- tribble(
 # disposition mappings
 disposition_mapping <- tribble(
   ~code, ~full_name,
-  "ADMDPT", "Administrative Deportation I-851/I-851A",
+  "ADMDPT", "Administrative Deportation (I-851/I-851A)",
   "ADMIT", "Admitted",
   "B", "Bag and Baggage",
   "DTNR", "Detainer",
   "ER", "Expedited Removal (I-860)",
+  "Expedited Removal - Securing the Border", "Expedited Removal (I-860)",
   "ER/CF", "Expedited Removal with Credible Fear",
+  "Expedited Removal/Credible Fear - Securing the Border", "Expedited Removal with Credible Fear",
   "ER/LR", "Expedited Removal Limited Review",
   "EX", "Exclusion",
   "I", "I-210",
@@ -374,6 +376,73 @@ prosecution_mapping <- tribble(
   ~code, ~full_name,
   "Y", "Referred"
 )
+
+# format statute charge values before building lookup
+format_statute_charge <- function(charge) {
+  charges_tbl <- tibble(charge)
+
+  charges_tbl <- charges_tbl |>
+    mutate(
+      # remove punctuation and whitespace before parsing charge code
+      charge_str = str_remove_all(charge, "[[:punct:]\\s]+"),
+      # extract numeric INA section prefix (e.g. "212", "237").
+      section = str_extract(charge_str, "^\\d+"),
+      remainder = str_remove(charge_str, "^\\d+") |>
+        # lowercase first letter followed by a digit
+        str_replace("^[A-Z](?=[0-9])", "a") |>
+        # split remainder at each case or type boundary
+        str_replace_all(
+          "(?<=[a-z])(?=[A-Z0-9])|(?<=[A-Z])(?=[a-z0-9])|(?<=[0-9])(?=[A-Za-z])|\\s+",
+          ")("
+        ) |>
+        # wrap remainder in parentheses
+        str_replace("^(.+)$", "(\\1)") |>
+        # strip leading zeros from numeric subsections
+        str_replace_all("\\(0+(\\d)", "(\\1") |>
+        # drop empty parentheses
+        str_replace_all("\\(\\)", ""),
+      # combine section and parsed remainder into final citation string
+      charge_str = if_else(
+        is.na(section),
+        NA_character_,
+        glue::glue("{section}{remainder}")
+      )
+    )
+
+  charges_tbl <- charges_tbl |>
+    mutate(
+      charge_str = case_when(
+        charge == "212a03F" ~ "212(a)(3)(F)",
+        charge == "215a" ~ "215(a)",
+        charge == "215b" ~ "215(b)",
+        charge == "237s02AiI" ~ "237(a)(2)(A)(i)(I)",
+        charge == "2153g" ~ "215(g)",
+        charge == "2153h" ~ "215(h)",
+        TRUE ~ charge_str
+      )
+    )
+
+  as.character(charges_tbl$charge_str)
+}
+
+# translate each distinct value once, preserving case for subsection boundaries
+write_statute_charge_lookup <- function(con) {
+  charges_tbl <- DBI::dbGetQuery(
+    con,
+    "SELECT DISTINCT statute_charge AS code
+     FROM combined_input
+     WHERE statute_charge IS NOT NULL"
+  ) |>
+    mutate(full_name = format_statute_charge(code))
+
+  DBI::dbWriteTable(
+    con,
+    "statute_charge_lookup",
+    charges_tbl,
+    temporary = TRUE,
+    overwrite = TRUE
+  )
+}
 
 # combine mappings
 code_map <- bind_rows(

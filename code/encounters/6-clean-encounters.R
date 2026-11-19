@@ -967,6 +967,13 @@ output_columns <- c(
 
 # build lookup joins and output expressions
 lookup_joins <- character()
+if ("statute_charge" %in% output_columns) {
+  write_statute_charge_lookup(con)
+  lookup_joins <- c(
+    lookup_joins,
+    "LEFT JOIN statute_charge_lookup charge ON charge.code = s.statute_charge"
+  )
+}
 output_expressions <- character()
 
 
@@ -985,6 +992,14 @@ for (column in output_columns) {
     next
   }
   
+  if (column == "statute_charge") {
+    output_expressions <- c(
+      output_expressions,
+      "charge.full_name AS statute_charge"
+    )
+    next
+  }
+
   # regular columns pass through unchanged
   if (!column %in% names(code_pairs)) {
     output_expressions <- c(

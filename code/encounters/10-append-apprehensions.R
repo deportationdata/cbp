@@ -68,6 +68,7 @@ latest_columns <- c(
   "border",
   "sector",
   "time_in_us",
+  "entry_date",
   
   # demographics / family
   "age",
@@ -99,6 +100,38 @@ encounters_latest <- bind_rows(
       TRUE ~ adult_or_juvenile
     )
   ) |>
+  mutate(
+    days_in_us = as.integer(
+      as.Date(encounter_datetime, tz = "UTC") - as.Date(entry_date)
+    ),
+    time_in_us = case_when(
+      !is.na(time_in_us) & trimws(time_in_us) != "" ~ time_in_us,
+      days_in_us == 0 ~ "At Entry",
+      between(days_in_us, 1L, 3L) ~ "Within 72 hours",
+      between(days_in_us, 4L, 30L) ~ "4 to 30 days",
+      between(days_in_us, 31L, 365L) ~ "1 month to 1 year",
+      days_in_us > 365L ~ "Over 1 year",
+      TRUE ~ time_in_us
+    )
+  ) |>
+  mutate(
+    border = case_when(
+      arrest_sector %in% c(
+        "Miami Sector", "New Orleans Sector", "Ramey Sector"
+        ) ~ "Coastal Border",
+      arrest_sector %in% c(
+        "Blaine Sector", "Buffalo Sector", "Detroit Sector",
+        "Grand Forks Sector", "Havre Sector", "Houlton Sector",
+        "Spokane Sector", "Swanton Sector"
+        ) ~ "Northern Border",
+      arrest_sector %in% c(
+        "Big Bend Sector", "Del Rio Sector", "El Centro Sector",
+        "El Paso Sector", "Laredo Sector", "Rio Grande Valley Sector",
+        "San Diego Sector", "Tucson Sector", "Yuma Sector"
+        ) ~ "Southwest Border",
+      TRUE ~ border
+      )
+    ) |>
   select(all_of(latest_columns)) |>
   arrange(encounter_datetime)
 

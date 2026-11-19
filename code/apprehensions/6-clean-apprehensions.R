@@ -1089,6 +1089,9 @@ code_pairs <- list(
   bookout_sector = character(),
   arrest_method = character(),
   gender = character(),
+  time_in_us = character(),
+  subject_group_classification = character(),
+  referred_for_prosecution_under_8usc1325_or_8usc1326 = character(),
   disposition = character(),
   cds_program = character(),
   transfer_to_group = character(),
@@ -1174,6 +1177,13 @@ lookup_joins <- if ("cds_program" %in% output_columns) {
 } else {
   character()
 }
+if ("statute_charge" %in% output_columns) {
+  write_statute_charge_lookup(con)
+  lookup_joins <- c(
+    lookup_joins,
+    "LEFT JOIN statute_charge_lookup charge ON charge.code = s.statute_charge"
+  )
+}
 output_expressions <- character()
 
 
@@ -1197,6 +1207,14 @@ for (column in output_columns) {
     output_expressions <- c(
       output_expressions,
       "cds.full_name AS cds_program"
+    )
+    next
+  }
+
+  if (column == "statute_charge") {
+    output_expressions <- c(
+      output_expressions,
+      "charge.full_name AS statute_charge"
     )
     next
   }
