@@ -160,11 +160,11 @@ Outputs in `data/apprehensions/`:
 -   `processed/intermediate/usbp-apprehensions-final-all-cols.parquet`: cleaned apprehensions dataset with all columns and resolved overlaps
 -   `metadata/usbp-apprehensions-overlap-resolution.parquet`: summarizes source part date ranges, contribution to the final dataset, and whether they were retained
 
-### 9. Audit the Final Data
+### 9. Audit the Cleaned Data
 
 Scripts: `9-audit-apprehensions.R`, `8-audit-encounters.R`
 
-These scripts compare column population across the stacked, cleaned, and final apprehensions files.
+These scripts compare column population across cleaned apprehension and encounter files.
 
 Input in `data/<dataset>/metadata/`:
 
@@ -259,6 +259,23 @@ This script adds apprehensions dated before the earliest encounter date or after
 Outputs in `data/encounters/processed/`:
 
 -   `usbp-encounters-latest.parquet`, `usbp-encounters-latest.dta`, and `usbp-encounters-latest.sav`: combined encounters and apprehensions dataset in Parquet, Stata, and SPSS formats
+
+### 13. Audit the Final Data
+
+Scripts: `11-final-audit.R`
+
+This script compares column population across the final dataset, `encounters-latest.parquet`.
+
+Input in `data/<dataset>/`:
+
+-   `metadata/parts-metadata.parquet`: summarizes part source files and sheets, row counts, date fields and ranges, and non-empty columns
+-   `processed/usbp-encounters-latest.parquet`:
+
+Outputs in `data/<dataset>/metadata/`:
+
+-   `final-column-inventory.parquet`: lists final columns, data types, counts of populated values at each stage, final missingness, and redaction flags
+-   `raw-column-missingness-matrix.parquet`: shows the percentage of missing values for each raw column by source sheet
+-   `final-column-missingness-matrix.parquet`: shows the percentage of missing values for each retained column by source sheet
 
 ## Updating the Data
 

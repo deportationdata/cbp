@@ -1096,7 +1096,7 @@ code_pairs <- list(
   cds_program = character(),
   transfer_to_group = character(),
   removal_type = character()
-  )
+)
 
 # retain existing code columns only 
 code_pairs <- map(
@@ -1138,22 +1138,22 @@ if ("cds_program" %in% output_columns) {
     "SELECT DISTINCT cds_program AS code FROM combined_input"
   ) |>
     as_tibble()
-
+  
   cds_lookup <- lookup |>
     filter(field == "cds_program") |>
     transmute(code_key = str_to_upper(code), full_name) |>
     distinct()
-
+  
   cds_values <- cds_values |>
     mutate(
       full_name = map_chr(code, function(value) {
         if (is.na(value)) return(NA_character_)
-
+        
         tokens <- str_split(value, "[,;]")[[1]] |>
           str_trim()
         tokens <- tokens[tokens != ""]
         if (length(tokens) == 0) return(NA_character_)
-
+        
         labels <- cds_lookup$full_name[
           match(str_to_upper(tokens), cds_lookup$code_key)
         ]
@@ -1161,7 +1161,7 @@ if ("cds_program" %in% output_columns) {
         paste(unique(labels), collapse = ", ")
       })
     )
-
+  
   dbWriteTable(
     con,
     "cds_combination_lookup",
@@ -1210,7 +1210,7 @@ for (column in output_columns) {
     )
     next
   }
-
+  
   if (column == "statute_charge") {
     output_expressions <- c(
       output_expressions,
@@ -1218,7 +1218,7 @@ for (column in output_columns) {
     )
     next
   }
-
+  
   # regular columns pass through unchanged
   if (!column %in% names(code_pairs)) {
     output_expressions <- c(
@@ -1288,11 +1288,18 @@ for (column in output_columns) {
     )
   }
   
+  if (column == "time_in_us") {
+    combined_sql <- sprintf(
+      "CASE WHEN UPPER(TRIM(%1$s)) = 'NOT APPLICABLE' THEN NULL ELSE %1$s END",
+      combined_sql
+    )
+  }
+  
   # uppercase citizenship after translating and combining values
   if (column == "citizenship") {
     combined_sql <- sprintf("UPPER(%s)", combined_sql)
   }
-
+  
   output_expressions <- c(
     output_expressions,
     sprintf(

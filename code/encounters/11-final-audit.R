@@ -29,8 +29,6 @@ apprehensions_parts_metadata_path <- file.path(
   "parts-metadata.parquet"
 )
 
-
-
 encounters_latest_path <- file.path(
   encounters_processed_dir,
   "usbp-encounters-latest.parquet"
@@ -173,7 +171,7 @@ count_nonmissing <- function(path_sql, columns) {
 
 #### Final col inventory ####
 # get final column names, positions, and types
-final_column_schema <- dbGetQuery(
+latest_column_schema <- dbGetQuery(
   con,
   paste0(
     "DESCRIBE SELECT * ",
@@ -189,15 +187,15 @@ final_column_schema <- dbGetQuery(
     data_type = column_type
   )
 
-final_columns <- final_column_schema$column
+latest_columns <- latest_column_schema$column
 
 # count populated values in every final column by record type
 inventory_final_counts <- count_nonmissing(
   final_sql,
-  final_columns
+  latest_columns
 )
 
-final_column_inventory <- final_column_schema |>
+latest_column_inventory <- latest_column_schema |>
   left_join(inventory_final_counts, by = "column") |>
   mutate(
     final_missing_rows =
@@ -219,7 +217,7 @@ final_column_inventory <- final_column_schema |>
   )
 
 write_parquet(
-  final_column_inventory,
+  latest_column_inventory,
   latest_column_inventory_path
 )
 
@@ -265,7 +263,7 @@ source_periods <- parts_metadata |>
 
 # one row per source file/sheet, using retained final records
 matrix_fields <- setdiff(
-  final_columns,
+  latest_columns,
   c("source_file", "source_sheet")
 )
 
@@ -297,11 +295,11 @@ final_source_matrix <- dbGetQuery(
   )
 ) |>
   as_tibble()
-  
-final_column_missingness_matrix <- final_source_matrix |>
+
+latest_column_missingness_matrix <- final_source_matrix |>
   left_join(
     source_periods, by = c("source_file", "source_sheet")
-    ) |>
+  ) |>
   mutate(
     n_rows = coalesce(as.numeric(n_rows), 0),
     status = if_else(
@@ -318,7 +316,7 @@ final_column_missingness_matrix <- final_source_matrix |>
   arrange(source_start_date, source_file, source_sheet)
 
 write_parquet(
-  final_column_missingness_matrix,
+  latest_column_missingness_matrix,
   latest_missingness_matrix_path
 )
 
@@ -335,7 +333,7 @@ cat(
 )
 
 print(
-  final_column_inventory,
+  latest_column_inventory,
   n = Inf
 )
 # END

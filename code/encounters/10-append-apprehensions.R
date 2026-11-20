@@ -87,7 +87,7 @@ latest_columns <- c(
   "record_type",
   "source_file",
   "source_sheet"
-  )
+)
 
 encounters_latest <- bind_rows(
   encounters_latest,
@@ -118,21 +118,21 @@ encounters_latest <- bind_rows(
     border = case_when(
       sector %in% c(
         "Miami Sector", "New Orleans Sector", "Ramey Sector"
-        ) ~ "Coastal Border",
+      ) ~ "Coastal Border",
       sector %in% c(
         "Blaine Sector", "Buffalo Sector", "Detroit Sector",
         "Grand Forks Sector", "Havre Sector", "Houlton Sector",
         "Spokane Sector", "Swanton Sector"
-        ) ~ "Northern Border",
+      ) ~ "Northern Border",
       sector %in% c(
         "Big Bend Sector", "Del Rio Sector", "El Centro Sector",
         "El Paso Sector", "Laredo Sector", "Rio Grande Valley Sector",
         "San Diego Sector", "Tucson Sector", "Yuma Sector"
-        ) ~ "Southwest Border",
+      ) ~ "Southwest Border",
       TRUE ~ border
-      )
-    ) |>
-  select(all_of(latest_columns)) |>
+    )
+  ) |>
+  select(all_of(setdiff(latest_columns, "entry_date"))) |>
   arrange(encounter_datetime)
 
 save_outputs(encounters_latest, file.path(

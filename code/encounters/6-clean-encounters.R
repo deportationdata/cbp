@@ -757,7 +757,7 @@ final_expression <- function(column) {
       )
     )
   }
-
+  
   # logical
   if (column %in% logical_columns) {
     
@@ -999,7 +999,7 @@ for (column in output_columns) {
     )
     next
   }
-
+  
   # regular columns pass through unchanged
   if (!column %in% names(code_pairs)) {
     output_expressions <- c(
@@ -1069,11 +1069,18 @@ for (column in output_columns) {
     )
   }
   
+  if (column == "time_in_us") {
+    combined_sql <- sprintf(
+      "CASE WHEN UPPER(TRIM(%1$s)) = 'NOT APPLICABLE' THEN NULL ELSE %1$s END",
+      combined_sql
+    )
+  }
+  
   # uppercase citizenship after translating and combining values
   if (column == "citizenship") {
     combined_sql <- sprintf("UPPER(%s)", combined_sql)
   }
-
+  
   output_expressions <- c(
     output_expressions,
     sprintf(

@@ -169,7 +169,7 @@ country_mapping <- tribble(
   "YEMEN", "Yemen",
   "ZAMBI", "Zambia",
   "ZIMBA", "Zimbabwe",
-
+  
   # miscellaneous / unsure = left as is
   "CONGO", "CONGO",
   "FSTMA", "FSTMA",
@@ -196,7 +196,7 @@ marital_mapping <- tribble(
   "U",         "Unknown",
   "D",         "Divorced",
   "W",         "Widowed",
-
+  
   # unsure = left as is
   "X",   "X"
 )
@@ -234,7 +234,7 @@ entry_mapping <- tribble(
   "C",    "Crew",
   "I",    "Immigrant",
   "TWOV", "Transit Without Visa",
-
+  
   # alternate and truncated labels
   "ABSCONDER",                     "Absconder",
   "False Claim with Counterfeit",  "False Claim with Counterfeit Document",
@@ -380,7 +380,7 @@ prosecution_mapping <- tribble(
 # format statute charge values before building lookup
 format_statute_charge <- function(charge) {
   charges_tbl <- tibble(charge)
-
+  
   charges_tbl <- charges_tbl |>
     mutate(
       # remove punctuation and whitespace before parsing charge code
@@ -408,7 +408,7 @@ format_statute_charge <- function(charge) {
         glue::glue("{section}{remainder}")
       )
     )
-
+  
   charges_tbl <- charges_tbl |>
     mutate(
       charge_str = case_when(
@@ -421,7 +421,7 @@ format_statute_charge <- function(charge) {
         TRUE ~ charge_str
       )
     )
-
+  
   as.character(charges_tbl$charge_str)
 }
 
@@ -434,7 +434,7 @@ write_statute_charge_lookup <- function(con) {
      WHERE statute_charge IS NOT NULL"
   ) |>
     mutate(full_name = format_statute_charge(code))
-
+  
   DBI::dbWriteTable(
     con,
     "statute_charge_lookup",
@@ -448,58 +448,58 @@ write_statute_charge_lookup <- function(con) {
 code_map <- bind_rows(
   cds_mapping |>
     mutate(field = "cds_program"),
-
+  
   country_mapping |>
     mutate(field = "citizenship"),
-
+  
   country_mapping |>
     mutate(field = "birth_country"),
-
+  
   country_mapping |>
     mutate(field = "residence_country"),
-
+  
   marital_mapping |>
     mutate(field = "marital_status"),
-
+  
   entry_mapping |>
     mutate(field = "entry_status"),
-
+  
   ethnicity_mapping |>
     mutate(field = "ethnicity"),
-
+  
   border_mapping |>
     mutate(field = "border"),
-
+  
   sector_mapping |>
     mutate(field = "sector"),
-
+  
   sector_mapping |>
     mutate(field = "bookout_sector"),
-
+  
   method_mapping |>
     mutate(field = "arrest_method"),
-
+  
   gender_mapping |>
     mutate(field = "gender"),
-
+  
   disposition_mapping |>
     mutate(field = "disposition"),
-
+  
   transfer_group_mapping |>
     mutate(field = "transfer_to_group"),
-
+  
   transfer_group_mapping |>
     mutate(field = "removal_type"),
-
+  
   juvenile_mapping |>
     mutate(field = "adult_or_juvenile"),
-
+  
   time_in_us_mapping |>
     mutate(field = "time_in_us"),
-
+  
   group_mapping |>
     mutate(field = "subject_group_classification"),
-
+  
   prosecution_mapping |>
     mutate(field = "referred_for_prosecution_under_8usc1325_or_8usc1326")
 ) |>
