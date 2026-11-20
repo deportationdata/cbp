@@ -116,15 +116,15 @@ encounters_latest <- bind_rows(
   ) |>
   mutate(
     border = case_when(
-      arrest_sector %in% c(
+      sector %in% c(
         "Miami Sector", "New Orleans Sector", "Ramey Sector"
         ) ~ "Coastal Border",
-      arrest_sector %in% c(
+      sector %in% c(
         "Blaine Sector", "Buffalo Sector", "Detroit Sector",
         "Grand Forks Sector", "Havre Sector", "Houlton Sector",
         "Spokane Sector", "Swanton Sector"
         ) ~ "Northern Border",
-      arrest_sector %in% c(
+      sector %in% c(
         "Big Bend Sector", "Del Rio Sector", "El Centro Sector",
         "El Paso Sector", "Laredo Sector", "Rio Grande Valley Sector",
         "San Diego Sector", "Tucson Sector", "Yuma Sector"

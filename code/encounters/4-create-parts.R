@@ -197,7 +197,7 @@ read_standardized_sheet <- function(file_path, sheet_name) {
   }
   
   # remove completely blank rows
-  part_df <- part_df |>
+  data_df <- data_df |>
     filter(
       if_any(
         everything(),
