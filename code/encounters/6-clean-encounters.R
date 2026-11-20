@@ -291,9 +291,9 @@ clean_string_sql <- function(column) {
     sql_string("), (b)")
   )
   
-  # collapse whitespace, trim, and convert empty strings to NULL
+  # collapse whitespace, trim, and convert empty strings or literal NA to NULL
   sprintf(
-    "NULLIF(TRIM(regexp_replace(%s, %s, ' ', 'g')), '')",
+    "NULLIF(regexp_replace(TRIM(regexp_replace(%s, %s, ' ', 'g')), '^NA$', '', 'i'), '')",
     value_sql,
     sql_string(whitespace_pattern)
   )
@@ -1069,6 +1069,13 @@ for (column in output_columns) {
     )
   }
   
+  if (column == "marital_status") {
+    combined_sql <- sprintf(
+      "CASE WHEN UPPER(TRIM(%1$s)) = 'X' THEN NULL ELSE %1$s END",
+      combined_sql
+    )
+  }
+
   if (column == "time_in_us") {
     combined_sql <- sprintf(
       "CASE WHEN UPPER(TRIM(%1$s)) = 'NOT APPLICABLE' THEN NULL ELSE %1$s END",

@@ -43,6 +43,7 @@ final_columns <- c(
   
   # family / child information
   "adult_or_juvenile",
+  "subject_group_classification",
   "number_of_children_and_nationality",
   "fmua_indication",
   "unaccompanied_child_indicator",
@@ -57,6 +58,7 @@ final_columns <- c(
   "statute_charge",
   "charge_code",
   "disposition",
+  "transfer_to_group",
   "removal_type",
   
   # source information

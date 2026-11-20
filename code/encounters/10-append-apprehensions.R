@@ -73,6 +73,7 @@ latest_columns <- c(
   # demographics / family
   "age",
   "adult_or_juvenile",
+  "subject_group_classification",
   "gender",
   "citizenship",
   "marital_status",
@@ -81,6 +82,7 @@ latest_columns <- c(
   # charges / disposition / bookout
   "statute_charge",
   "disposition",
+  "transfer_to_group",
   "final_bookout_date",
   
   # source metadata
