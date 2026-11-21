@@ -178,7 +178,7 @@ country_mapping <- tribble(
   "STATE", "STATE",
   "STRIA", "STRIA",
   "STMAR", "STMAR"
-)
+  )
 
 # ethnicity mappings
 ethnicity_mapping <- tribble(
@@ -186,7 +186,7 @@ ethnicity_mapping <- tribble(
   "H",   "Hispanic",
   "N",   "Not Hispanic",
   "U",   "Unknown"
-)
+  )
 
 # marital mappings
 marital_mapping <- tribble(
@@ -199,7 +199,7 @@ marital_mapping <- tribble(
   
   # unsure = left as is
   "X",   "X"
-)
+  )
 
 # entry mappings
 entry_mapping <- tribble(
@@ -249,7 +249,7 @@ entry_mapping <- tribble(
   "PWA Mexico",                    "Present Without Admission Mexico",
   "PWA Other",                     "Present Without Admission Other",
   "US CITIZEN",                    "US Citizen"
-)
+  )
 
 # border mappings
 border_mapping <- tribble(
@@ -260,7 +260,7 @@ border_mapping <- tribble(
   "SB",   "Southwest Border",
   "CB",   "Coastal Border",
   "NB",   "Northern Border"
-)
+  )
 
 # sector mappings
 sector_mapping <- tribble(
@@ -285,50 +285,49 @@ sector_mapping <- tribble(
   "SWB", "Swanton Sector",
   "TCA", "Tucson Sector",
   "YUM", "Yuma Sector"
-)
+  )
 
 method_mapping <- tribble(
   ~code, ~full_name,
   "Organized Crime Drug Enforcement Task Fo", "Organized Crime Drug Enforcement Task Force"
-)
+  )
 
 # gender mappings
 gender_mapping <- tribble(
   ~code, ~full_name,
   "F", "Female",
   "M", "Male"
-)
+  )
 
 # disposition mappings
 disposition_mapping <- tribble(
-  ~code, ~full_name,
+  ~code,    ~full_name,
   "ADMDPT", "Administrative Deportation (I-851/I-851A)",
-  "ADMIT", "Admitted",
-  "B", "Bag and Baggage",
-  "DTNR", "Detainer",
-  "ER", "Expedited Removal (I-860)",
-  "Expedited Removal - Securing the Border", "Expedited Removal (I-860)",
-  "ER/CF", "Expedited Removal with Credible Fear",
-  "Expedited Removal/Credible Fear - Securing the Border", "Expedited Removal with Credible Fear",
-  "ER/LR", "Expedited Removal Limited Review",
-  "EX", "Exclusion",
-  "I", "I-210",
-  "NAR", "Not Amenable to Removal",
-  "NTA", "Notice to Appear Released (I-862)",
+  "ADMIT",  "Admitted",
+  "B",      "Bag and Baggage",
+  "DTNR",   "Detainer",
+  "ER",     "Expedited Removal (I-860)",
+  "ER/CF",  "Expedited Removal with Credible Fear",
+  "ER/LR",  "Expedited Removal Limited Review",
+  "EREBC",  "Expedited Removal Without Credible Fear",
+  "EX",     "Exclusion",
+  "NAR",    "Not Amenable to Removal",
+  "NTA",    "Notice to Appear Released (I-862)",
   "NTA/DT", "Notice to Appear Detained (I-862)",
-  "P", "Paroled",
+  "P",      "Paroled",
+  "PD",     "Prosecutorial Discretion",
   "REINRF", "Reinstatement of Deportation Reasonable Fear",
   "REINST", "Reinstatement of Deportation Order I-871",
-  "REL", "Release",
-  "STOW", "Stowaway",
-  "T", "Other",
-  "TOT", "Turned Over To",
-  "V", "Voluntary Return",
-  "VWP/CF", "VWP with I-863 Notice to Refer (Refer to IJ)",
+  "REL",    "Release",
+  "STOW",   "Stowaway",
+  "T",      "Other",
+  "TOT",    "Turned Over To",
+  "V",      "Voluntary Return",
+  "VD",     "Voluntary Departure",
   "VWPPRM", "VWPP Removal",
-  "VWPRM", "VWP Removal",
+  "VWPRM",  "VWP Removal",
   "WA/NTA", "Warrant of Arrest/Notice to Appear"
-)
+  )
 
 # CDS program mappings
 cds_mapping <- tribble(
@@ -339,7 +338,7 @@ cds_mapping <- tribble(
   "IRI",      "Interior Repatriation Initiative",
   "QUICK",    "Quick Court",
   "STRMLINE", "Streamline"
-)
+  )
 
 # transfer group mappings
 transfer_group_mapping <- tribble(
@@ -348,12 +347,12 @@ transfer_group_mapping <- tribble(
   "ORR", "Office of Refugee Resettlement",
   "POE", "Port of Entry",
   "TOT", "Turned Over To"
-)
+  )
 
 juvenile_mapping <- tribble(
   ~code, ~full_name,
   "Child",  "Juvenile"
-)
+  )
 
 time_in_us_mapping <- tribble(
   ~code, ~full_name,
@@ -362,7 +361,7 @@ time_in_us_mapping <- tribble(
   "AE", "At Entry",
   "OVER1", "Over 1 year",
   "WI72", "Within 72 hours"
-)
+  )
 
 group_mapping <- tribble(
   ~code, ~full_name,
@@ -370,12 +369,12 @@ group_mapping <- tribble(
   "FMUA AAC", "FMUA Accompanied Alien Children",
   "Single Adults", "Single Adult",
   "UC", "Unaccompanied Child"
-)
+  )
 
 prosecution_mapping <- tribble(
   ~code, ~full_name,
   "Y", "Referred"
-)
+  )
 
 # format statute charge values before building lookup
 format_statute_charge <- function(charge) {

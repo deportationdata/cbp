@@ -343,7 +343,7 @@ clean_string_sql <- function(column) {
     )
   }
   
-  # collapse whitespace, trim, and convert empty strings or literal NA to NULL
+  # collapse whitespace, trim, and convert empty/NA strings to NULL
   sprintf(
     "NULLIF(regexp_replace(TRIM(regexp_replace(%s, %s, ' ', 'g')), '^NA$', '', 'i'), '')",
     value_sql,
