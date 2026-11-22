@@ -34,6 +34,9 @@ final_columns <- c(
   # arrest information
   "sector",
   "arrest_method",
+
+  # encounter history
+  "number_of_previous_encounters",
   
   # demographic information
   "age",

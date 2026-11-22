@@ -250,6 +250,8 @@ redaction_b7e_pattern <- "\\(\\s*b\\s*\\)\\s*\\(\\s*7\\s*\\)\\s*\\(\\s*E\\s*\\)"
 # boundary between one complete code and the next (b)
 redaction_separator_pattern <- "\\)\\s*[,;]*\\s*\\(b\\)"
 
+missing_text_pattern <- "^(N([.]|[.]? */{1,2} *[.]?|-)?A[.]?|NOT APPLICABLE|NULL|-)$"
+
 whitespace_pattern <- "\\s+"
 
 # standardize redaction codes, separators, and whitespace
@@ -291,11 +293,12 @@ clean_string_sql <- function(column) {
     sql_string("), (b)")
   )
   
-  # collapse whitespace, trim, and convert empty/NA strings to NULL
+  # collapse whitespace, trim, and convert blanks and missing-value strings to NULL
   sprintf(
-    "NULLIF(regexp_replace(TRIM(regexp_replace(%s, %s, ' ', 'g')), '^NA$', '', 'i'), '')",
+    "NULLIF(regexp_replace(TRIM(regexp_replace(%s, %s, ' ', 'g')), %s, '', 'i'), '')",
     value_sql,
-    sql_string(whitespace_pattern)
+    sql_string(whitespace_pattern),
+    sql_string(missing_text_pattern)
   )
 }
 

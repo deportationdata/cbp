@@ -365,10 +365,14 @@ time_in_us_mapping <- tribble(
 
 group_mapping <- tribble(
   ~code, ~full_name,
-  "FMUA", "Family Unit Alien",
+  "FMUA", "Family Unit (FMUA)",
   "FMUA AAC", "FMUA Accompanied Alien Children",
+  "FMUA Adult", "FMUA Adult",
   "Single Adults", "Single Adult",
-  "UC", "Unaccompanied Child"
+  "UC", "Unaccompanied Child",
+  "UAC", "Unaccompanied Child",
+  "UC / Single Minor", "Unaccompanied Child",
+  "Y", "Family Unit (FMUA)"
   )
 
 prosecution_mapping <- tribble(
@@ -498,6 +502,9 @@ code_map <- bind_rows(
   
   group_mapping |>
     mutate(field = "subject_group_classification"),
+
+  group_mapping |>
+    mutate(field = "fmua_indication"),
   
   prosecution_mapping |>
     mutate(field = "referred_for_prosecution_under_8usc1325_or_8usc1326")

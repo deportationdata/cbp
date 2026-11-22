@@ -69,6 +69,7 @@ latest_columns <- c(
   "sector",
   "time_in_us",
   "entry_date",
+  "number_of_previous_encounters",
   
   # demographics / family
   "age",
