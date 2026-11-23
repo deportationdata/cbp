@@ -34,6 +34,7 @@ final_columns <- c(
   # arrest information
   "sector",
   "arrest_method",
+  "arrest_at_checkpoint_indicator",
 
   # encounter history
   "number_of_previous_encounters",
@@ -58,6 +59,7 @@ final_columns <- c(
   "prosecution_indicator",
   
   # charges / disposition
+  "drugs_seized_indicator",
   "statute_charge",
   "charge_code",
   "disposition",

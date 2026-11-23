@@ -67,6 +67,7 @@ latest_columns <- c(
   "encounter_datetime",
   "border",
   "sector",
+  "arrest_at_checkpoint_indicator",
   "time_in_us",
   "entry_date",
   "number_of_previous_encounters",
@@ -81,6 +82,7 @@ latest_columns <- c(
   "number_of_children_and_nationality",
   
   # charges / disposition / bookout
+  "drugs_seized_indicator",
   "statute_charge",
   "disposition",
   "transfer_to_group",

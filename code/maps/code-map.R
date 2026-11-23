@@ -308,6 +308,8 @@ disposition_mapping <- tribble(
   "DTNR",   "Detainer",
   "ER",     "Expedited Removal (I-860)",
   "ER/CF",  "Expedited Removal with Credible Fear",
+  "ER/CFF", "Expedited Removal with Credible Fear",
+  "ERF",    "Expedited Removal with Credible Fear",
   "ER/LR",  "Expedited Removal Limited Review",
   "EREBC",  "Expedited Removal Without Credible Fear",
   "EX",     "Exclusion",
