@@ -59,7 +59,6 @@ final_columns <- c(
   "prosecution_indicator",
   
   # charges / disposition
-  "drugs_seized_indicator",
   "statute_charge",
   "charge_code",
   "disposition",

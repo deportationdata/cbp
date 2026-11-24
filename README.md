@@ -20,6 +20,10 @@ The `cbp` repository contains three main folders. Throughout this document, `<da
 
 -   The `code/<dataset>` folder contains all project code needed to reproduce each dataset.
 
+    -   `code/functions`: functions shared by both pipelines
+
+    -   `code/maps`: value maps shared by both pipelines
+
 -   The `data/<dataset>/` folder contains all data extracted through the pipeline.
 
     -   `~/included-sources/`: source files accepted into the pipeline downloaded from CBP's website
@@ -42,9 +46,9 @@ Scripts: `0-convert-pdf.R` in apprehensions
 
 This script converts PDFs used to fill in a gap in information found in 2014 on CBP's website. We used files obtained by Deportation Data Project co-director David Hausman, represented by the Law Office of Amber Qureshi and the National Immigration Project. This script exists only for apprehensions and does not need to be rerun after the PDF files are converted to parquet form.
 
-Inputs:
+Inputs in `inputs/`:
 
--   `inputs/pdfs/`: contains original PDF files
+-   `pdfs/`: contains original PDF files
 
 Outputs in `data/apprehensions/`:
 
@@ -122,23 +126,11 @@ Outputs in `data/<dataset>/`:
 
 Before running the apprehensions stack, review `parts_to_delete` near the beginning of the script. This list is maintained manually based on overlap review. The script deletes listed files from `parts-to-stack/`.
 
-### 6. Build Code Column Map
+### 6. Clean the Combined Data
 
-Scripts: `6-build-code-map.R`
+Scripts: `6-clean-<dataset>.R`
 
-These scripts create look-up tables that translate coded or truncated values into readable labels.
-
-Outputs in `data/<dataset>/metadata/`:
-
--   `code-map.parquet`: code map with field, code, and full name
-
-The mapping tables are maintained manually and should be reviewed when new coded columns or values appear in the stacked data.
-
-### 7. Clean the Combined Data
-
-Scripts: `7-clean-<dataset>.R`
-
-These scripts standardize redaction codes, convert fields to their intended data types, order columns, and write the cleaned data.
+These scripts standardize redaction codes, convert fields to their intended data types, order columns, and write the cleaned data. Both cleaning scripts load `code/maps/code-map.R` to translate coded values into their full labels.
 
 Outputs in `data/<dataset>/processed/intermediate/`:
 
@@ -149,9 +141,9 @@ Apprehension parts that overlap in date are retained in this step. In using this
 
 Several objects are maintained manually in each cleaning script and should be reviewed when the crosswalk gains new fields. Review all warnings about unrecognized values or columns absent from `column_order`. Columns not assigned another data type remain character fields by default.
 
-### 8. Resolve Apprehension Overlaps
+### 7. Resolve Apprehension Overlaps
 
-Scripts: `8-overlap-resolution.R`.
+Scripts: `7-overlap-resolution.R`.
 
 This script resolves overlapping apprehension datasets by using a manual list of preferred and fallback parts. These lists were built based on an investigation of usable values in key columns from each part.
 
@@ -160,9 +152,9 @@ Outputs in `data/apprehensions/`:
 -   `processed/intermediate/usbp-apprehensions-final-all-cols.parquet`: cleaned apprehensions dataset with all columns and resolved overlaps
 -   `metadata/usbp-apprehensions-overlap-resolution.parquet`: summarizes source part date ranges, contribution to the final dataset, and whether they were retained
 
-### 9. Audit the Cleaned Data
+### 8. Audit the Cleaned Data
 
-Scripts: `9-audit-apprehensions.R`, `8-audit-encounters.R`
+Scripts: `8-audit-apprehensions.R`, `7-audit-encounters.R`
 
 These scripts compare column population across cleaned apprehension and encounter files.
 
@@ -176,9 +168,9 @@ Outputs in `data/<dataset>/metadata/`:
 -   `raw-column-missingness-matrix.parquet`: shows the percentage of missing values for each raw column by source sheet
 -   `final-column-missingness-matrix.parquet`: shows the percentage of missing values for each retained column by source sheet
 
-### 10. Cross-Reference Datasets
+### 9. Cross-Reference Datasets
 
-Scripts: `9-cross-reference-encounters.R` and `10-cross-reference-apprehensions.R`.
+Scripts: `8-cross-reference-encounters.R` and `9-cross-reference-apprehensions.R`.
 
 These scripts compare monthly counts in `usbp-<dataset>-final-all-cols.parquet` with published CBP dashboard totals.
 
@@ -189,70 +181,20 @@ Outputs in `data/<dataset>/validation/`:
 
 The `cbp_benchmarks` table is maintained manually. Before each update, check whether CBP has published a newer benchmark and add its identifier, release date, and URL.
 
-### 11. Select Final Columns
+### 10. Select Final Columns
 
-Scripts: `10-select-final-cols.R` in encounters, `11-select-final-cols.R` in apprehensions.
+Scripts: `9-select-final-cols.R` in encounters, `10-select-final-cols.R` in apprehensions.
 
 These scripts select final columns based on usefulness and percent missing, outputting what we believe to be the most useful dataset after the pipeline. This step produces the final apprehensions dataset, while the final encounters dataset is created in the following script.
 
 Outputs in `data/<dataset>/processed/`:
 
--   `usbp-apprehensions-latest.parquet`: contains the following columns
-    -   `apprehension_datetime`
-    -   `entry_date`
-    -   `final_bookout_date`
-    -   `arrest_sector`
-    -   `arrest_method`
-    -   `age`
-    -   `gender`
-    -   `citizenship`
-    -   `marital_status`
-    -   `number_of_children_and_nationality`
-    -   `fmua_indication`
-    -   `unaccompanied_child_indicator`
-    -   `entry_status`
-    -   `credible_fear_indicator`
-    -   `cds_program`
-    -   `prosecution_indicator`
-    -   `statute_charge`
-    -   `charge_code`
-    -   `disposition`
-    -   `removal_type`
-    -   `source_file`
-    -   `source_sheet`
--   `usbp-encounters-fy2010-2025.parquet`: contains the following columns
-    -   `encounter_datetime`
-    -   `most_recent_encounter_date`
-    -   `earliest_encounter_date`
-    -   `number_of_previous_encounters`
-    -   `final_bookout_datetime`
-    -   `border`
-    -   `arrest_sector`
-    -   `arrest_state`
-    -   `arrest_at_checkpoint_indicator`
-    -   `age`
-    -   `adult_or_juvenile`
-    -   `gender`
-    -   `citizenship`
-    -   `residence_city`
-    -   `residence_country`
-    -   `marital_status`
-    -   `subject_group_classification`
-    -   `number_of_children_and_nationality`
-    -   `time_in_us`
-    -   `ces_indicator`
-    -   `mpp_indicator`
-    -   `transfer_to_group`
-    -   `drugs_seized_indicator`
-    -   `statute_charge`
-    -   `disposition`
-    -   `referred_for_prosecution_under_8usc1325_or_8usc1326`
-    -   `source_file`
-    -   `source_sheet`
+-   `usbp-encounters-fy2010-2025.parquet`: cleaned encounters data with selected columns
+-   `usbp-apprehensions-latest.parquet`: cleaned apprehensions data with selected columns
 
-### 12. Append Apprehensions to Encounters
+### 11. Append Apprehensions to Encounters
 
-Scripts: `11-append-apprehensions.R` in encounters.
+Scripts: `10-append-apprehensions.R` in encounters.
 
 This script adds apprehensions dated before the earliest encounter date or after the latest encounter date and labels rows with `record_type`. This step must be performed after `usbp-apprehensions-latest.parquet` has been generated.
 
@@ -260,22 +202,22 @@ Outputs in `data/encounters/processed/`:
 
 -   `usbp-encounters-latest.parquet`, `usbp-encounters-latest.dta`, and `usbp-encounters-latest.sav`: combined encounters and apprehensions dataset in Parquet, Stata, and SPSS formats
 
-### 13. Audit the Final Data
+### 12. Audit the Final Data
 
-Scripts: `11-final-audit.R`
+Scripts: `11-final-audit.R` in encounters.
 
-This script compares column population across the final dataset, `encounters-latest.parquet`.
+This script summarizes column population by record type and missingness by source sheet in `usbp-encounters-latest.parquet`.
 
-Input in `data/<dataset>/`:
+Inputs in `data/`:
 
--   `metadata/parts-metadata.parquet`: summarizes part source files and sheets, row counts, date fields and ranges, and non-empty columns
--   `processed/usbp-encounters-latest.parquet`:
+-   `apprehensions/metadata/parts-metadata.parquet`: source file and sheet metadata for apprehensions
+-   `encounters/metadata/parts-metadata.parquet`: source file and sheet metadata for encounters
+-   `encounters/processed/usbp-encounters-latest.parquet`: combined encounters and apprehensions dataset
 
-Outputs in `data/<dataset>/metadata/`:
+Outputs in `data/encounters/metadata/`:
 
--   `final-column-inventory.parquet`: lists final columns, data types, counts of populated values at each stage, final missingness, and redaction flags
--   `raw-column-missingness-matrix.parquet`: shows the percentage of missing values for each raw column by source sheet
--   `final-column-missingness-matrix.parquet`: shows the percentage of missing values for each retained column by source sheet
+-   `latest-column-inventory.parquet`: lists final columns, data types, counts of populated values, and final missingness
+-   `latest-column-missingness-matrix.parquet`: shows the percentage of missing values for each retained column by source sheet
 
 ## Updating the Data
 
@@ -287,8 +229,9 @@ For an ordinary update after CBP publishes a new file:
 4.  Set `force_rebuild <- TRUE` if the crosswalk or an existing input changed. Otherwise create only the new parts with `force_rebuild <- FALSE`.
 5.  Update the manual part exclusions.
 6.  Run the stacking script.
-7.  Review columns to collapse in the cleaning stage and rerun the map.
-8.  Clean the data.
+7.  Review columns to collapse and update `code/maps/code-map.R` if value mappings need changes.
+8.  Run the cleaning scripts, which load the shared code map.
 9.  Run the dataset-specific overlap resolution, audit, cross-reference, and column selection steps.
-10. Run `code/encounters/11-append-apprehensions.R` to refresh the combined encounters dataset.
-11. Review warnings and validation outputs before publishing final files.
+10. Run `code/encounters/10-append-apprehensions.R` to refresh the combined encounters dataset.
+11. Run `code/encounters/11-final-audit.R` to refresh the final audit outputs.
+12. Review warnings and validation outputs before publishing final files.

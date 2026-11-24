@@ -82,7 +82,6 @@ latest_columns <- c(
   "number_of_children_and_nationality",
   
   # charges / disposition / bookout
-  "drugs_seized_indicator",
   "statute_charge",
   "disposition",
   "transfer_to_group",

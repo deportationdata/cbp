@@ -36,7 +36,6 @@ final_columns <- c(
   # arrest information
   "border",
   "sector",
-  "arrest_state",
   "arrest_at_checkpoint_indicator",
   
   
